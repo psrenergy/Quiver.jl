@@ -1,10 +1,8 @@
 using Quiver
 
 using Test
+using Random
 
-function test_all()
-
-    return nothing
-end
-
-test_all()
+include("tests_write_2_mb.jl")
+include("tests_write_20_mb.jl")
+include("tests_write_200_mb.jl")

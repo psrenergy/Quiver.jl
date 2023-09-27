@@ -25,3 +25,8 @@ Manifest.toml
 
 # MacOS files
 *.DS_Store
+*.bin
+*.hdr
+*.sqlite
+*.sqlite3
+*.arrow
