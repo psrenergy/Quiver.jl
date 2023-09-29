@@ -58,6 +58,15 @@ Quiver.close!(writer)
 # We can query a stage and it will return every scenario and block from that stage
 @time df = Quiver.read(reader, (;stage = 21))
 
+@time begin 
+    reader = Quiver.QuiverReader(filename);
+    for stage in 1:num_stages
+        println("$stage")
+        for scenario in 1:num_scenarios
+            Quiver.read(reader, (;stage = stage, scenario = scenario))
+        end
+    end
+end
 # We can query the metadata and other things
 Quiver.metadata(filename)
 Quiver.schema(filename)

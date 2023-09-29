@@ -17,10 +17,6 @@ mutable struct QuiverWriter
         # add version and unit
         # add compression, if we turn off is much faster to read (it appears that reading is a bottleneck when compressed)
     )
-        # Make a gc pass before starting, not really needed
-        # TODO remove
-        Base.GC.gc()
-
         # TODO put inside a function
         if isfile(filename)
             if remove_if_exists
@@ -165,20 +161,14 @@ function read(reader::QuiverReader, dimensions_to_query::NamedTuple)
     for (i, dim_to_query) in enumerate(dimensions_to_query)
         # The searchsorted function makes a binary search on the indexes_to_search
         # TODO this needs better explanation. It is a series of chained searches
-        # NOTE: The first one is separated from the others because it allocates a lot, 
-        # acessing  DataFrame via df[!, dim] is much faster than df[indexes, dim] because it does not allocate
-        if i == 1
-            indexes_found_at_dimension[i] = searchsorted(reader.df[!, reader.dimensions[i]], dim_to_query)
-            indexes_to_search_at_dimension[i + 1] = indexes_found_at_dimension[i]
-        else
-            indexes_found_at_dimension[i] = searchsorted(reader.df[indexes_to_search_at_dimension[i], reader.dimensions[i]], dim_to_query)
-            indexes_to_search_at_dimension[i + 1] = indexes_found_at_dimension[i] .+ indexes_to_search_at_dimension[i][1] .- 1
-        end
-
+        view_of_df = @view reader.df[indexes_to_search_at_dimension[i], reader.dimensions[i]]
+        indexes_found_at_dimension[i] = searchsorted(view_of_df, dim_to_query)
+        indexes_to_search_at_dimension[i + 1] = indexes_found_at_dimension[i] .+ indexes_to_search_at_dimension[i][1] .- 1
         if isempty(indexes_found_at_dimension[i])
             error("Dimension $dimensions_to_query not found.")
         end
     end
+    # The only allocation needed is this last one. But we could also avoid it if we wanted
     return reader.df[indexes_to_search_at_dimension[end], :]
 end
 
