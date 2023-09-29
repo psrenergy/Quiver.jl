@@ -16,9 +16,9 @@ total_size_gb = 4 * num_stages * num_scenarios * maximum(num_blocks_per_stage) *
 
 filename = "test_5gb_variable_block_rand.arrow"
 # This should be a vector of symbols
-dimensions = ["stage", "scenario", "block"]
-agents = ["agent_$i" for i in 1:num_agents]
-writer = Quiver.QuiverWriter(filename, dimensions, agents; initial_date = initial_date, stage_type = "month")
+dimensions_names = ["stage", "scenario", "block"]
+agents_names = ["agent_$i" for i in 1:num_agents]
+writer = Quiver.QuiverWriter(filename, dimensions_names, agents_names; initial_date = initial_date, stage_type = "month")
 
 # I am allocating everything before so it does not count on the @time
 
@@ -77,3 +77,54 @@ Quiver.names(filename)
 # The implementation might not be the best but it is reasonably easy to understand
 # It also allows for holes in the data, so if you have a stage 1 and a stage 3 but not a stage 2 it will work. but I haven't tested it yet
 # It allows for a variable number of anything, stages, scenarios, blocks, whatever. You can also create your own dimensions as you wish
+
+# test with PSRI
+using PSRClassesInterface
+PSRI = PSRClassesInterface
+FILE_PATH = "./test_5gb_variable_block_rand"
+iow = PSRI.open(
+    PSRI.OpenBinary.Writer,
+    FILE_PATH,
+    is_hourly = true,
+    scenarios = num_scenarios,
+    stages = num_stages,
+    agents = agents_names,
+    unit = "",
+    initial_stage = 1,
+    initial_year = 2006,
+)
+
+@time for stage in 1:num_stages
+    println("$stage")
+    agents = rand(Float32, num_scenarios * PSRI.blocks_in_stage(iow, stage), num_agents)
+    for scenario in 1:num_scenarios
+        for block in 1:PSRI.blocks_in_stage(iow, stage)
+            PSRI.write_registry(
+                iow,
+                # This is wrong but is ok for performance testing
+                agents[scenario, :],
+                stage,
+                scenario,
+                block,
+            )
+        end
+    end
+end
+
+PSRI.close(iow)
+
+ior = PSRI.open(
+    PSRI.OpenBinary.Reader, 
+    FILE_PATH;
+    use_header = false
+)
+
+@time for stage = 1:num_stages
+    println("$stage")
+    for scenario = 1:num_scenarios, block = 1:PSRI.blocks_in_stage(iow, stage)
+        ior.data
+        PSRI.next_registry(ior)
+    end
+end
+
+PSRI.close(ior)
