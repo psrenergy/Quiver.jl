@@ -1,16 +1,42 @@
-function sqlite_write_2d_one_shot(file_name::String, arr::Matrix{Float32}, agent_names::Vector{String})
-    n_agents = length(agent_names)
-    
-    stages = collect(Int64, 1:size(arr, 1))
-    df = DataFrame(stages[:, :], ["stage"])
-    for i in 1:n_agents
-        df[!, agent_names[i]] = arr[:, i]
-    end
-    
-    rm(file_name*".sqlite3", force = true)
-    db = SQLite.DB(file_name*".sqlite3")
-    SQLite.load!(df, db, file_name)
-    DBInterface.close!(db)
+function create_db(filepath::String)
+    return SQLite.DB(filepath)
+end
 
+function create_time_series_table(
+    db::SQLite.DB, 
+    time_series_name::String, 
+    dimensions::Vector{String}, 
+    agents::Vector{String}
+)
+    statement = SQLite.Stmt(db,
+        """
+        CREATE TABLE IF NOT EXISTS $time_series_name (
+            $(join(dimensions, " INTEGER, ")) INTEGER,
+            $(join(agents, " REAL, ")) REAL,
+            PRIMARY KEY ($(join(dimensions, ", ")))
+        )
+        """
+    )
+    DBInterface.execute(statement)
+    return time_series_name
+end
+
+function dimensions_columns(db::SQLite.DB, time_series_name::String)
+    cols = SQLite.columns(db, time_series_name)
+    idx = findall(isequal("INTEGER"), cols.type)
+    return cols.name[idx]
+end
+
+function agents_columns(db::SQLite.DB, time_series_name::String)
+    cols = SQLite.columns(db, time_series_name)
+    idx = findall(isequal("REAL"), cols.type)
+    return cols.name[idx]
+end
+
+function write!(db::SQLite.DB, time_series_name::String, dimensions::Matrix{Int64}, agents::Matrix{Float64})
+    dimensions_names = Symbol.(dimensions_columns(db, time_series_name))
+    agents_names = Symbol.(agents_columns(db, time_series_name))
+    tbl = Tables.table([dimensions agents]; header = [dimensions_names; agents_names])
+    SQLite.load!(tbl, db, time_series_name)
     return nothing
 end
