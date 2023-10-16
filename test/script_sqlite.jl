@@ -79,3 +79,55 @@ end
         end
     end
 end
+
+
+# test with PSRI
+using PSRClassesInterface
+PSRI = PSRClassesInterface
+FILE_PATH = "./test_5gb_variable_block_rand"
+iow = PSRI.open(
+    PSRI.OpenBinary.Writer,
+    FILE_PATH,
+    is_hourly = true,
+    scenarios = num_scenarios,
+    stages = num_stages,
+    agents = agents_names,
+    unit = "",
+    initial_stage = 1,
+    initial_year = 2006,
+)
+
+@time for stage in 1:num_stages
+    println("$stage")
+    agents = rand(Float32, num_scenarios * PSRI.blocks_in_stage(iow, stage), num_agents)
+    for scenario in 1:num_scenarios
+        for block in 1:PSRI.blocks_in_stage(iow, stage)
+            PSRI.write_registry(
+                iow,
+                # This is wrong but is ok for performance testing
+                agents[scenario, :],
+                stage,
+                scenario,
+                block,
+            )
+        end
+    end
+end
+
+PSRI.close(iow)
+
+ior = PSRI.open(
+    PSRI.OpenBinary.Reader, 
+    FILE_PATH;
+    use_header = false
+)
+
+@time for stage = 1:num_stages
+    println("$stage")
+    for scenario = 1:num_scenarios, block = 1:PSRI.blocks_in_stage(iow, stage)
+        ior.data
+        PSRI.next_registry(ior)
+    end
+end
+
+PSRI.close(ior)

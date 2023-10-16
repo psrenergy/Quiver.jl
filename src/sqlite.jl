@@ -167,7 +167,7 @@ function read(db::SQLite.DB, time_series_name::String, dimensions_to_query::Name
     # TODO
     # For some reason this part allocates a lot of memory
     # this is the main bottleneck of the read function
-    return DataFrame(query_result)
+    # return DataFrame(query_result)
 end
 
 function assert_dimensions_are_in_order(db::SQLite.DB, time_series_name::String, dimensions_to_query::NamedTuple)
