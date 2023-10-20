@@ -27,26 +27,28 @@ function test_write_read_small_time_series()
     filename = "test_small_time_series"
 
     for impl in Quiver.implementations()
-        writer = QuiverWriter{impl}(
-            filename,
-            dimensions_names,
-            agents_names
-        )
-        Quiver.write!(writer, dimensions, agents)
-        Quiver.close!(writer)
+        @testset "$impl" begin
+            writer = QuiverWriter{impl}(
+                filename,
+                dimensions_names,
+                agents_names
+            )
+            Quiver.write!(writer, dimensions, agents)
+            Quiver.close!(writer)
 
-        reader = QuiverReader{impl}(filename)
-        data = Quiver.read(reader, (;stage = 1, scenario = 34))
-        @test typeof(data) == Matrix{Float32}
-        @test data[1] == 34
-        @test data[8] == 41
+            reader = QuiverReader{impl}(filename)
+            data = Quiver.read(reader, (;stage = 1, scenario = 34))
+            @test typeof(data) == Matrix{Float32}
+            @test data[1] == 34
+            @test data[8] == 41
 
-        data = Quiver.read(reader, (;stage = 1))
-        @test typeof(data) == Matrix{Float32}
-        @test size(data) == size(agents)
-        @test data[1, 1] == 1
-        @test data[34, 1] == 34
-        @test data[34, 8] == 41
+            data = Quiver.read(reader, (;stage = 1))
+            @test typeof(data) == Matrix{Float32}
+            @test size(data) == size(agents)
+            @test data[1, 1] == 1
+            @test data[34, 1] == 34
+            @test data[34, 8] == 41
+        end
     end
 end
 

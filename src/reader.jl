@@ -23,3 +23,8 @@ end
 function find_cols_of_agents(reader::QuiverReader, cols::Vector{Symbol})
     return findall((in)(reader.agents_to_read), cols)
 end
+
+function close!(writer::QuiverReader)
+    _quiver_close!(writer)
+    return nothing
+end

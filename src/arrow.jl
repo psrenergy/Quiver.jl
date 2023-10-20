@@ -96,3 +96,8 @@ function _quiver_read(reader::QuiverReader{arrow, DataFrame}, dimensions_to_quer
     # by passing a view. But this would be kind of weird in the context of some applications.
     return Matrix{Float32}(reader.reader[indexes_to_search_at_dimension[end], cols_of_agents])
 end
+
+function _quiver_close!(reader::QuiverReader{arrow, DataFrame})
+    reader.reader = nothing
+    return nothing
+end
