@@ -30,6 +30,8 @@ Manifest.toml
 *.sqlite
 *.sqlite3
 *.arrow
+*.gz
+*.csv
 test/*.toml
 test/*.arrow
 test/*.csv

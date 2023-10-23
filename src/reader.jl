@@ -1,5 +1,5 @@
 mutable struct QuiverReader{I <: QuiverImplementation, R}
-    reader::R
+    reader::Union{Nothing, R}
     dimensions::Vector{Symbol}
     agents_to_read::Vector{Symbol}
     metadata::QuiverMetadata

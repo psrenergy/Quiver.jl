@@ -84,34 +84,30 @@ function QuiverReader{csv}(
         rows,
         dimensions,
         agents_to_read,
-        meta_data
+        meta_data,
     )
 end
 
 function _quiver_read(reader::QuiverReader{csv, CSV.Rows}, dimensions_to_query::NamedTuple)
-    filename = reader.reader.name
     cols_of_agents = find_cols_of_agents(reader, Symbol.(reader.reader.names))
     selected_rows = Vector{Vector{Float32}}(undef, 0)
-    # TODO this here could be smarter
-    # We could check what is the last row searched and simply continue through this 
-    # same iterator.
-    # Here we are starting again and iterating through the whole file every time
-    for row in CSV.Rows(filename; types = reader.reader.ctx.types)
-        is_row_selected = true
-        for (i, dim_to_query) in enumerate(dimensions_to_query)
-            if row[i] != dim_to_query
-                is_row_selected = false
-                break
-            end
-        end
-        if is_row_selected
+
+    # TODO we could start the search at the last dimension selected
+    # This would be more performant.
+    for row in CSV.Rows(reader.reader.name; types = reader.reader.ctx.types)
+        if _row_is_in_order_of_query(row, dimensions_to_query)
             # TODO it is possible to make a smarter collect that only build the appropriate
             # sized vector
             push!(selected_rows, collect(Float32, row)[cols_of_agents])
+        elseif _row_is_below_order_of_query(row, dimensions_to_query)
+            continue
+        else # row is above order of query
+            break
         end
     end
 
-    return gather_selected_rows(selected_rows)
+    result = gather_selected_rows(selected_rows)
+    return result
 end
 
 function _quiver_close!(reader::QuiverReader{csv, CSV.Rows})
@@ -128,4 +124,21 @@ function gather_selected_rows(selected_rows::Vector{Vector{Float32}})
         m[i, j] = selected_rows[i][j]
     end
     return m
+end
+
+function _row_is_in_order_of_query(row::CSV.Row2, dimensions_to_query::NamedTuple)
+    for (i, dim_to_query) in enumerate(dimensions_to_query)
+        if row[i] != dim_to_query
+            return false
+        end
+    end
+    return true
+end
+function _row_is_below_order_of_query(row::CSV.Row2, dimensions_to_query::NamedTuple)
+    for (i, dim_to_query) in enumerate(dimensions_to_query)
+        if row[i] < dim_to_query
+            return true
+        end
+    end
+    return false
 end

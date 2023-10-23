@@ -29,6 +29,6 @@ function add_extension_to_file(filename::AbstractString, ext::AbstractString)
     return "$filename.$ext"
 end
 
-function default_last_dimension_added(dimensions::Vector{String})
+function default_last_dimension_added(dimensions::Vector)
     return fill(Int32(-10000), length(dimensions))
 end

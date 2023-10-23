@@ -46,6 +46,7 @@ function read_time_series(impl::Type{<:Quiver.QuiverImplementation})
             Quiver.read(reader, (;stage = stage, scenario = scenario))
         end
     end
+    Quiver.close!(reader)
 end
 
 for impl in Quiver.implementations()
@@ -54,4 +55,5 @@ for impl in Quiver.implementations()
     @time write_time_series(impl);
     println("read time")
     @time read_time_series(impl);
+    Base.GC.gc()
 end
