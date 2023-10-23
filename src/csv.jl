@@ -52,6 +52,11 @@ function _quiver_close!(::QuiverWriter{csv, Nothing})
     return nothing
 end
 
+mutable struct QuiverCSVReader
+    rows::CSV.Rows
+    dimensions_rows_dict::Dict{Vector{Int32}, Int64}
+end
+
 function QuiverReader{csv}(
     filename::String; 
     agents::Union{Nothing, Vector{Symbol}} = nothing,    
@@ -79,43 +84,54 @@ function QuiverReader{csv}(
 
     # This one is to put the correct types
     rows = CSV.Rows(filename_with_extension; types = [fill(Int32, meta_data.num_dimensions); fill(Float32, num_agents)])
+    reader = QuiverCSVReader(rows, Dict{Vector{Int32}, Int64}())
 
-    return QuiverReader{csv, CSV.Rows}(
-        rows,
+    return QuiverReader{csv, QuiverCSVReader}(
+        reader,
         dimensions,
         agents_to_read,
         meta_data,
     )
 end
 
-function _quiver_read(reader::QuiverReader{csv, CSV.Rows}, dimensions_to_query::NamedTuple)
-    cols_of_agents = find_cols_of_agents(reader, Symbol.(reader.reader.names))
+function _quiver_read(reader::QuiverReader{csv, QuiverCSVReader}, dimensions_to_query::NamedTuple)
+    cols_of_agents = find_cols_of_agents(reader, Symbol.(reader.reader.rows.names))
     selected_rows = Vector{Vector{Float32}}(undef, 0)
+    _create_rows_iterator!(reader, dimensions_to_query)
 
     # TODO we could start the search at the last dimension selected
     # This would be more performant.
-    for row in CSV.Rows(reader.reader.name; types = reader.reader.ctx.types)
+    next = iterate(reader.reader.rows)
+    while next !== nothing
+        (row, state) = next
         if _row_is_in_order_of_query(row, dimensions_to_query)
             # TODO it is possible to make a smarter collect that only build the appropriate
             # sized vector
             push!(selected_rows, collect(Float32, row)[cols_of_agents])
         elseif _row_is_below_order_of_query(row, dimensions_to_query)
+            next = iterate(reader.reader.rows, state)
             continue
         else # row is above order of query
+            # _save_row_in_dict(reader, row, dimensions_to_query)
             break
         end
+        next = iterate(reader.reader.rows, state)
     end
 
-    result = gather_selected_rows(selected_rows)
-    return result
+    return _gather_selected_rows(selected_rows)
 end
 
-function _quiver_close!(reader::QuiverReader{csv, CSV.Rows})
+function _quiver_close!(reader::QuiverReader{csv, QuiverCSVReader})
     reader.reader = nothing
     return nothing
 end
 
-function gather_selected_rows(selected_rows::Vector{Vector{Float32}})
+function _create_rows_iterator!(reader::QuiverReader{csv, QuiverCSVReader}, dimensions_to_query::NamedTuple)
+    reader.reader.rows = CSV.Rows(reader.reader.rows.name; types = reader.reader.rows.ctx.types)
+    return reader
+end
+
+function _gather_selected_rows(selected_rows::Vector{Vector{Float32}})
     n_rows = length(selected_rows)
     n_cols = length(selected_rows[1])
     m = Matrix{Float32}(undef, n_rows, n_cols)
