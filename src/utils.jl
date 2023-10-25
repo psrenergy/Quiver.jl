@@ -32,3 +32,16 @@ end
 function default_last_dimension_added(dimensions::Vector)
     return fill(Int32(-10000), length(dimensions))
 end
+
+function _warn_if_file_is_bigger_than_ram(filename::AbstractString, implementation::String)
+    size_of_file_mb = filesize(filename) / 2^20 |> trunc
+    freememory_mb = Sys.free_memory() / 2^20 |> trunc
+    if size_of_file_mb / 2 > freememory_mb
+        @warn(
+            "The Quiver implementation for $implementation is not optimized for large files. " *
+            "The file has $(size_of_file_mb) MB and the available memory is $(freememory_mb) MB. " *
+            "The program might run out of memory. Please consider using the Arrow implementation instead."
+        )
+    end
+    return nothing
+end

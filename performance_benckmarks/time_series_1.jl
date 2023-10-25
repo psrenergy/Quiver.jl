@@ -7,7 +7,7 @@ function write_time_series(impl::Type{<:Quiver.QuiverImplementation})
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
     dates = collect(initial_date:Dates.Month(1):initial_date + Dates.Month(num_stages - 1))
-    num_scenarios = 12
+    num_scenarios = 1200
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     num_agents = 20
     
@@ -40,7 +40,7 @@ end
 function read_time_series(impl::Type{<:Quiver.QuiverImplementation})
     reader = QuiverReader{impl}(FILENAME);
     num_stages = 10
-    num_scenarios = 12
+    num_scenarios = 1200
     for stage in 1:num_stages
         for scenario in 1:num_scenarios
             Quiver.read(reader, (;stage = stage, scenario = scenario))
