@@ -1,15 +1,9 @@
 module Quiver
 
-using PSRClassesInterface
-using Arrow
-using SQLite
-using DataFrames
 using Tables
+using DataFrames
 
-const PSRI = PSRClassesInterface
-
-include("graf.jl")
-include("sqlite.jl")
-include("arrow.jl")
+include("metadata.jl")
+include("api.jl")
 
 end
