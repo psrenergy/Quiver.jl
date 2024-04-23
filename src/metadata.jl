@@ -1,41 +1,95 @@
-# TODO enum stage type
-
-mutable struct QuiverMetadata
-    num_dimensions::Int
-    stage_type::Union{Nothing, String}
-    initial_date::Union{Nothing, Dates.DateTime}
-    unit::Union{Nothing, String}
+Base.@kwdef mutable struct QuiverMetadata
+    # number of dimensions columns in file
+    dimension_names::Vector{String}
+    # frequency of the time series
+    frequency::String = defaukt_frequency()
+    # initial date of the time series
+    initial_date::Dates.DateTime = default_initial_date()
+    # unit of the time series
+    unit::String = default_unit()
+    # Inform which dimensions represent time
+    time_dimensions::Vector{String}
+    # Maximum index for each dimension
+    maximum_value_of_each_dimension::Vector{Int}
+    # version of the file. This is in case anything changes in the future
+    const version::String = "1"
 end
 
-function to_dict(metadata::QuiverMetadata)
-    dict = Dict{String, String}()
-    for f in fieldnames(QuiverMetadata)
-        if getfield(metadata, f) !== nothing
-            dict[string(f)] = string(getfield(metadata, f))
-        end
+function num_dimensions(metadata::QuiverMetadata)::Int
+    return length(metadata.dimension_names)
+end
+
+function max_index(metadata::QuiverMetadata, dimension_name::String)::Int
+    index = findfirst(metadata.dimension_names .== dimension_name)
+    if index === nothing
+        error("Dimension $dimension_name not found in metadata")
     end
-    return dict
+    return metadata.maximum_value_of_each_dimension[index]
 end
 
-function from_file(metadata_file::AbstractString)
-    @assert isfile(metadata_file)
-    return from_dict(TOML.parsefile(metadata_file))
+function default_frequency()::String
+    return "M"
 end
 
-function from_dict(dict::Dict{String, Any})
-    metadata = QuiverMetadata(
-        parse(Int, dict["num_dimensions"]),
-        get(dict, "stage_type", nothing),
-        get(dict, "initial_date", nothing),
-        get(dict, "unit", nothing)
+function default_initial_date()::Dates.DateTime
+    return DateTime(1900)
+end
+
+function default_unit()::String
+    return ""
+end
+
+function to_string(metadata::QuiverMetadata)::String
+    return "frequency: $(metadata.frequency)\n" *
+           "initial_date: $(metadata.initial_date)\n" *
+           "unit: $(metadata.unit)\n" *
+           "dimension_names: $(join(metadata.dimension_names, " "))\n" *
+           "maximum_value_of_each_dimension: $(join(metadata.maximum_value_of_each_dimension, " "))\n" *
+           "time_dimensions: $(join(metadata.time_dimensions, " "))\n" * 
+           "version: $(metadata.version)\n" * 
+           "--- \n"
+end
+
+function from_string(str::String)::QuiverMetadata
+    lines = split(str, "\n")
+    frequency = split(lines[1], ": ")[2]
+    initial_date = DateTime(split(lines[2], ": ")[2])
+    unit = split(lines[3], ": ")[2]
+    dimension_names = split(lines[4], ": ")[2]
+    maximum_value_of_each_dimension = split(lines[5], ": ")[2]
+    time_dimensions = split(lines[6], ": ")[2]
+    version = split(lines[7], ": ")[2]
+    return QuiverMetadata(
+        split(dimension_names, " "),
+        frequency,
+        initial_date,
+        unit,
+        split(time_dimensions, " "),
+        parse.(Int, split(maximum_value_of_each_dimension, " ")),
+        version
     )
-    return metadata
 end
 
-function to_toml(filename::String, metadata::QuiverMetadata)
-    @assert !isfile(filename)
-    open(filename, "w") do io
-        TOML.print(io, to_dict(metadata))
-    end
-    return filename
+function to_dict(metadata::QuiverMetadata)::Dict{String, String}
+    return Dict(
+        "frequency" => metadata.frequency,
+        "initial_date" => string(metadata.initial_date),
+        "unit" => metadata.unit,
+        "dimension_names" => join(metadata.dimension_names, " "),
+        "maximum_value_of_each_dimension" => join(metadata.maximum_value_of_each_dimension, " "),
+        "time_dimensions" => join(metadata.time_dimensions, " "),
+        "version" => metadata.version
+    )
+end
+
+function from_dict(dict::AbstractDict{String, String})::QuiverMetadata
+    return QuiverMetadata(
+        split(dict["dimension_names"], " "),
+        dict["frequency"],
+        DateTime(dict["initial_date"]),
+        dict["unit"],
+        split(dict["time_dimensions"], " "),
+        parse.(Int, split(dict["maximum_value_of_each_dimension"], " ")),
+        dict["version"]
+    )
 end

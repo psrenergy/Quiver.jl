@@ -1,38 +1,41 @@
 # TODO see if we can add compression here
 function QuiverWriter{arrow}(
     filename::String,
-    dimensions::Vector{String},
-    agents::Vector{String};
-    initial_date::Union{Nothing, Dates.DateTime} = nothing,
-    stage_type::Union{Nothing, String} = nothing,
-    unit::Union{Nothing, String} = nothing,
+    dimension_names::Vector{String},
+    agent_names::Vector{String},
+    time_dimensions::Vector{String},
+    maximum_value_of_each_dimension::Vector{Int};
+    frequency::String = default_frequency(),
+    initial_date::Dates.DateTime = default_initial_date(),
+    unit::String = default_unit(),
     remove_if_exists::Bool = true
 )
     filename_with_extensions = add_extension_to_file(filename, "arrow")
-    metadata_with_extensions = add_extension_to_file(filename, "toml")
     rm_if_exists(filename_with_extensions, remove_if_exists)
-    rm_if_exists(metadata_with_extensions, remove_if_exists)
 
-    quiver_empty_df = create_quiver_empty_df(dimensions, agents)
-    metadata = QuiverMetadata(
-        length(dimensions),
-        stage_type,
+    quiver_empty_df = create_quiver_empty_df(dimension_names, agent_names)
+
+    metadata = QuiverMetadata(;
+        dimension_names,
+        frequency,
         initial_date,
-        unit
+        unit,
+        time_dimensions,
+        maximum_value_of_each_dimension
     )
 
-    to_toml(metadata_with_extensions, metadata)
+    metadata_dict = to_dict(metadata)
 
-    arrow_writer = open(Arrow.Writer, filename_with_extensions)
+    arrow_writer = open(Arrow.Writer, filename_with_extensions; metadata = metadata_dict)
     Arrow.write(arrow_writer, quiver_empty_df)
 
     return QuiverWriter{arrow, Arrow.Writer}(
         arrow_writer,
         filename_with_extensions,
-        dimensions,
-        agents,
+        dimension_names,
+        agent_names,
         metadata,
-        default_last_dimension_added(dimensions)
+        default_last_dimension_added(dimension_names)
     )
 end
 
@@ -50,19 +53,17 @@ function QuiverReader{arrow}(
     agents::Union{Nothing, Vector{Symbol}} = nothing,    
 )
     filename_with_extension = add_extension_to_file(filename, "arrow")
-    metadata_with_extension = add_extension_to_file(filename, "toml")
-    @assert isfile(filename_with_extension)
-    @assert isfile(metadata_with_extension)
-
-    meta_data = from_file(metadata_with_extension)
+    @assert isfile(filename_with_extension) "File $filename_with_extension does not exist."
 
     tbl = Arrow.Table(filename_with_extension)
+    metadata = from_dict(Arrow.getmetadata(tbl))
     cols = Arrow.names(tbl)
+    n_dim = num_dimensions(metadata)
 
-    dimensions = cols[1:meta_data.num_dimensions]
+    dimensions = cols[1:n_dim]
     
     agents_to_read = if agents === nothing
-        cols[meta_data.num_dimensions + 1:end]
+        cols[n_dim + 1:end]
     else
         agents
     end
@@ -71,14 +72,14 @@ function QuiverReader{arrow}(
 
     return QuiverReader{arrow, DataFrame}(
         df,
+        filename,
         dimensions,
         agents_to_read,
-        meta_data
+        metadata
     )
 end
 
-function _quiver_read(reader::QuiverReader{arrow, DataFrame}, dimensions_to_query::NamedTuple)
-    cols_of_agents = find_cols_of_agents(reader, Symbol.(names(reader.reader)))
+function _quiver_read_df(reader::QuiverReader{arrow, DataFrame}, dimensions_to_query::NamedTuple)
     indexes_to_search_at_dimension = Vector{UnitRange{Int}}(undef, length(dimensions_to_query) + 1)
     indexes_found_at_dimension = Vector{UnitRange{Int}}(undef, length(dimensions_to_query))
     indexes_to_search_at_dimension[1] = 1:size(reader.reader, 1)
@@ -92,9 +93,13 @@ function _quiver_read(reader::QuiverReader{arrow, DataFrame}, dimensions_to_quer
             error("Dimension $dimensions_to_query not found.")
         end
     end
-    # The only allocation needed is this last one. But we could also avoid it if we wanted
-    # by passing a view. But this would be kind of weird in the context of some applications.
-    return Matrix{Float32}(reader.reader[indexes_to_search_at_dimension[end], cols_of_agents])
+    return reader.reader[indexes_to_search_at_dimension[end], :]
+end
+
+function _quiver_read(reader::QuiverReader{arrow, DataFrame}, dimensions_to_query::NamedTuple)
+    cols_of_agents = find_cols_of_agents(reader, Symbol.(names(reader.reader)))
+    view_df = _quiver_read_df(reader, dimensions_to_query)
+    return Matrix{Float32}(view_df[:, cols_of_agents])
 end
 
 function _quiver_close!(reader::QuiverReader{arrow, DataFrame})

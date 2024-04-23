@@ -1,8 +1,13 @@
 mutable struct QuiverReader{I <: QuiverImplementation, R}
     reader::Union{Nothing, R}
+    filename::String
     dimensions::Vector{Symbol}
     agents_to_read::Vector{Symbol}
     metadata::QuiverMetadata
+end
+
+function max_index(reader::QuiverReader, dimension::String)
+    return max_index(reader.metadata, dimension)
 end
 
 function read(reader::QuiverReader, dimensions_to_query::NamedTuple)

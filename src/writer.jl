@@ -20,7 +20,17 @@ function dimensions_are_compliant(writer::QuiverWriter, dimensions::Matrix{Int32
         elseif dim == writer.last_dimension_added[i]
             # If this is true we still need to check if the next dimension respects the order
             continue
+        elseif dim > writer.metadata.maximum_value_of_each_dimension[i]
+            @error(
+                "Dimension $(metadata.dimension_names[dim]) of value $(dimensions[i + 1, dim]) is "*
+                "greater than the maximum value of the dimension $(writer.metadata.maximum_value_of_each_dimension[dim])."
+            )
+            return false
         else # dim < writer.last_dimension_added[i]
+            @error(
+                "Dimension $(metadata.dimension_names[dim]) of value $(dimensions[i + 1, dim]) is "*
+                "smaller than the last dimension added $(writer.last_dimension_added[i])."
+            )
            return false
         end
     end
@@ -32,7 +42,17 @@ function dimensions_are_compliant(writer::QuiverWriter, dimensions::Matrix{Int32
                 break
             elseif dimensions[i + 1, dim] == dimensions[i, dim]
                 continue
+            elseif dimensions[i + 1, dim] > writer.metadata.maximum_value_of_each_dimension[dim]
+                @error(
+                    "Dimension $(metadata.dimension_names[dim]) of value $(dimensions[i + 1, dim]) is "*
+                    "greater than the maximum value of the dimension $(writer.metadata.maximum_value_of_each_dimension[dim])."
+                )
+                return false
             else
+                @error(
+                    "Dimension $(metadata.dimension_names[dim]) of value $(dimensions[i + 1, dim]) is "*
+                    "smaller than the last dimension added $(writer.last_dimension_added[i])."
+                )
                 return false
             end
         end
@@ -48,7 +68,7 @@ end
 
 function write!(writer::QuiverWriter, dimensions::Matrix{Int32}, agents::Matrix{Float32})
     if !dimensions_are_compliant(writer, dimensions)
-        error("Dimensions are not in order.")
+        error("Dimensions are invalid.")
     end
     intermediary_df = DataFrames.DataFrame(agents, writer.agents)
     for dim in 1:length(writer.dimensions)

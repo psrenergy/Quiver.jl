@@ -23,14 +23,16 @@ function create_quiver_empty_df(
 end
 
 function add_extension_to_file(filename::AbstractString, ext::AbstractString)
-    if occursin(r"\.", filename)
+    # This regex is to check if a file has an extension
+    # https://stackoverflow.com/questions/22863973/regex-check-if-a-file-has-any-extension
+    if occursin(r"^.*\.[^\\]+$", filename)
         error("Filename $filename already has an extension.")
     end
     return "$filename.$ext"
 end
 
 function default_last_dimension_added(dimensions::Vector)
-    return fill(Int32(-10000), length(dimensions))
+    return fill(Int32(0), length(dimensions))
 end
 
 function _warn_if_file_is_bigger_than_ram(filename::AbstractString, implementation::String)
