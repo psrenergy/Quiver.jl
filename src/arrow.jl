@@ -23,6 +23,7 @@ function QuiverWriter{arrow}(
         time_dimension,
         maximum_value_of_each_dimension
     )
+    validate_metadata(metadata)
 
     metadata_dict = to_dict(metadata)
 
@@ -57,6 +58,7 @@ function QuiverReader{arrow}(
 
     tbl = Arrow.Table(filename_with_extension)
     metadata = from_dict(Arrow.getmetadata(tbl))
+    validate_metadata(metadata)
     cols = Arrow.names(tbl)
     n_dim = num_dimensions(metadata)
 

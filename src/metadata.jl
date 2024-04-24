@@ -15,6 +15,13 @@ Base.@kwdef mutable struct QuiverMetadata
     version::Int = 1
 end
 
+function validate_metadata(metadata::QuiverMetadata)
+    if metadata.num_dimensions != length(metadata.maximum_value_of_each_dimension)
+        error("The number of dimensions must be equal to the length of maximum_value_of_each_dimension")
+    end
+    return nothing
+end
+
 function num_dimensions(metadata::QuiverMetadata)::Int
     return metadata.num_dimensions
 end

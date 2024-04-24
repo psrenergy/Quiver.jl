@@ -25,6 +25,7 @@ function QuiverWriter{csv}(
         time_dimension,
         maximum_value_of_each_dimension
     )
+    validate_metadata(metadata)
 
     # Write metadata on the top of the file
     open(filename_with_extensions, "a+") do io
@@ -69,6 +70,7 @@ function QuiverReader{csv}(
 
     metadata_string = readuntil(open(filename_with_extension), "--- \n")
     metadata = from_string(metadata_string)
+    validate_metadata(metadata)
     header_line = 9
 
     # The first part is only to get the names
