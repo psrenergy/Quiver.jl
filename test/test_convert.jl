@@ -21,7 +21,7 @@ function write_test_file(impl)
         filename,
         dimensions_names,
         agents_names,
-        ["stage", "block"],
+        "stage",
         [num_stages, num_scenarios, maximum(num_blocks_per_stage)],
     )
     for stage in 1:num_stages

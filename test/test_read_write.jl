@@ -21,7 +21,7 @@ function read_write_with_implementation(impl)
         filename,
         dimensions_names,
         agents_names,
-        ["stage", "block"],
+        "stage",
         [num_stages, num_scenarios, maximum(num_blocks_per_stage)];
         initial_date = initial_date
     )

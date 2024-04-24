@@ -7,7 +7,11 @@ mutable struct QuiverReader{I <: QuiverImplementation, R}
 end
 
 function max_index(reader::QuiverReader, dimension::String)
-    return max_index(reader.metadata, dimension)
+    index_of_dimension = findfirst(isequal(dimension), string.(reader.dimensions))
+    if index_of_dimension === nothing
+        error("Dimension $dimension not found in $(reader.dimensions)")
+    end
+    return reader.metadata.maximum_value_of_each_dimension[index_of_dimension]
 end
 
 function read(reader::QuiverReader, dimensions_to_query::NamedTuple)

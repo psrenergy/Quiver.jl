@@ -12,7 +12,7 @@ function convert(
         filename,
         string.(reader.dimensions),
         string.(reader.agents_to_read),
-        reader.metadata.time_dimensions,
+        reader.metadata.time_dimension,
         reader.metadata.maximum_value_of_each_dimension,
     )
 

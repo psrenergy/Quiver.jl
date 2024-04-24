@@ -3,7 +3,7 @@ function QuiverWriter{arrow}(
     filename::String,
     dimension_names::Vector{String},
     agent_names::Vector{String},
-    time_dimensions::Vector{String},
+    time_dimension::String,
     maximum_value_of_each_dimension::Vector{Int};
     frequency::String = default_frequency(),
     initial_date::Dates.DateTime = default_initial_date(),
@@ -16,11 +16,11 @@ function QuiverWriter{arrow}(
     quiver_empty_df = create_quiver_empty_df(dimension_names, agent_names)
 
     metadata = QuiverMetadata(;
-        dimension_names,
+        num_dimensions = length(dimension_names),
         frequency,
         initial_date,
         unit,
-        time_dimensions,
+        time_dimension,
         maximum_value_of_each_dimension
     )
 
