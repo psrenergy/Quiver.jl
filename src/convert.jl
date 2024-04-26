@@ -43,5 +43,3 @@ end
 # From and to a PSRI Open Binary.
 
 # Another thing we should do is a small go program to open the Arrow file and show the header.
-
-# Add a function to export and import to a timestamped csv.

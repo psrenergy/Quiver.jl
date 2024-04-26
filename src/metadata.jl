@@ -1,4 +1,23 @@
+@enum TimeRepresentation begin
+    TimeDeltas = 0
+    ExplicitDates = 1
+end
+
+function time_representation_from_string(str::AbstractString)::TimeRepresentation
+    if str == "TimeDeltas"
+        return TimeDeltas
+    elseif str == "ExplicitDates"
+        return ExplicitDates
+    else
+        error("Invalid time representation")
+    end
+end
+
 Base.@kwdef mutable struct QuiverMetadata
+    # Time representation. There are essentially two representations
+    # 1. TimeDeltas: The time is represented as deltas from the initial date
+    # 2. ExplicitDates: The time is represented as explicit dates.
+    time_representation::TimeRepresentation = TimeDeltas
     # frequency of the time series
     frequency::String = defaukt_frequency()
     # initial date of the time series
@@ -39,7 +58,8 @@ function default_unit()::String
 end
 
 function to_string(metadata::QuiverMetadata)::String
-    return "frequency: $(metadata.frequency)\n" *
+    return "time_representation: $(metadata.time_representation)\n" *
+           "frequency: $(metadata.frequency)\n" *
            "initial_date: $(metadata.initial_date)\n" *
            "time_dimension: $(metadata.time_dimension)\n" * 
            "num_dimensions: $(metadata.num_dimensions)\n" *
@@ -51,14 +71,16 @@ end
 
 function from_string(str::String)::QuiverMetadata
     lines = split(str, "\n")
-    frequency = split(lines[1], ": ")[2]
-    initial_date = DateTime(split(lines[2], ": ")[2])
-    time_dimension = split(lines[3], ": ")[2]
-    num_dimensions = parse(Int, split(lines[4], ": ")[2])
-    unit = split(lines[5], ": ")[2]
-    maximum_value_of_each_dimension = split(lines[6], ": ")[2]
-    version = parse(Int, split(lines[7], ": ")[2])
+    time_representation = time_representation_from_string(split(lines[1], ": ")[2])
+    frequency = split(lines[2], ": ")[2]
+    initial_date = DateTime(split(lines[3], ": ")[2])
+    time_dimension = split(lines[4], ": ")[2]
+    num_dimensions = parse(Int, split(lines[5], ": ")[2])
+    unit = split(lines[6], ": ")[2]
+    maximum_value_of_each_dimension = split(lines[7], ": ")[2]
+    version = parse(Int, split(lines[8], ": ")[2])
     return QuiverMetadata(
+        time_representation,
         frequency,
         initial_date,
         time_dimension,
@@ -71,6 +93,7 @@ end
 
 function to_dict(metadata::QuiverMetadata)::Dict{String, String}
     return Dict(
+        "time_representation" => string(metadata.time_representation),
         "frequency" => metadata.frequency,
         "initial_date" => string(metadata.initial_date),
         "time_dimensions" => metadata.time_dimension,
@@ -83,6 +106,7 @@ end
 
 function from_dict(dict::AbstractDict{String, String})::QuiverMetadata
     return QuiverMetadata(
+        time_representation_from_string(dict["time_representation"]),
         dict["frequency"],
         DateTime(dict["initial_date"]),
         dict["time_dimensions"],

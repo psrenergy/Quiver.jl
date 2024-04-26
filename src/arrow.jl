@@ -16,6 +16,8 @@ function QuiverWriter{arrow}(
     quiver_empty_df = create_quiver_empty_df(dimension_names, agent_names)
 
     metadata = QuiverMetadata(;
+        # The Quiver API only supports TimeDeltas
+        time_representation = TimeDeltas,
         num_dimensions = length(dimension_names),
         frequency,
         initial_date,
@@ -58,6 +60,9 @@ function QuiverReader{arrow}(
 
     tbl = Arrow.Table(filename_with_extension)
     metadata = from_dict(Arrow.getmetadata(tbl))
+    if metadata.time_representation != TimeDeltas
+        error("The Quiver reader API only supports TimeDeltas.")
+    end
     validate_metadata(metadata)
     cols = Arrow.names(tbl)
     n_dim = num_dimensions(metadata)

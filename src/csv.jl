@@ -18,6 +18,8 @@ function QuiverWriter{csv}(
     CSV.write(iobuf, quiver_empty_df)
 
     metadata = QuiverMetadata(;
+        # The Quiver Writer API only supports TimeDeltas
+        time_representation = TimeDeltas,
         num_dimensions = length(dimension_names),
         frequency,
         initial_date,
@@ -70,8 +72,11 @@ function QuiverReader{csv}(
 
     metadata_string = readuntil(open(filename_with_extension), "--- \n")
     metadata = from_string(metadata_string)
+    if metadata.time_representation != TimeDeltas
+        error("The Quiver reader API only supports TimeDeltas.")
+    end
     validate_metadata(metadata)
-    header_line = 9
+    header_line = 10
 
     # The first part is only to get the names
     rows = CSV.Rows(filename_with_extension; header = header_line)
