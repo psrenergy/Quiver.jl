@@ -36,10 +36,7 @@ function convert(
     return nothing
 end
 
-# There is a list of converters that we should makes.
-
-# From DataFrame of time stamps and scenarios to Quiver.
-
 # From and to a PSRI Open Binary.
 
 # Another thing we should do is a small go program to open the Arrow file and show the header.
+# I would love to give a try to this program in go.

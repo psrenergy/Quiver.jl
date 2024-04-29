@@ -61,8 +61,8 @@ function test_read_write()
     # Windows has some kind of problem releasing the Arrow file mmaped
     GC.gc()
     GC.gc()
-    # rm(joinpath(@__DIR__, "test_read_write.arrow"))
-    # rm(joinpath(@__DIR__, "test_read_write.csv"))
+    rm(joinpath(@__DIR__, "test_read_write.arrow"))
+    rm(joinpath(@__DIR__, "test_read_write.csv"))
 end
 
 function runtests()
