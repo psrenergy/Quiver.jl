@@ -12,10 +12,10 @@ CSV files are implemented in a way that the first few lines are used to store th
 ```csv
 frequency: M
 initial_date: 2006-01-01T00:00:00
+time_dimension: stage
+num_dimensions: 3
 unit: 
-dimension_names: stage scenario block
 maximum_value_of_each_dimension: 10 12 744
-time_dimensions: stage block
 version: 1
 --- 
 stage,scenario,block,agent_1,agent_2,agent_3
@@ -24,4 +24,4 @@ stage,scenario,block,agent_1,agent_2,agent_3
 1,1,3,1.0,1.0,1.0
 ```
 
-The metadata stores the frequency of the time series, the initial date, the unit of the data, the names of the dimensions, the maximum value of each dimension, the time dimensions and the version of the file.
+The metadata stores the frequency of the time series, the initial date, the unit of the data, the number of the dimension, the maximum value of each dimension, the time dimension and the version of the file.
