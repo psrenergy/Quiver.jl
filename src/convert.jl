@@ -13,7 +13,10 @@ function convert(
         string.(reader.dimensions),
         string.(reader.agents_to_read),
         reader.metadata.time_dimension,
-        reader.metadata.maximum_value_of_each_dimension,
+        reader.metadata.maximum_value_of_each_dimension;
+        frequency = reader.metadata.frequency,
+        initial_date = reader.metadata.initial_date,
+        unit = reader.metadata.unit,
     )
 
     # The outermost dimension is one of the fastest ways 
