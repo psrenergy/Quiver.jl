@@ -1,7 +1,7 @@
 name = "Quiver"
 uuid = "cdbb3f72-2527-4dbd-9d0e-93533a5519ac"
 authors = ["raphasampaio", "guilhermebodin"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 Arrow = "69666777-d1a9-59fb-9406-91d4454c9d45"

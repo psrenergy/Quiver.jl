@@ -12,11 +12,6 @@ function QuiverWriter{csv}(
     filename_with_extensions = add_extension_to_file(filename, "csv")
     rm_if_exists(filename_with_extensions, remove_if_exists)
 
-    quiver_empty_df = create_quiver_empty_df(dimension_names, agent_names)
-    # Save header on buffer
-    iobuf = IOBuffer()
-    CSV.write(iobuf, quiver_empty_df)
-
     metadata = QuiverMetadata(;
         num_dimensions = length(dimension_names),
         frequency,
@@ -25,6 +20,11 @@ function QuiverWriter{csv}(
         time_dimension,
         maximum_value_of_each_dimension
     )
+
+    quiver_empty_df = _create_quiver_empty_df(dimension_names, agent_names)
+    # Save header on buffer
+    iobuf = IOBuffer()
+    CSV.write(iobuf, quiver_empty_df)
 
     # Write metadata on the top of the file
     open(filename_with_extensions, "a+") do io
@@ -99,7 +99,8 @@ function QuiverReader{csv}(
     )
 end
 
-function _quiver_read_df(reader::QuiverReader{csv, DataFrame}, dimensions_to_query::NamedTuple)
+function _quiver_read_df(reader::QuiverReader{csv, DataFrame}; kwargs...)
+    dimensions_to_query = values(kwargs)
     indexes_to_search_at_dimension = Vector{UnitRange{Int}}(undef, length(dimensions_to_query) + 1)
     indexes_found_at_dimension = Vector{UnitRange{Int}}(undef, length(dimensions_to_query))
     indexes_to_search_at_dimension[1] = 1:size(reader.reader, 1)
@@ -116,9 +117,9 @@ function _quiver_read_df(reader::QuiverReader{csv, DataFrame}, dimensions_to_que
     return reader.reader[indexes_to_search_at_dimension[end], :]
 end
 
-function _quiver_read(reader::QuiverReader{csv, DataFrame}, dimensions_to_query::NamedTuple)
+function _quiver_read(reader::QuiverReader{csv, DataFrame}; dimensions_to_query...)
     cols_of_agents = find_cols_of_agents(reader, Symbol.(names(reader.reader)))
-    view_df = _quiver_read_df(reader, dimensions_to_query)
+    view_df = _quiver_read_df(reader; dimensions_to_query...)
     return Matrix{Float32}(view_df[:, cols_of_agents])
 end
 

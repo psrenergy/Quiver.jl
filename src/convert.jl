@@ -29,7 +29,7 @@ function convert(
         dimensions_to_query = NamedTuple(
             (Symbol(outermost_dimension) => i,)
         )
-        df = _quiver_read_df(reader, dimensions_to_query)
+        df = _quiver_read_df(reader; dimensions_to_query...)
         _quiver_write!(writer, df)
     end
 

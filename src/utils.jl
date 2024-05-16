@@ -8,7 +8,17 @@ function rm_if_exists(filename::AbstractString, remove_if_exists::Bool)
     end
 end
 
-function create_quiver_empty_df(
+function _assert_dimensions_are_in_order(reader_or_writer; dimensions_to_query...)
+    keys_dims_to_query = keys(dimensions_to_query)
+    for (i, dim) in enumerate(keys_dims_to_query)
+        if dim != reader_or_writer.dimensions[i]
+            error("Dimensions must be read in the order of the file. (Expected the order $(reader.dimensions)")
+        end
+    end
+    return nothing
+end
+
+function _create_quiver_empty_df(
     dimensions::Vector{String}, 
     agents::Vector{String}
 )

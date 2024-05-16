@@ -13,8 +13,6 @@ function QuiverWriter{arrow}(
     filename_with_extensions = add_extension_to_file(filename, "arrow")
     rm_if_exists(filename_with_extensions, remove_if_exists)
 
-    quiver_empty_df = create_quiver_empty_df(dimension_names, agent_names)
-
     metadata = QuiverMetadata(;
         num_dimensions = length(dimension_names),
         frequency,
@@ -25,6 +23,8 @@ function QuiverWriter{arrow}(
     )
 
     metadata_dict = to_dict(metadata)
+
+    quiver_empty_df = _create_quiver_empty_df(dimension_names, agent_names)
 
     arrow_writer = open(Arrow.Writer, filename_with_extensions; metadata = metadata_dict)
     Arrow.write(arrow_writer, quiver_empty_df)
@@ -79,7 +79,8 @@ function QuiverReader{arrow}(
     )
 end
 
-function _quiver_read_df(reader::QuiverReader{arrow, DataFrame}, dimensions_to_query::NamedTuple)
+function _quiver_read_df(reader::QuiverReader{arrow, DataFrame}; kwargs...)
+    dimensions_to_query = values(kwargs)
     indexes_to_search_at_dimension = Vector{UnitRange{Int}}(undef, length(dimensions_to_query) + 1)
     indexes_found_at_dimension = Vector{UnitRange{Int}}(undef, length(dimensions_to_query))
     indexes_to_search_at_dimension[1] = 1:size(reader.reader, 1)
@@ -96,9 +97,9 @@ function _quiver_read_df(reader::QuiverReader{arrow, DataFrame}, dimensions_to_q
     return reader.reader[indexes_to_search_at_dimension[end], :]
 end
 
-function _quiver_read(reader::QuiverReader{arrow, DataFrame}, dimensions_to_query::NamedTuple)
+function _quiver_read(reader::QuiverReader{arrow, DataFrame}; dimensions_to_query...)
     cols_of_agents = find_cols_of_agents(reader, Symbol.(names(reader.reader)))
-    view_df = _quiver_read_df(reader, dimensions_to_query)
+    view_df = _quiver_read_df(reader; dimensions_to_query...)
     return Matrix{Float32}(view_df[:, cols_of_agents])
 end
 

@@ -4,13 +4,13 @@ mutable struct QuiverWriter{I <: QuiverImplementation, W}
     dimensions::Vector{String}
     agents::Vector{String}
     metadata::QuiverMetadata
-    last_dimension_added::Vector{Int32}
+    last_dimension_added::Vector{Integer}
 end
 
 # This is something for safety but could be turn off
 # It helps us guarantee that the dimensions follow their expected behaviour
 # There should be smarter ways of doing these checks
-function dimensions_are_compliant(writer::QuiverWriter, dimensions::Matrix{Int32})::Bool
+function _dimensions_are_compliant(writer::QuiverWriter, dimensions::Matrix{I})::Bool where I <: Integer
     # The first dimension must be grater or equal than the last one added
     first_dim = dimensions[1, :]
     for (i, dim) in enumerate(first_dim)
@@ -22,13 +22,13 @@ function dimensions_are_compliant(writer::QuiverWriter, dimensions::Matrix{Int32
             continue
         elseif dim > writer.metadata.maximum_value_of_each_dimension[i]
             @error(
-                "Dimension $(metadata.dimension_names[dim]) of value $(dimensions[i + 1, dim]) is "*
+                "Dimension $(metadata.dimension_names[dim]) of value $(dimensions[i + 1, dim]) is " *
                 "greater than the maximum value of the dimension $(writer.metadata.maximum_value_of_each_dimension[dim])."
             )
             return false
         else # dim < writer.last_dimension_added[i]
             @error(
-                "Dimension $(metadata.dimension_names[dim]) of value $(dimensions[i + 1, dim]) is "*
+                "Dimension $(metadata.dimension_names[dim]) of value $(dimensions[i + 1, dim]) is " *
                 "smaller than the last dimension added $(writer.last_dimension_added[i])."
             )
            return false
@@ -61,21 +61,111 @@ function dimensions_are_compliant(writer::QuiverWriter, dimensions::Matrix{Int32
     return true
 end
 
+function _agents_are_compliant(writer::QuiverWriter, agents::Matrix{F}) where {F <: AbstractFloat}
+    if length(writer.agents) != size(agents, 2)
+        return false
+    end
+    return true
+end
+
 function write!(writer::QuiverWriter, df::DataFrames.DataFrame)
     _quiver_write!(writer, df)
     return nothing
 end
 
-function write!(writer::QuiverWriter, dimensions::Matrix{Int32}, agents::Matrix{Float32})
-    if !dimensions_are_compliant(writer, dimensions)
+function _create_matrix_of_dimension_to_write(writer::QuiverWriter; provided_dimensions...)
+    _assert_dimensions_are_in_order(writer, provided_dimensions...)
+    # Create a matrix of Integers with the dimensions to write
+    dimensions_to_build = values(provided_dimensions)
+    dimensions_names = keys(dimensions_to_build)
+    dimensions_missing = setdiff(Symbol.(writer.dimensions), dimensions_names) .|> string
+    indexes_of_dimensions_provided = [findfirst(isequal(dim), Symbol.(writer.dimensions)) for dim in dimensions_names]
+    indexes_of_dimensions_missing = [findfirst(isequal(dim), writer.dimensions) for dim in dimensions_missing]
+    # Get the maximum of each dimension missing
+    max_dimension_per_not_provided_dimension = writer.metadata.maximum_value_of_each_dimension[indexes_of_dimensions_missing]
+    number_of_rows = prod(max_dimension_per_not_provided_dimension)
+    dimensions = zeros(Int, number_of_rows, num_dimensions(writer.metadata))
+
+    # Fill the dimensions matrix with the values provided
+    for j in indexes_of_dimensions_provided
+        dimensions[:, j] .= dimensions_to_build[j]
+    end
+
+    # Fill the other dimensions 
+    current_missing_dimensions = ones(Int32, length(dimensions_missing))
+    reversed_indexes_of_dimensions = reverse(indexes_of_dimensions_missing)
+    dimensions_offset = length(indexes_of_dimensions_provided)
+    for i in 1:number_of_rows
+        dimensions[i, indexes_of_dimensions_missing] .= current_missing_dimensions
+        for j in reversed_indexes_of_dimensions
+            dim = j - dimensions_offset
+            if current_missing_dimensions[dim] < max_dimension_per_not_provided_dimension[dim]
+                current_missing_dimensions[dim] += 1
+                break
+            else
+                current_missing_dimensions[dim] = 1   
+            end
+        end
+    end
+
+    return dimensions
+end
+
+function write!(writer::QuiverWriter, agents::Matrix{F}; provided_dimensions...) where F <: AbstractFloat
+    dimensions = _create_matrix_of_dimension_to_write(writer; provided_dimensions...)
+    write!(writer, dimensions, agents)
+    return nothing
+end
+
+function write!(writer::QuiverWriter, agents::Array{F, N}; provided_dimensions...) where F <: AbstractFloat
+    _assert_dimensions_are_in_order(writer, provided_dimensions...)
+    # Check dimensions of the array knowing the dimensions provided
+    error("Not implemented yet for generic Array{F, N}.")
+    dimensions_to_build = values(provided_dimensions)
+    dimensions_names = keys(dimensions_to_build)
+    dimensions_missing = setdiff(Symbol.(writer.dimensions), dimensions_names) .|> string
+    indexes_of_dimensions_missing = [findfirst(isequal(dim), writer.dimensions) for dim in dimensions_missing]
+    max_dimension_per_not_provided_dimension = writer.metadata.maximum_value_of_each_dimension[indexes_of_dimensions_missing]
+    agents_dimensions = size(agents)
+
+    for (axe, max_dimension) in enumerate(max_dimension_per_not_provided_dimension)
+        if agents_dimensions[axe] != max_dimension
+            error("Matrix has size $(size(agents_dimensions)) but it was expected to be ")
+        end
+    end
+
+    number_of_agents = agents_dimensions[end]
+    number_of_rows = prod(max_dimension_per_not_provided_dimension)
+
+    # Reshape the array into a matrix in order to be mapped to a DataFrame in the correct dimensions
+    matrix_agents = zeros(number_of_rows, number_of_agents)
+
+    # Pass to the next function to build the dimensions and write it.
+    Quiver.write!(writer, matrix_agents; provided_dimensions...)
+    return nothing
+end
+
+function write!(writer::QuiverWriter, dimensions::Matrix{I}, agents::Matrix{F}) where {I <: Integer, F <: AbstractFloat}
+    if size(dimensions, 1) != size(agents, 1)
+        CSV.write("dimensions.csv", DataFrame(dimensions, :auto))
+        CSV.write("agents.csv", DataFrame(agents, :auto))
+        error(
+            "The matrix of dimensions if not the same as the matrix of agents. " *
+            "The dimensions and agents matrices were saved in dimensions.csv and agents.csv, respectively."
+        )
+    end
+    if !_dimensions_are_compliant(writer, dimensions)
         error("Dimensions are invalid.")
     end
-    intermediary_df = DataFrames.DataFrame(agents, writer.agents)
+    if !_agents_are_compliant(writer, agents)
+        error("Agents are invalid.")
+    end
+    intermediary_df = DataFrames.DataFrame(Float32.(agents), writer.agents)
     for dim in 1:length(writer.dimensions)
-        DataFrames.insertcols!(intermediary_df, dim, writer.dimensions[dim] => dimensions[:, dim])
+        DataFrames.insertcols!(intermediary_df, dim, writer.dimensions[dim] => Int32.(dimensions[:, dim]))
     end
     _quiver_write!(writer, intermediary_df)
-    writer.last_dimension_added = dimensions[end, :]
+    writer.last_dimension_added .= dimensions[end, :]
     return nothing
 end
 

@@ -50,7 +50,7 @@ function test_convert_from_arrow_to_csv()
     num_scenarios = Quiver.max_index(reader, "scenario")
     for stage in 1:num_stages
         for scenario in 1:num_scenarios
-            result = Quiver.read(reader, (stage = stage, scenario = scenario))
+            result = Quiver.read(reader; stage = stage, scenario = scenario)
             @test unique(result)[1] == stage
         end
     end
@@ -69,7 +69,7 @@ function test_convert_from_csv_to_arrow()
     num_scenarios = Quiver.max_index(reader, "scenario")
     for stage in 1:num_stages
         for scenario in 1:num_scenarios
-            result = Quiver.read(reader, (stage = stage, scenario = scenario))
+            result = Quiver.read(reader; stage = stage, scenario = scenario)
             @test unique(result)[1] == stage
         end
     end
