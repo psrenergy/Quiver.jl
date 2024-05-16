@@ -122,7 +122,6 @@ function write!(writer::QuiverWriter, agents::Array{F, N}; provided_dimensions..
     indexes_of_dimensions_missing = length(dimensions_provided_by_user) + 1:num_dimensions(writer.metadata)
     # Get the maximum of each dimension missing
     max_dimension_per_not_provided_dimension = writer.metadata.maximum_value_of_each_dimension[indexes_of_dimensions_missing]
-    number_of_rows = prod(max_dimension_per_not_provided_dimension)
     agent_array_sizes = size(agents)
     number_of_agents = agent_array_sizes[end]
 
@@ -133,17 +132,18 @@ function write!(writer::QuiverWriter, agents::Array{F, N}; provided_dimensions..
         end
     end
     
+    # Build dimensions matrix
+    dimensions = _create_matrix_of_dimension_to_write(writer; provided_dimensions...)
+
     # Reshape the array into a matrix in order to be mapped to a DataFrame in the correct dimensions
     number_of_rows = prod(max_dimension_per_not_provided_dimension)
+    matrix_agents = Matrix{F}(undef, number_of_rows, number_of_agents)
+    for i in 1:number_of_rows
+        matrix_agents[i, :] = agents[dimensions[i, indexes_of_dimensions_missing]..., :]
+    end
 
-    # TODO this could be much more performatic. It currently allocates a lot. This 
-    # Could be written in one pass without creating the two copies it is currently doing.
-    perm = (collect(ndims(agents)-1:-1:1)..., ndims(agents))
-    permuted_agents = permutedims(agents, perm)
-    matrix_agents = reshape(permuted_agents, (number_of_rows, number_of_agents))
-
-    # Pass to the next function to build the dimensions and write it.
-    Quiver.write!(writer, matrix_agents; provided_dimensions...)
+    # Pass to the next function to write the data.
+    write!(writer, dimensions, matrix_agents)
     return nothing
 end
 
