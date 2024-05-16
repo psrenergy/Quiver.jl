@@ -11,8 +11,8 @@ end
 function _assert_dimensions_are_in_order(reader_or_writer; dimensions_to_query...)
     keys_dims_to_query = keys(dimensions_to_query)
     for (i, dim) in enumerate(keys_dims_to_query)
-        if dim != reader_or_writer.dimensions[i]
-            error("Dimensions must be read in the order of the file. (Expected the order $(reader.dimensions)")
+        if dim != Symbol.(reader_or_writer.dimensions[i])
+            error("Dimensions must be read in the order of the file. (Expected the order $(reader_or_writer.dimensions)")
         end
     end
     return nothing

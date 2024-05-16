@@ -74,25 +74,23 @@ function write!(writer::QuiverWriter, df::DataFrames.DataFrame)
 end
 
 function _create_matrix_of_dimension_to_write(writer::QuiverWriter; provided_dimensions...)
-    _assert_dimensions_are_in_order(writer, provided_dimensions...)
+    _assert_dimensions_are_in_order(writer; provided_dimensions...)
     # Create a matrix of Integers with the dimensions to write
-    dimensions_to_build = values(provided_dimensions)
-    dimensions_names = keys(dimensions_to_build)
-    dimensions_missing = setdiff(Symbol.(writer.dimensions), dimensions_names) .|> string
-    indexes_of_dimensions_provided = [findfirst(isequal(dim), Symbol.(writer.dimensions)) for dim in dimensions_names]
-    indexes_of_dimensions_missing = [findfirst(isequal(dim), writer.dimensions) for dim in dimensions_missing]
+    dimensions_provided_by_user = values(provided_dimensions)
+    indexes_of_dimensions_provided = 1:length(dimensions_provided_by_user)
+    indexes_of_dimensions_missing = length(dimensions_provided_by_user) + 1:num_dimensions(writer.metadata)
     # Get the maximum of each dimension missing
     max_dimension_per_not_provided_dimension = writer.metadata.maximum_value_of_each_dimension[indexes_of_dimensions_missing]
     number_of_rows = prod(max_dimension_per_not_provided_dimension)
-    dimensions = zeros(Int, number_of_rows, num_dimensions(writer.metadata))
+    dimensions = zeros(Int32, number_of_rows, num_dimensions(writer.metadata))
 
     # Fill the dimensions matrix with the values provided
     for j in indexes_of_dimensions_provided
-        dimensions[:, j] .= dimensions_to_build[j]
+        dimensions[:, j] .= dimensions_provided_by_user[j]
     end
 
     # Fill the other dimensions 
-    current_missing_dimensions = ones(Int32, length(dimensions_missing))
+    current_missing_dimensions = ones(Int32, length(indexes_of_dimensions_missing))
     reversed_indexes_of_dimensions = reverse(indexes_of_dimensions_missing)
     dimensions_offset = length(indexes_of_dimensions_provided)
     for i in 1:number_of_rows
@@ -117,28 +115,32 @@ function write!(writer::QuiverWriter, agents::Matrix{F}; provided_dimensions...)
     return nothing
 end
 
-function write!(writer::QuiverWriter, agents::Array{F, N}; provided_dimensions...) where F <: AbstractFloat
-    _assert_dimensions_are_in_order(writer, provided_dimensions...)
-    # Check dimensions of the array knowing the dimensions provided
-    error("Not implemented yet for generic Array{F, N}.")
-    dimensions_to_build = values(provided_dimensions)
-    dimensions_names = keys(dimensions_to_build)
-    dimensions_missing = setdiff(Symbol.(writer.dimensions), dimensions_names) .|> string
-    indexes_of_dimensions_missing = [findfirst(isequal(dim), writer.dimensions) for dim in dimensions_missing]
+function write!(writer::QuiverWriter, agents::Array{F, N}; provided_dimensions...) where {F <: AbstractFloat, N}
+    _assert_dimensions_are_in_order(writer; provided_dimensions...)
+    # Create a matrix of Integers with the dimensions to write
+    dimensions_provided_by_user = values(provided_dimensions)
+    indexes_of_dimensions_missing = length(dimensions_provided_by_user) + 1:num_dimensions(writer.metadata)
+    # Get the maximum of each dimension missing
     max_dimension_per_not_provided_dimension = writer.metadata.maximum_value_of_each_dimension[indexes_of_dimensions_missing]
-    agents_dimensions = size(agents)
+    number_of_rows = prod(max_dimension_per_not_provided_dimension)
+    agent_array_sizes = size(agents)
+    number_of_agents = agent_array_sizes[end]
 
-    for (axe, max_dimension) in enumerate(max_dimension_per_not_provided_dimension)
-        if agents_dimensions[axe] != max_dimension
-            error("Matrix has size $(size(agents_dimensions)) but it was expected to be ")
+    # Check if agent array sizes are compatible with the dimensions we need to provide.
+    for (i, s) in enumerate(agent_array_sizes[1:end-1])
+        if s != max_dimension_per_not_provided_dimension[i]
+            error("Expected dimensions are $([max_dimension_per_not_provided_dimension, number_of_agents]), provided array has $(agent_array_sizes).")
         end
     end
-
-    number_of_agents = agents_dimensions[end]
+    
+    # Reshape the array into a matrix in order to be mapped to a DataFrame in the correct dimensions
     number_of_rows = prod(max_dimension_per_not_provided_dimension)
 
-    # Reshape the array into a matrix in order to be mapped to a DataFrame in the correct dimensions
-    matrix_agents = zeros(number_of_rows, number_of_agents)
+    # TODO this could be much more performatic. It currently allocates a lot. This 
+    # Could be written in one pass without creating the two copies it is currently doing.
+    perm = (collect(ndims(agents)-1:-1:1)..., ndims(agents))
+    permuted_agents = permutedims(agents, perm)
+    matrix_agents = reshape(permuted_agents, (number_of_rows, number_of_agents))
 
     # Pass to the next function to build the dimensions and write it.
     Quiver.write!(writer, matrix_agents; provided_dimensions...)
