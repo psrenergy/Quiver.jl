@@ -123,7 +123,7 @@ function write!(writer::QuiverWriter, agents::Array{F, N}; provided_dimensions..
     # Check if agent array sizes are compatible with the dimensions we need to provide.
     for (i, s) in enumerate(agent_array_sizes[end:-1:2])
         if s != max_dimension_per_not_provided_dimension[i]
-            error("Expected dimensions are $([max_dimension_per_not_provided_dimension; number_of_agents]), provided array has $(agent_array_sizes).")
+            error("Expected dimensions are $([number_of_agents; max_dimension_per_not_provided_dimension]), provided array has $(agent_array_sizes).")
         end
     end
     
