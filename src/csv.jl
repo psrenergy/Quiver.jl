@@ -63,6 +63,7 @@ end
 function QuiverReader{csv}(
     filename::String; 
     agents::Union{Nothing, Vector{Symbol}} = nothing,    
+    dimensions_to_cache::Union{Nothing, Vector{Symbol}} = nothing
 )
     filename_with_extension = add_extension_to_file(filename, "csv")
     @assert isfile(filename_with_extension) "File $filename_with_extension does not exist."
@@ -88,6 +89,12 @@ function QuiverReader{csv}(
 
     _warn_if_file_is_bigger_than_ram(filename_with_extension, "CSV")
 
+    cache = QuiverReaderCache(
+        metadata, 
+        dimensions_to_cache,
+        num_agents
+    )
+
     df = CSV.read(filename_with_extension, DataFrame; types = [fill(Int32, n_dim); fill(Float32, num_agents)], header = header_line)
 
     return QuiverReader{csv, DataFrame}(
@@ -96,10 +103,11 @@ function QuiverReader{csv}(
         dimensions,
         agents_to_read,
         metadata,
+        cache
     )
 end
 
-function _quiver_read_df(reader::QuiverReader{csv, DataFrame}; kwargs...)
+function _quiver_read_df(reader::QuiverReader{csv, DataFrame, N}; kwargs...) where N
     dimensions_to_query = values(kwargs)
     if isempty(dimensions_to_query)
         return reader.reader

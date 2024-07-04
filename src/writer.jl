@@ -7,9 +7,8 @@ mutable struct QuiverWriter{I <: QuiverImplementation, W}
     last_dimension_added::Vector{Integer}
 end
 
-# This is something for safety but could be turn off
+# This implmentation is for safety, it could be turn off
 # It helps us guarantee that the dimensions follow their expected behaviour
-# There should be smarter ways of doing these checks
 function _dimensions_are_compliant(writer::QuiverWriter, dimensions::Matrix{I})::Bool where I <: Integer
     # The first dimension must be grater or equal than the last one added
     first_dim = dimensions[1, :]

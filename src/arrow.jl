@@ -81,8 +81,9 @@ end
 
 function _quiver_read_df(reader::QuiverReader{arrow, DataFrame}; kwargs...)
     dimensions_to_query = values(kwargs)
+    cols_of_agents = find_cols_of_agents(reader, Symbol.(names(reader.reader)))
     if isempty(dimensions_to_query)
-        return reader.reader
+        return reader.reader[:, cols_of_agents]
     end
     indexes_to_search_at_dimension = Vector{UnitRange{Int}}(undef, length(dimensions_to_query) + 1)
     indexes_found_at_dimension = Vector{UnitRange{Int}}(undef, length(dimensions_to_query))

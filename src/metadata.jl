@@ -44,6 +44,10 @@ function num_dimensions(metadata::QuiverMetadata)::Int
     return metadata.num_dimensions
 end
 
+function maximum_value_of_each_dimension(metadata::QuiverMetadata)::Vector{Int}
+    return metadata.maximum_value_of_each_dimension
+end
+
 function default_frequency()::String
     return "M"
 end

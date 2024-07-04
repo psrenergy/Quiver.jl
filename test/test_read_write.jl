@@ -41,14 +41,16 @@ function read_write_with_implementation(impl)
     end
     Quiver.close!(writer)
 
-    reader = QuiverReader{impl}(filename);
+    reader = QuiverReader{impl}(filename; dimensions_to_cache = [:stage, :scenario]);
     num_stages = Quiver.max_index(reader, "stage")
     num_scenarios = Quiver.max_index(reader, "scenario")
     for stage in 1:num_stages
         for scenario in 1:num_scenarios
-            result = Quiver.read(reader; stage = stage, scenario = scenario)
-            @test size(result) == (num_blocks_per_stage[stage], num_agents)
-            @test unique(result)[1] == stage
+            for block in 1:num_blocks_per_stage[stage]
+                for ag in 1:num_agents
+                    @test reader[ag, block, scenario, stage] == stage
+                end
+            end
         end
     end
     Quiver.close!(reader)
@@ -86,14 +88,17 @@ function read_write_with_implementation_passing_array(impl)
     end
     Quiver.close!(writer)
 
-    reader = QuiverReader{impl}(filename);
+    reader = QuiverReader{impl}(filename; dimensions_to_cache = [:stage, :scenario]);
     num_stages = Quiver.max_index(reader, "stage")
     num_scenarios = Quiver.max_index(reader, "scenario")
+    num_blocks = Quiver.max_index(reader, "block")
     for stage in 1:num_stages
         for scenario in 1:num_scenarios
-            result = Quiver.read(reader; stage = stage, scenario = scenario)
-            @test size(result) == (num_blocks, num_agents)
-            @test unique(result)[1] == stage * scenario
+            for block in 1:num_blocks
+                for ag in 1:num_agents
+                    @test reader[ag, block, scenario, stage] == stage * scenario
+                end
+            end
         end
     end
     Quiver.close!(reader)
@@ -134,13 +139,14 @@ function read_write_with_implementation_passing_full_array(impl)
     Quiver.close!(writer)
 
     reader = QuiverReader{impl}(filename);
-    result = Quiver.read(reader)
-    row = 1
     for stage in 1:num_stages
         for scenario in 1:num_scenarios
             for block in 1:num_blocks
-                @test agents[:, block, scenario, stage] == result[row, :]
-                row += 1
+                for ag in 1:num_agents
+                    @test agents[ag, block, scenario, stage] == reader[ag, block, scenario, stage]
+                end
+                # Test access with colon for agents
+                @test agents[:, block, scenario, stage] == reader[:, block, scenario, stage]
             end
         end
     end
@@ -155,8 +161,8 @@ function test_read_write()
     # Windows has some kind of problem releasing the Arrow file mmaped
     GC.gc()
     GC.gc()
-    rm(joinpath(@__DIR__, "test_read_write.arrow"))
-    rm(joinpath(@__DIR__, "test_read_write.csv"))
+    rm(joinpath(@__DIR__, "test_read_write.arrow"); force = true)
+    rm(joinpath(@__DIR__, "test_read_write.csv"); force = true)
 end
 
 function test_read_write_with_implementation_passing_array()
@@ -166,8 +172,8 @@ function test_read_write_with_implementation_passing_array()
     # Windows has some kind of problem releasing the Arrow file mmaped
     GC.gc()
     GC.gc()
-    rm(joinpath(@__DIR__, "test_read_write_with_implementation_passing_array.arrow"))
-    rm(joinpath(@__DIR__, "test_read_write_with_implementation_passing_array.csv"))
+    rm(joinpath(@__DIR__, "test_read_write_with_implementation_passing_array.arrow"); force = true)
+    rm(joinpath(@__DIR__, "test_read_write_with_implementation_passing_array.csv"); force = true)
 end
 
 
@@ -178,8 +184,8 @@ function test_read_write_with_implementation_passing_full_array()
     # Windows has some kind of problem releasing the Arrow file mmaped
     GC.gc()
     GC.gc()
-    rm(joinpath(@__DIR__, "test_read_write_with_implementation_passing_full_array.arrow"))
-    rm(joinpath(@__DIR__, "test_read_write_with_implementation_passing_full_array.csv"))
+    rm(joinpath(@__DIR__, "test_read_write_with_implementation_passing_full_array.arrow"); force = true)
+    rm(joinpath(@__DIR__, "test_read_write_with_implementation_passing_full_array.csv"); force = true)
 end
 
 function runtests()
