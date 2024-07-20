@@ -17,6 +17,8 @@ end
 mutable struct QuiverSQLiteReader
     db::SQLite.DB
     data::Vector{Float64}
+    prepared_statement::SQLite.Stmt
+    stmt_handle
 end
 
 function encode_dimensions(stage::Integer, scenario::Integer, block::Integer)
@@ -35,7 +37,7 @@ function crate_sqlite_time_series_writer(
     agents_names::Vector{String},
 )
     db = SQLite.DB("./$FILE_PATH.sqlite")
-    DBInterface.execute(db, "PRAGMA synchronous = OFF")
+    DBInterface.execute(db, "PRAGMA synchronous = OFF;")
     statement = SQLite.Stmt(db,
         """
         CREATE TABLE IF NOT EXISTS time_series (
@@ -81,17 +83,35 @@ end
 
 function create_sqlite_time_series_reader(FILE_PATH)
     db = SQLite.DB("./$FILE_PATH.sqlite")
-    return QuiverSQLiteReader(db, [])
+    DBInterface.execute(db, "PRAGMA journal_mode = OFF;")
+    DBInterface.execute(db, "PRAGMA locking_mode = EXCLUSIVE;")
+    DBInterface.execute(db, "pragma mmap_size = 100000000000;")
+    DBInterface.execute(db, "PRAGMA synchronous = OFF;")
+    prepared_statement = SQLite.Stmt(db,
+        """
+        SELECT * FROM time_series WHERE encoded = ?
+        """
+    )
+    # TODO obviously this is not the right way to get the number of agents
+    num_agents = length(SQLite.columns(db, "time_series")) - 4
+    stmt_handle = SQLite._get_stmt_handle(prepared_statement)
+    return QuiverSQLiteReader(db, Vector{Float64}(undef, num_agents), prepared_statement, stmt_handle)
 end 
 
 function goto(ior::QuiverSQLiteReader, stage::Integer, scenario::Integer, block::Integer)
-    rowid = encode_dimensions(stage, scenario, block)
-    statement = SQLite.Stmt(ior.db,
-        """
-        SELECT * FROM time_series WHERE rowid = $rowid
-        """
-    )
-    ior.data = DBInterface.execute(statement)
+    encoded = encode_dimensions(stage, scenario, block)
+    SQLite.C.sqlite3_bind_int64(ior.stmt_handle, 1, encoded)
+    r = SQLite.C.sqlite3_step(ior.stmt_handle)
+    if r == SQLite.C.SQLITE_DONE
+        SQLite.C.sqlite3_reset(ior.stmt_handle)
+    elseif r != SQLite.C.SQLITE_ROW
+        e = SQLite.sqliteexception(ior.db, ior.prepared_statement)
+        SQLite.C.sqlite3_reset(ior.stmt_handle)
+        throw(e)
+    end
+    for col in 1:length(ior.data)
+        ior.data[col] = SQLite.C.sqlite3_column_double(ior.stmt_handle, 4 + col - 1)
+    end
 end
 
 end

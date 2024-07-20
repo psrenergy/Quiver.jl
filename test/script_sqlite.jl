@@ -66,7 +66,6 @@ function read_graf_file(;
         for scenario = 1:num_scenarios
             for block = 1:num_blocks
                 PSRI.goto(ior, stage, scenario, block)
-                ior.data[:]
             end
         end
     end
@@ -132,11 +131,10 @@ function read_sqlite_file(;
         for scenario = 1:num_scenarios
             for block = 1:num_blocks
                 SQLiteDoneRight.goto(ior, stage, scenario, block)
-                ior.data[:]
             end
         end
     end
-    SQLite.close(ior.db)
+    SQLiteDoneRight.SQLite.close(ior.db)
 end
 
 function sqlite_file_size(;
@@ -156,7 +154,7 @@ function evaluate_all_implementations()
 
     file_name = "time_series"
     num_stages = 30
-    num_scenarios = 100
+    num_scenarios = 10
     num_agents = 20
     num_blocks = 720
     println(""" 
@@ -198,11 +196,15 @@ function evaluate_all_implementations()
         num_agents = num_agents,
         num_blocks = num_blocks
     )
-    # println("   Time to read")
-    # @time read_sqlite_file(;
-    #     file_name = file_name,
-    #     num_stages = num_stages,
-    #     num_scenarios = num_scenarios,
-    #     num_blocks = num_blocks
-    # )
+    println("   Time to read")
+    @time read_sqlite_file(;
+        file_name = file_name,
+        num_stages = num_stages,
+        num_scenarios = num_scenarios,
+        num_blocks = num_blocks
+    )
+    sqlite_size = sqlite_file_size(;
+        file_name = file_name
+    )
+    println("   File Size: $sqlite_size MB")
 end
