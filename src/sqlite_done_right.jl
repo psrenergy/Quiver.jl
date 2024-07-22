@@ -36,8 +36,12 @@ function crate_sqlite_time_series_writer(
     num_blocks::Int,
     agents_names::Vector{String},
 )
-    db = SQLite.DB("./$FILE_PATH.sqlite")
+    file_path = "./$FILE_PATH.sqlite"
+    sqlite_file = abspath(file_path)
+    db = SQLite.DB("file:$sqlite_file")
     DBInterface.execute(db, "PRAGMA synchronous = OFF;")
+    DBInterface.execute(db, "PRAGMA journal_mode = MEMORY;")
+    DBInterface.execute(db, "PRAGMA temp_store = MEMORY;")
     statement = SQLite.Stmt(db,
         """
         CREATE TABLE IF NOT EXISTS time_series (
@@ -82,10 +86,9 @@ function write_registry(iow::QuiverSQLiteWriter, values::Vector{Float64}, stage:
 end
 
 function create_sqlite_time_series_reader(FILE_PATH)
-    db = SQLite.DB("./$FILE_PATH.sqlite")
-    DBInterface.execute(db, "PRAGMA journal_mode = OFF;")
-    DBInterface.execute(db, "PRAGMA locking_mode = EXCLUSIVE;")
-    DBInterface.execute(db, "pragma mmap_size = 100000000000;")
+    file_path = "./$FILE_PATH.sqlite"
+    sqlite_file = abspath(file_path)
+    db = SQLite.DB("file:$sqlite_file?immutable=1")
     DBInterface.execute(db, "PRAGMA synchronous = OFF;")
     prepared_statement = SQLite.Stmt(db,
         """

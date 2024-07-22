@@ -31,7 +31,7 @@ function write_graf_time_series(;
         initial_year = 2006,
     )
 
-    base_values = ones(Float32, num_agents)
+    base_values = rand(Float32, num_agents)
 
     for stage in 1:num_stages
         for scenario in 1:num_scenarios
@@ -98,24 +98,24 @@ function write_sqlite_file(;
         agents_names
     )
 
-    base_values = ones(Float64, num_agents)
+    base_values = rand(Float64, num_agents)
 
     
-    SQLiteDoneRight.SQLite.transaction(iow.db) do
-        for block in 1:num_blocks
-            for scenario in 1:num_scenarios
-                for stage in 1:num_stages
-                    SQLiteDoneRight.write_registry(
-                        iow,
-                        base_values,
-                        stage,
-                        scenario,
-                        block
-                    )
-                end
+    SQLiteDoneRight.DBInterface.execute(iow.db, "BEGIN EXCLUSIVE TRANSACTION")
+    for block in 1:num_blocks
+        for scenario in 1:num_scenarios
+            for stage in 1:num_stages
+                SQLiteDoneRight.write_registry(
+                    iow,
+                    base_values,
+                    stage,
+                    scenario,
+                    block
+                )
             end
         end
     end
+    SQLiteDoneRight.DBInterface.execute(iow.db, "END TRANSACTION")
 
     SQLiteDoneRight.SQLite.close(iow.db)
 end
@@ -127,9 +127,9 @@ function read_sqlite_file(;
     num_blocks::Int = 720
 )
     ior = SQLiteDoneRight.create_sqlite_time_series_reader(file_name)
-    for stage = 1:num_stages
+    for block = 1:num_blocks
         for scenario = 1:num_scenarios
-            for block = 1:num_blocks
+            for stage = 1:num_stages
                 SQLiteDoneRight.goto(ior, stage, scenario, block)
             end
         end
@@ -154,8 +154,8 @@ function evaluate_all_implementations()
 
     file_name = "time_series"
     num_stages = 30
-    num_scenarios = 10
-    num_agents = 20
+    num_scenarios = 30
+    num_agents = 150
     num_blocks = 720
     println(""" 
     Dimenions: 
