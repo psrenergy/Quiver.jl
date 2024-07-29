@@ -13,7 +13,7 @@ function write_graf_time_series(;
     num_stages::Int = 60,
     num_scenarios::Int = 10,
     num_agents::Int = 20,
-    num_blocks::Int = 720
+    num_blocks::Int = 720,
 )
     agents_names = ["Agent_$i" for i in 1:num_agents]
 
@@ -41,36 +41,36 @@ function write_graf_time_series(;
                     base_values,
                     stage,
                     scenario,
-                    block
+                    block,
                 )
             end
         end
     end
 
-    PSRI.close(iow)
+    return PSRI.close(iow)
 end
 
 function read_graf_file(;
     file_name::String = "time_series",
     num_stages::Int = 60,
     num_scenarios::Int = 10,
-    num_blocks::Int = 720
+    num_blocks::Int = 720,
 )
     FILE_PATH = "./$file_name"
     ior = PSRI.open(
-        PSRI.OpenBinary.Reader, 
+        PSRI.OpenBinary.Reader,
         FILE_PATH;
-        use_header = false
+        use_header = false,
     )
-    for stage = 1:num_stages
-        for scenario = 1:num_scenarios
-            for block = 1:num_blocks
+    for stage in 1:num_stages
+        for scenario in 1:num_scenarios
+            for block in 1:num_blocks
                 PSRI.goto(ior, stage, scenario, block)
             end
         end
     end
 
-    PSRI.close(ior)
+    return PSRI.close(ior)
 end
 
 function graf_file_size(;
@@ -86,7 +86,7 @@ function write_sqlite_file(;
     num_stages::Int = 60,
     num_scenarios::Int = 10,
     num_agents::Int = 20,
-    num_blocks::Int = 720
+    num_blocks::Int = 720,
 )
     agents_names = ["Agent_$i" for i in 1:num_agents]
 
@@ -95,12 +95,11 @@ function write_sqlite_file(;
         num_stages,
         num_scenarios,
         num_blocks,
-        agents_names
+        agents_names,
     )
 
     base_values = rand(Float64, num_agents)
 
-    
     SQLiteDoneRight.DBInterface.execute(iow.db, "BEGIN EXCLUSIVE TRANSACTION")
     for block in 1:num_blocks
         for scenario in 1:num_scenarios
@@ -110,31 +109,31 @@ function write_sqlite_file(;
                     base_values,
                     stage,
                     scenario,
-                    block
+                    block,
                 )
             end
         end
     end
     SQLiteDoneRight.DBInterface.execute(iow.db, "END TRANSACTION")
 
-    SQLiteDoneRight.SQLite.close(iow.db)
+    return SQLiteDoneRight.SQLite.close(iow.db)
 end
 
 function read_sqlite_file(;
     file_name::String = "time_series",
     num_stages::Int = 60,
     num_scenarios::Int = 10,
-    num_blocks::Int = 720
+    num_blocks::Int = 720,
 )
     ior = SQLiteDoneRight.create_sqlite_time_series_reader(file_name)
-    for block = 1:num_blocks
-        for scenario = 1:num_scenarios
-            for stage = 1:num_stages
+    for block in 1:num_blocks
+        for scenario in 1:num_scenarios
+            for stage in 1:num_stages
                 SQLiteDoneRight.goto(ior, stage, scenario, block)
             end
         end
     end
-    SQLiteDoneRight.SQLite.close(ior.db)
+    return SQLiteDoneRight.SQLite.close(ior.db)
 end
 
 function sqlite_file_size(;
@@ -151,11 +150,10 @@ function evaluate_all_implementations()
     rm("time_series.hdr", force = true)
     rm("time_series.sqlite", force = true)
 
-
     file_name = "time_series"
     num_stages = 30
     num_scenarios = 30
-    num_agents = 150
+    num_agents = 20
     num_blocks = 720
     println(""" 
     Dimenions: 
@@ -165,7 +163,6 @@ function evaluate_all_implementations()
     num_agents: $num_agents
     """)
 
-
     println("Benchmarking GRAF")
     println("   Time to write")
     @time write_graf_time_series(;
@@ -173,38 +170,38 @@ function evaluate_all_implementations()
         num_stages = num_stages,
         num_scenarios = num_scenarios,
         num_agents = num_agents,
-        num_blocks = num_blocks
+        num_blocks = num_blocks,
     )
     println("   Time to read")
     @time read_graf_file(;
         file_name = file_name,
         num_stages = num_stages,
         num_scenarios = num_scenarios,
-        num_blocks = num_blocks
+        num_blocks = num_blocks,
     )
     graf_size = graf_file_size(;
-        file_name = file_name
+        file_name = file_name,
     )
-    println("   File Size: $graf_size MB")
+    return println("   File Size: $graf_size MB")
 
-    println("Benchmarking SQLite")
-    println("   Time to write")
-    @time write_sqlite_file(;
-        file_name = file_name,
-        num_stages = num_stages,
-        num_scenarios = num_scenarios,
-        num_agents = num_agents,
-        num_blocks = num_blocks
-    )
-    println("   Time to read")
-    @time read_sqlite_file(;
-        file_name = file_name,
-        num_stages = num_stages,
-        num_scenarios = num_scenarios,
-        num_blocks = num_blocks
-    )
-    sqlite_size = sqlite_file_size(;
-        file_name = file_name
-    )
-    println("   File Size: $sqlite_size MB")
+    # println("Benchmarking SQLite")
+    # println("   Time to write")
+    # @time write_sqlite_file(;
+    #     file_name = file_name,
+    #     num_stages = num_stages,
+    #     num_scenarios = num_scenarios,
+    #     num_agents = num_agents,
+    #     num_blocks = num_blocks
+    # )
+    # println("   Time to read")
+    # @time read_sqlite_file(;
+    #     file_name = file_name,
+    #     num_stages = num_stages,
+    #     num_scenarios = num_scenarios,
+    #     num_blocks = num_blocks
+    # )
+    # sqlite_size = sqlite_file_size(;
+    #     file_name = file_name
+    # )
+    # println("   File Size: $sqlite_size MB")
 end
