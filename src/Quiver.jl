@@ -1,6 +1,5 @@
 module Quiver
 
-using Arrow
 using CSV
 using DataFrames
 using Dates
@@ -8,7 +7,7 @@ using Tables
 using OrderedCollections
 
 export QuiverWriter, QuiverReader
-export arrow, csv
+export csv
 
 include("metadata.jl")
 include("utils.jl")
@@ -20,6 +19,5 @@ include("reader.jl")
 include("convert.jl")
 
 include("csv.jl")
-include("arrow.jl")
 
 end

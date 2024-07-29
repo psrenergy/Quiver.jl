@@ -8,11 +8,11 @@ function write_test_file(impl)
     filename = joinpath(@__DIR__, "test_convert")
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
-    dates = collect(initial_date:Dates.Month(1):initial_date + Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
     num_scenarios = 12
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     num_agents = 20
-    
+
     # This should be a vector of symbols
     dimensions_names = ["stage", "scenario", "block"]
     agents_names = ["agent_$i" for i in 1:num_agents]
@@ -38,12 +38,11 @@ function write_test_file(impl)
         end
         Quiver.write!(writer, dimensions, agents)
     end
-    Quiver.close!(writer)
+    return Quiver.close!(writer)
 end
 
 function test_convert_from_arrow_to_csv()
     path_file = joinpath(@__DIR__, "test_convert")
-    write_test_file(arrow)
     Quiver.convert(path_file, arrow, csv)
     reader = QuiverReader{csv}(path_file)
     num_stages = Quiver.max_index(reader, "stage")
@@ -57,7 +56,7 @@ function test_convert_from_arrow_to_csv()
     Quiver.close!(reader)
     GC.gc()
     rm(joinpath(@__DIR__, "test_convert.arrow"))
-    rm(joinpath(@__DIR__, "test_convert.csv"))
+    return rm(joinpath(@__DIR__, "test_convert.csv"))
 end
 
 function test_convert_from_csv_to_arrow()
@@ -76,7 +75,7 @@ function test_convert_from_csv_to_arrow()
     Quiver.close!(reader)
     GC.gc()
     rm(joinpath(@__DIR__, "test_convert.arrow"))
-    rm(joinpath(@__DIR__, "test_convert.csv"))
+    return rm(joinpath(@__DIR__, "test_convert.csv"))
 end
 
 function test_convert_to_the_same_implementation()
@@ -87,7 +86,7 @@ function test_convert_to_the_same_implementation()
     @test_throws ErrorException Quiver.convert(path_file, csv, csv)
     GC.gc()
     rm(joinpath(@__DIR__, "test_convert.arrow"))
-    rm(joinpath(@__DIR__, "test_convert.csv"))
+    return rm(joinpath(@__DIR__, "test_convert.csv"))
 end
 
 function runtests()
