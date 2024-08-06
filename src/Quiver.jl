@@ -18,5 +18,6 @@ include("writer.jl")
 include("reader.jl")
 
 include("csv.jl")
+include("binary.jl")
 
 end

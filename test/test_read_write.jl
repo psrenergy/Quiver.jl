@@ -43,11 +43,17 @@ function read_write_1(impl)
     for stage in 1:num_stages
         for scenario in 1:num_scenarios
             for block in 1:num_blocks_per_stage[stage]
-                Quiver.next_dimension!(reader)
+                if impl == Quiver.csv
+                    Quiver.next_dimension!(reader)
+                else
+                    Quiver.goto!(reader; stage, scenario, block)
+                end
                 @test reader.data == [stage, scenario, block]
             end
         end
     end
+
+    Quiver.close!(reader)
 
     rm(filename, force = true)
 end
@@ -57,7 +63,6 @@ function test_read_write_implementations()
         read_write_1(impl)
     end
 end
-
 
 function runtests()
     Base.GC.gc()

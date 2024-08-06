@@ -6,8 +6,16 @@ mutable struct Reader{I <: Implementation, R}
     data::Vector{Float32}
 end
 
-function goto(reader::Reader; dims...)
-    _quiver_goto!(reader; dims...)
+function _build_last_dimension_read!(reader::Reader; dims...)
+    for (i, dim) in enumerate(dims)
+        reader.last_dimension_read[i] = dim[2]
+    end
+    return nothing
+end
+
+function goto!(reader::Reader; dims...)
+    _build_last_dimension_read!(reader; dims...)
+    _quiver_goto!(reader)
     return reader.data
 end
 

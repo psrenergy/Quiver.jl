@@ -27,11 +27,9 @@ Manifest.toml
 *.DS_Store
 *.bin
 *.hdr
-*.sqlite
-*.sqlite3
-*.arrow
 *.gz
 *.csv
+*.quiv
 test/*.toml
-test/*.arrow
+test/*.quiv
 test/*.csv
