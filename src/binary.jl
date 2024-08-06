@@ -35,11 +35,23 @@ function Writer{binary}(
     return writer
 end
 
+function performant_product_from_index_i_to_j(arr::Vector{Int}, i::Int, j::Int)
+    result = 1
+    @inbounds for k in i:j
+        result *= arr[k]
+    end
+    return result
+end
+
 function _calculate_position_in_file(metadata::Quiver.Metadata, dims...)
     space_of_a_row = 4 * metadata.number_of_time_series
     position = 0
     for i in 1:metadata.number_of_dimensions - 1
-        position += (dims[i] - 1) * prod(metadata.maximum_value_of_each_dimension[1+i:end])
+        position += (dims[i] - 1) * performant_product_from_index_i_to_j(
+            metadata.maximum_value_of_each_dimension, 
+            i + 1, 
+            metadata.number_of_dimensions
+        )
     end
     position += (dims[end] - 1)
     position *= space_of_a_row
@@ -48,8 +60,13 @@ end
 
 function _quiver_write!(writer::Quiver.Writer{binary}, data::Vector{T}) where T <: Real
     # The last dimension added is calculated in the abstract implementation
-    pos = _calculate_position_in_file(writer.metadata, writer.last_dimension_added...)
-    seek(writer.writer, pos)
+    next_pos = _calculate_position_in_file(writer.metadata, writer.last_dimension_added...)
+    # Check if we need to seek a new position or write directly in the io
+    # This is absolutely necessary for performance in the binary operation
+    current_pos = position(writer.writer)
+    if current_pos != next_pos
+        seek(writer.writer, next_pos)
+    end
     @inbounds for i in eachindex(data)
         write(writer.writer, Float32(data[i]))
     end
@@ -59,11 +76,6 @@ end
 function _quiver_close!(writer::Quiver.Writer{binary})
     close(writer.writer)
     return nothing
-end
-
-mutable struct BinaryReader
-    io
-    current_position::Int
 end
 
 function Reader{binary}(
@@ -82,10 +94,8 @@ function Reader{binary}(
     last_dimension_read = zeros(Int, metadata.number_of_dimensions)
     data = zeros(Float32, metadata.number_of_time_series)
 
-    binary_reader = BinaryReader(io, 0)
-
-    reader = Quiver.Reader{binary, typeof(binary_reader)}(
-        binary_reader,
+    reader = Quiver.Reader{binary, typeof(io)}(
+        io,
         filename,
         metadata,
         last_dimension_read,
@@ -96,10 +106,16 @@ function Reader{binary}(
 end
 
 function _quiver_goto!(reader::Quiver.Reader{binary})
-    position = _calculate_position_in_file(reader.metadata, reader.last_dimension_read...)
-    seek(reader.reader.io, position)
-    reader.reader.current_position = position
-    read!(reader.reader.io, reader.data)
+    next_pos = _calculate_position_in_file(reader.metadata, reader.last_dimension_read...)
+    # Check if we need to seek a new position or write directly in the io
+    # This is absolutely necessary for performance in the binary operation
+    current_pos = position(reader.reader)
+    if next_pos >= current_pos
+        skip(reader.reader, next_pos - current_pos)
+    else
+        seek(reader.reader, next_pos)
+    end
+    read!(reader.reader, reader.data)
     return nothing
 end
 
@@ -109,6 +125,6 @@ function _quiver_next_dimension!(reader::Quiver.Reader{binary})
 end
 
 function _quiver_close!(reader::Quiver.Reader{binary})
-    close(reader.reader.io)
+    close(reader.reader)
     return nothing
 end
