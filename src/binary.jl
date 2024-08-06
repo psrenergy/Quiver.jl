@@ -1,3 +1,5 @@
+file_extension(::Type{binary}) = "quiv"
+
 function Writer{binary}(
     filename::String;
     names_of_dimensions::Vector{String},
@@ -8,7 +10,7 @@ function Writer{binary}(
     kwargs...,
 )
 
-    filename_with_extensions = add_extension_to_file(filename, "quiv")
+    filename_with_extensions = add_extension_to_file(filename, file_extension(binary))
     rm_if_exists(filename_with_extensions, remove_if_exists)
 
     metadata = Quiver.Metadata(;
@@ -82,7 +84,7 @@ function Reader{binary}(
     filename::String;
 )
 
-    filename_with_extensions = add_extension_to_file(filename, "quiv")
+    filename_with_extensions = add_extension_to_file(filename, file_extension(binary))
     if !isfile(filename_with_extensions)
         throw(ArgumentError("File $filename_with_extensions does not exist"))
     end

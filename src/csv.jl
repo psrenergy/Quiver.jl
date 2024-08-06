@@ -1,3 +1,5 @@
+file_extension(::Type{csv}) = "csv"
+
 mutable struct QuiverCSVRowReader
     iterator
     next
@@ -13,7 +15,7 @@ function Writer{csv}(
     kwargs...,
 )
 
-    filename_with_extensions = add_extension_to_file(filename, "csv")
+    filename_with_extensions = add_extension_to_file(filename, file_extension(csv))
     rm_if_exists(filename_with_extensions, remove_if_exists)
 
     metadata = Quiver.Metadata(;
@@ -56,7 +58,7 @@ function Reader{csv}(
     filename::String;
 )
 
-    filename_with_extensions = add_extension_to_file(filename, "csv")
+    filename_with_extensions = add_extension_to_file(filename, file_extension(csv))
     if !isfile(filename_with_extensions)
         throw(ArgumentError("File $filename_with_extensions does not exist"))
     end
@@ -107,5 +109,7 @@ function _quiver_goto!(reader::Quiver.Reader{csv}, dims...)
 end
 
 function _quiver_close!(reader::Quiver.Reader{csv})
+    reader.reader.iterator = nothing
+    GC.gc()
     return nothing
 end
