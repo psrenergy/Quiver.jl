@@ -28,7 +28,12 @@ end
 function add_extension_to_file(filename::AbstractString, ext::AbstractString)
     # This regex is to check if a file has an extension
     # https://stackoverflow.com/questions/22863973/regex-check-if-a-file-has-any-extension
-    if occursin(r"^.*\.[^\\]+$", filename)
+    file_extension_regex = if Sys.iswindows()
+        r"^.*\.[^\\]+$"
+    else
+        r"^.*\.[^/]+$"
+    end
+    if occursin(file_extension_regex, filename)
         error("Filename $filename already has an extension.")
     end
     return "$filename.$ext"
