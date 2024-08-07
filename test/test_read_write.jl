@@ -302,6 +302,66 @@ function read_write_5(impl)
     rm("$filename.toml")
 end
 
+function read_write_carrousel(impl)
+    if impl == Quiver.csv
+        return
+    end
+    filename = joinpath(@__DIR__, "test_read_write_1")
+
+    initial_date = DateTime(2006, 1, 1)
+    num_stages = 10
+    dates = collect(initial_date:Dates.Month(1):initial_date + Dates.Month(num_stages - 1))
+    num_scenarios = 1
+    num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
+    num_time_series = 3
+    
+    names_of_dimensions = ["stage", "scenario", "block"]
+    names_of_time_series = ["agent_$i" for i in 1:num_time_series]
+    time_dimension = "stage"
+    maximum_value_of_each_dimension = [num_stages, num_scenarios, maximum(num_blocks_per_stage)]
+
+    writer = Quiver.Writer{impl}(
+        filename;
+        names_of_dimensions,
+        names_of_time_series,
+        time_dimension,
+        maximum_value_of_each_dimension,
+        initial_date = initial_date,
+        # carrousel = true
+    )
+
+    for stage in 1:num_stages
+        for scenario in 1:num_scenarios
+            for block in 1:num_blocks_per_stage[stage]
+                data = [stage, scenario, block]
+                Quiver.write!(writer, data; stage, scenario, block)
+            end
+        end
+    end
+
+    Quiver.close!(writer)
+
+    number_of_stages_to_read = 50
+    number_of_scenarios_to_read = 10
+
+    reader = Quiver.Reader{impl}(filename)
+    for stage in 1:number_of_stages_to_read
+        inbounds_stage = mod1(stage, num_stages)
+        for scenario in 1:number_of_scenarios_to_read
+            inbounds_scenario = mod1(scenario, num_scenarios)
+            for block in 1:num_blocks_per_stage[inbounds_stage]
+                Quiver.goto!(reader; stage, scenario, block)
+                @test reader.data == [inbounds_stage, inbounds_scenario, block] #skip=(stage > num_stages || scenario > num_scenarios)
+            end
+        end
+    end
+
+    Quiver.close!(reader)
+
+    rm("$filename.$(Quiver.file_extension(impl))")
+    rm("$filename.toml")
+end
+
 function read_outside_bounds_1(impl)
     if impl == Quiver.csv
         return
@@ -581,6 +641,7 @@ function test_read_write_implementations()
         read_write_3(impl)
         read_write_4(impl)
         read_write_5(impl)
+        # read_write_carrousel(impl)
         read_outside_bounds_1(impl)
         read_outside_bounds_2(impl)
         read_outside_bounds_3(impl)
