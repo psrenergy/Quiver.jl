@@ -3,6 +3,16 @@ mutable struct Writer{I <: Implementation, W}
     filename::String
     metadata::Metadata
     last_dimension_added::Vector{Int}
+    function Writer{I}(
+        writer::W, 
+        filename::String, 
+        metadata::Metadata, 
+        last_dimension_added::Vector{Int}
+    ) where {I, W}
+        writer = new{I, W}(writer, filename, metadata, last_dimension_added)
+        finalizer(Quiver.close!, writer)
+        return writer
+    end
 end
 
 function _build_last_dimension_added!(writer::Writer, dims...)
@@ -20,4 +30,5 @@ end
 
 function close!(writer::Writer)
     _quiver_close!(writer)
+    return nothing
 end
