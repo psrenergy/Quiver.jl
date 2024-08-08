@@ -31,7 +31,7 @@ function Writer{csv}(
     print(io, join(metadata.names_of_dimensions, ",") * "," * join(metadata.names_of_time_series, ",") * "\n")
     last_dimension_added = zeros(Int, metadata.number_of_dimensions)
 
-    writer = Quiver.Writer{csv, typeof(io)}(
+    writer = Quiver.Writer{csv}(
         io,
         filename,
         metadata,
@@ -75,7 +75,7 @@ function Reader{csv}(
 
     row_reader = QuiverCSVRowReader(rows, next)
 
-    reader = Quiver.Reader{csv, typeof(row_reader)}(
+    reader = Quiver.Reader{csv}(
         row_reader,
         filename,
         metadata,

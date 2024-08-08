@@ -25,7 +25,7 @@ function Writer{binary}(
     io = open(filename_with_extensions, "w")
     last_dimension_added = zeros(Int, metadata.number_of_dimensions)
 
-    writer = Quiver.Writer{binary, typeof(io)}(
+    writer = Quiver.Writer{binary}(
         io,
         filename,
         metadata,
@@ -96,7 +96,7 @@ function Reader{binary}(
     last_dimension_read = zeros(Int, metadata.number_of_dimensions)
     data = zeros(Float32, metadata.number_of_time_series)
 
-    reader = Quiver.Reader{binary, typeof(io)}(
+    reader = Quiver.Reader{binary}(
         io,
         filename,
         metadata,

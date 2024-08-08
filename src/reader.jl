@@ -4,6 +4,17 @@ mutable struct Reader{I <: Implementation, R}
     metadata::Metadata
     last_dimension_read::Vector{Int}
     data::Vector{Float32}
+    function Reader{I}(
+        reader::R, 
+        filename::String, 
+        metadata::Metadata, 
+        last_dimension_read::Vector{Int},
+        data::Vector{Float32}
+    ) where {I, R}
+        reader = new{I, R}(reader, filename, metadata, last_dimension_read, data)
+        finalizer(Quiver.close!, reader)
+        return reader
+    end
 end
 
 function _build_last_dimension_read!(reader::Reader; dims...)
