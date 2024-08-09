@@ -91,10 +91,10 @@ function write_quiver_file(;
 
     iow = Quiver.Writer{Quiver.binary}(
         file_name;
-        names_of_dimensions = ["stage", "scenario", "block"],
-        names_of_time_series = agents_names,
+        dimensions = ["stage", "scenario", "block"],
+        labels = agents_names,
         time_dimension = "stage",
-        maximum_value_of_each_dimension = [num_stages, num_scenarios, num_blocks],
+        dimension_size = [num_stages, num_scenarios, num_blocks],
         initial_date = DateTime(2006)
     )
 

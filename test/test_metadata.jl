@@ -8,11 +8,11 @@ function test_create_metadata()
     metadata = Quiver.Metadata(
         frequency = "M",
         initial_date = Dates.DateTime(2000),
-        names_of_dimensions = ["stage", "scenario"],
+        dimensions = ["stage", "scenario"],
         time_dimension = "stage",
         unit = "m",
-        maximum_value_of_each_dimension = [10, 20],
-        names_of_time_series = ["ts1", "ts2", " ts3"]
+        dimension_size = [10, 20],
+        labels = ["ts1", "ts2", " ts3"]
     )
 
     @test metadata.frequency == "M"
@@ -25,41 +25,41 @@ function test_creating_invalid_metadata()
     @test_throws ErrorException Quiver.Metadata(
         frequency = "M",
         initial_date = Dates.DateTime(2000),
-        names_of_dimensions = ["stage", "scenario"],
+        dimensions = ["stage", "scenario"],
         time_dimension = "some_other_thing",
         unit = "m",
-        maximum_value_of_each_dimension = [10, 20],
-        names_of_time_series = ["ts1", "ts2", " ts3"]
+        dimension_size = [10, 20],
+        labels = ["ts1", "ts2", " ts3"]
     )
 
     @test_throws ErrorException Quiver.Metadata(
         frequency = "M",
         initial_date = Dates.DateTime(2000),
-        names_of_dimensions = ["stage", "scenario"],
+        dimensions = ["stage", "scenario"],
         time_dimension = "stage",
         unit = "m",
-        maximum_value_of_each_dimension = [10, 20, 30],
-        names_of_time_series = ["ts1", "ts2", " ts3"]
+        dimension_size = [10, 20, 30],
+        labels = ["ts1", "ts2", " ts3"]
     )
 
     @test_throws ErrorException Quiver.Metadata(
         frequency = "M",
         initial_date = Dates.DateTime(2000),
-        names_of_dimensions = ["stage", "scenario"],
+        dimensions = ["stage", "scenario"],
         time_dimension = "stage",
         unit = "m",
-        maximum_value_of_each_dimension = [10, 20],
-        names_of_time_series = String[]
+        dimension_size = [10, 20],
+        labels = String[]
     )
 
     @test_throws ErrorException Quiver.Metadata(
         frequency = "M",
         initial_date = Dates.DateTime(2000),
-        names_of_dimensions = ["stage", "scenario"],
+        dimensions = ["stage", "scenario"],
         time_dimension = "stage",
         unit = "m",
-        maximum_value_of_each_dimension = [10, 20],
-        names_of_time_series = ["ts1", "ts2", "ts1"]
+        dimension_size = [10, 20],
+        labels = ["ts1", "ts2", "ts1"]
     )
 end
 
@@ -67,11 +67,11 @@ function test_writing_and_reading_toml()
     metadata = Quiver.Metadata(
         frequency = "M",
         initial_date = Dates.DateTime(2000),
-        names_of_dimensions = ["stage", "scenario"],
+        dimensions = ["stage", "scenario"],
         time_dimension = "stage",
         unit = "m",
-        maximum_value_of_each_dimension = [10, 20],
-        names_of_time_series = ["ts1", "ts2", "ts3"]
+        dimension_size = [10, 20],
+        labels = ["ts1", "ts2", "ts3"]
     )
 
     Quiver.to_toml(metadata, "test_metadata.toml")

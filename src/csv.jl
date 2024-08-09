@@ -7,10 +7,10 @@ end
 
 function Writer{csv}(
     filename::String;
-    names_of_dimensions::Vector{String},
-    names_of_time_series::Vector{String},
+    dimensions::Vector{String},
+    labels::Vector{String},
     time_dimension::String,
-    maximum_value_of_each_dimension::Vector{Int},
+    dimension_size::Vector{Int},
     remove_if_exists::Bool = true,
     kwargs...,
 )
@@ -19,16 +19,16 @@ function Writer{csv}(
     rm_if_exists(filename_with_extensions, remove_if_exists)
 
     metadata = Quiver.Metadata(;
-        names_of_dimensions = names_of_dimensions,
+        dimensions = dimensions,
         time_dimension = time_dimension,
-        maximum_value_of_each_dimension = maximum_value_of_each_dimension,
-        names_of_time_series = names_of_time_series,
+        dimension_size = dimension_size,
+        labels = labels,
         kwargs...
     )
 
     # Open the file and write the header
     io = open(filename_with_extensions, "w")
-    print(io, join(metadata.names_of_dimensions, ",") * "," * join(metadata.names_of_time_series, ",") * "\n")
+    print(io, join(metadata.dimensions, ",") * "," * join(metadata.labels, ",") * "\n")
     last_dimension_added = zeros(Int, metadata.number_of_dimensions)
 
     writer = Quiver.Writer{csv}(
@@ -56,6 +56,7 @@ end
 
 function Reader{csv}(
     filename::String;
+    labels_to_read::Vector{String} = String[],
 )
 
     filename_with_extensions = add_extension_to_file(filename, file_extension(csv))
@@ -68,20 +69,29 @@ function Reader{csv}(
     rows = CSV.Rows(filename_with_extensions; types = [fill(Int32, metadata.number_of_dimensions); fill(Float32, metadata.number_of_time_series)])
 
     last_dimension_read = zeros(Int, metadata.number_of_dimensions)
-    data = zeros(Float32, metadata.number_of_time_series)
 
     next = iterate(rows)
     (row, state) = next
 
-    row_reader = QuiverCSVRowReader(rows, next)
-
-    reader = Quiver.Reader{csv}(
-        row_reader,
-        filename,
-        metadata,
-        last_dimension_read,
-        data
-    )
+    
+    reader = try
+        row_reader = QuiverCSVRowReader(rows, next)
+        Quiver.Reader{csv}(
+            row_reader,
+            filename,
+            metadata,
+            last_dimension_read;
+            labels_to_read = isempty(labels_to_read) ? metadata.labels : labels_to_read
+        )
+    catch e
+        row_reader = nothing
+        rows = nothing
+        next = nothing
+        row = nothing
+        state = nothing
+        GC.gc()
+        rethrow(e)
+    end
 
     return reader
 end
@@ -92,11 +102,11 @@ function _quiver_next_dimension!(reader::Quiver.Reader{csv})
         return nothing
     end
     (row, state) = reader.reader.next
-    for (i, dim) in enumerate(reader.metadata.names_of_dimensions)
+    for (i, dim) in enumerate(reader.metadata.dimensions)
         reader.last_dimension_read[i] = row[Symbol(dim)]
     end
-    for (i, ts) in enumerate(reader.metadata.names_of_time_series)
-        reader.data[i] = row[Symbol(ts)]
+    for (i, ts) in enumerate(reader.metadata.labels)
+        reader.all_labels_data_cache[i] = row[Symbol(ts)]
     end
     next = iterate(reader.reader.iterator, state)
     reader.reader.next = next

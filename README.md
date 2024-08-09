@@ -10,13 +10,14 @@ Files that follow the Quiver implementation can be stored in any format that map
 CSV files are implemented in a way that the first few lines are used to store the metadata and the rest of the file is used to store the data., i.e.
 
 ```csv
-frequency: M
-initial_date: 2006-01-01T00:00:00
-time_dimension: stage
-num_dimensions: 3
-unit: 
-maximum_value_of_each_dimension: 10 12 744
-version: 1
+version = 1
+dimensions = ["stage", "scenario", "block"]
+dimension_size = [10, 12, 744]
+initial_date = "2006-01-01 00:00:00"
+time_dimension = "stage"
+frequency = "month"
+unit = ""
+labels = ["agent_1", "agent_2", "agent_3"]
 --- 
 stage,scenario,block,agent_1,agent_2,agent_3
 1,1,1,1.0,1.0,1.0

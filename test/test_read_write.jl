@@ -14,17 +14,17 @@ function read_write_1(impl)
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     num_time_series = 3
     
-    names_of_dimensions = ["stage", "scenario", "block"]
-    names_of_time_series = ["agent_$i" for i in 1:num_time_series]
+    dimensions = ["stage", "scenario", "block"]
+    labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
-    maximum_value_of_each_dimension = [num_stages, num_scenarios, maximum(num_blocks_per_stage)]
+    dimension_size = [num_stages, num_scenarios, maximum(num_blocks_per_stage)]
 
     writer = Quiver.Writer{impl}(
         filename;
-        names_of_dimensions,
-        names_of_time_series,
+        dimensions,
+        labels,
         time_dimension,
-        maximum_value_of_each_dimension,
+        dimension_size,
         initial_date = initial_date
     )
 
@@ -70,17 +70,17 @@ function read_write_2(impl)
     num_segments_per_scenario = [2*s for s in 1:num_scenarios]
     num_time_series = 3
     
-    names_of_dimensions = ["stage", "scenario", "block", "segment"]
-    names_of_time_series = ["agent_$i" for i in 1:num_time_series]
+    dimensions = ["stage", "scenario", "block", "segment"]
+    labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
-    maximum_value_of_each_dimension = [num_stages, num_scenarios, maximum(num_blocks_per_stage), maximum(num_segments_per_scenario)]
+    dimension_size = [num_stages, num_scenarios, maximum(num_blocks_per_stage), maximum(num_segments_per_scenario)]
 
     writer = Quiver.Writer{impl}(
         filename;
-        names_of_dimensions,
-        names_of_time_series,
+        dimensions,
+        labels,
         time_dimension,
-        maximum_value_of_each_dimension,
+        dimension_size,
         initial_date = initial_date
     )
 
@@ -132,17 +132,17 @@ function read_write_3(impl)
     max_num_segments = maximum(num_segments_per_block)
     num_time_series = 3
     
-    names_of_dimensions = ["stage", "scenario", "block", "segment"]
-    names_of_time_series = ["agent_$i" for i in 1:num_time_series]
+    dimensions = ["stage", "scenario", "block", "segment"]
+    labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
-    maximum_value_of_each_dimension = [num_stages, num_scenarios, max_num_blocks, max_num_segments]
+    dimension_size = [num_stages, num_scenarios, max_num_blocks, max_num_segments]
 
     writer = Quiver.Writer{impl}(
         filename;
-        names_of_dimensions,
-        names_of_time_series,
+        dimensions,
+        labels,
         time_dimension,
-        maximum_value_of_each_dimension,
+        dimension_size,
         initial_date = initial_date
     )
 
@@ -193,17 +193,17 @@ function read_write_4(impl)
     max_num_segments = maximum(num_segments_per_block)
     num_time_series = 3
     
-    names_of_dimensions = ["stage", "scenario", "block", "segment"]
-    names_of_time_series = ["agent_$i" for i in 1:num_time_series]
+    dimensions = ["stage", "scenario", "block", "segment"]
+    labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
-    maximum_value_of_each_dimension = [num_stages, max_num_scenarios, num_blocks, max_num_segments]
+    dimension_size = [num_stages, max_num_scenarios, num_blocks, max_num_segments]
 
     writer = Quiver.Writer{impl}(
         filename;
-        names_of_dimensions,
-        names_of_time_series,
+        dimensions,
+        labels,
         time_dimension,
-        maximum_value_of_each_dimension,
+        dimension_size,
         initial_date = initial_date
     )
 
@@ -253,17 +253,17 @@ function read_write_5(impl)
     max_num_segments = maximum(num_segments_per_block_scenario)
     num_time_series = 3
     
-    names_of_dimensions = ["stage", "scenario", "block", "segment"]
-    names_of_time_series = ["agent_$i" for i in 1:num_time_series]
+    dimensions = ["stage", "scenario", "block", "segment"]
+    labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
-    maximum_value_of_each_dimension = [num_stages, num_scenarios, num_blocks, max_num_segments]
+    dimension_size = [num_stages, num_scenarios, num_blocks, max_num_segments]
 
     writer = Quiver.Writer{impl}(
         filename;
-        names_of_dimensions,
-        names_of_time_series,
+        dimensions,
+        labels,
         time_dimension,
-        maximum_value_of_each_dimension,
+        dimension_size,
         initial_date = initial_date
     )
 
@@ -315,17 +315,17 @@ function read_write_carrousel(impl)
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     num_time_series = 3
     
-    names_of_dimensions = ["stage", "scenario", "block"]
-    names_of_time_series = ["agent_$i" for i in 1:num_time_series]
+    dimensions = ["stage", "scenario", "block"]
+    labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
-    maximum_value_of_each_dimension = [num_stages, num_scenarios, maximum(num_blocks_per_stage)]
+    dimension_size = [num_stages, num_scenarios, maximum(num_blocks_per_stage)]
 
     writer = Quiver.Writer{impl}(
         filename;
-        names_of_dimensions,
-        names_of_time_series,
+        dimensions,
+        labels,
         time_dimension,
-        maximum_value_of_each_dimension,
+        dimension_size,
         initial_date = initial_date,
         # carrousel = true
     )
@@ -378,17 +378,17 @@ function read_outside_bounds_1(impl)
     max_num_segments = maximum(num_segments_per_scenario)
     num_time_series = 3
     
-    names_of_dimensions = ["stage", "scenario", "block", "segment"]
-    names_of_time_series = ["agent_$i" for i in 1:num_time_series]
+    dimensions = ["stage", "scenario", "block", "segment"]
+    labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
-    maximum_value_of_each_dimension = [num_stages, num_scenarios, max_num_blocks, max_num_segments]
+    dimension_size = [num_stages, num_scenarios, max_num_blocks, max_num_segments]
 
     writer = Quiver.Writer{impl}(
         filename;
-        names_of_dimensions,
-        names_of_time_series,
+        dimensions,
+        labels,
         time_dimension,
-        maximum_value_of_each_dimension,
+        dimension_size,
         initial_date = initial_date
     )
 
@@ -446,17 +446,17 @@ function read_outside_bounds_2(impl)
     max_num_segments = maximum(num_segments_per_block)
     num_time_series = 3
     
-    names_of_dimensions = ["stage", "scenario", "block", "segment"]
-    names_of_time_series = ["agent_$i" for i in 1:num_time_series]
+    dimensions = ["stage", "scenario", "block", "segment"]
+    labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
-    maximum_value_of_each_dimension = [num_stages, num_scenarios, max_num_blocks, max_num_segments]
+    dimension_size = [num_stages, num_scenarios, max_num_blocks, max_num_segments]
 
     writer = Quiver.Writer{impl}(
         filename;
-        names_of_dimensions,
-        names_of_time_series,
+        dimensions,
+        labels,
         time_dimension,
-        maximum_value_of_each_dimension,
+        dimension_size,
         initial_date = initial_date
     )
 
@@ -514,17 +514,17 @@ function read_outside_bounds_3(impl)
     max_num_segments = maximum(num_segments_per_block)
     num_time_series = 3
     
-    names_of_dimensions = ["stage", "scenario", "block", "segment"]
-    names_of_time_series = ["agent_$i" for i in 1:num_time_series]
+    dimensions = ["stage", "scenario", "block", "segment"]
+    labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
-    maximum_value_of_each_dimension = [num_stages, max_num_scenarios, num_blocks, max_num_segments]
+    dimension_size = [num_stages, max_num_scenarios, num_blocks, max_num_segments]
 
     writer = Quiver.Writer{impl}(
         filename;
-        names_of_dimensions,
-        names_of_time_series,
+        dimensions,
+        labels,
         time_dimension,
-        maximum_value_of_each_dimension,
+        dimension_size,
         initial_date = initial_date
     )
 
@@ -581,17 +581,17 @@ function read_outside_bounds_4(impl)
     max_num_segments = maximum(num_segments_per_block_scenario)
     num_time_series = 3
     
-    names_of_dimensions = ["stage", "scenario", "block", "segment"]
-    names_of_time_series = ["agent_$i" for i in 1:num_time_series]
+    dimensions = ["stage", "scenario", "block", "segment"]
+    labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
-    maximum_value_of_each_dimension = [num_stages, num_scenarios, num_blocks, max_num_segments]
+    dimension_size = [num_stages, num_scenarios, num_blocks, max_num_segments]
 
     writer = Quiver.Writer{impl}(
         filename;
-        names_of_dimensions,
-        names_of_time_series,
+        dimensions,
+        labels,
         time_dimension,
-        maximum_value_of_each_dimension,
+        dimension_size,
         initial_date = initial_date
     )
 
@@ -634,18 +634,108 @@ function read_outside_bounds_4(impl)
     rm("$filename.toml")
 end
 
+function read_filtering_labels(impl)
+    filename = joinpath(@__DIR__, "test_read_filtering_labels")
+
+    initial_date = DateTime(2006, 1, 1)
+    num_stages = 10
+    dates = collect(initial_date:Dates.Month(1):initial_date + Dates.Month(num_stages - 1))
+    num_scenarios = 12
+    num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
+    num_time_series = 3
+    
+    dimensions = ["stage", "scenario", "block"]
+    labels = ["agent_$i" for i in 1:num_time_series]
+    time_dimension = "stage"
+    dimension_size = [num_stages, num_scenarios, maximum(num_blocks_per_stage)]
+
+    writer = Quiver.Writer{impl}(
+        filename;
+        dimensions,
+        labels,
+        time_dimension,
+        dimension_size,
+        initial_date = initial_date
+    )
+
+    for stage in 1:num_stages
+        for scenario in 1:num_scenarios
+            for block in 1:num_blocks_per_stage[stage]
+                data = [stage, scenario, block]
+                Quiver.write!(writer, data; stage, scenario, block)
+            end
+        end
+    end
+
+    Quiver.close!(writer)
+
+    reader = Quiver.Reader{impl}(filename; labels_to_read = ["agent_1", "agent_3"])
+    for stage in 1:num_stages
+        for scenario in 1:num_scenarios
+            for block in 1:num_blocks_per_stage[stage]
+                if impl == Quiver.csv
+                    Quiver.next_dimension!(reader)
+                else
+                    Quiver.goto!(reader; stage, scenario, block)
+                end
+                @test reader.data == [stage, block]
+            end
+        end
+    end
+
+    Quiver.close!(reader)
+
+    reader = Quiver.Reader{impl}(filename; labels_to_read = ["agent_2", "agent_1"])
+    for stage in 1:num_stages
+        for scenario in 1:num_scenarios
+            for block in 1:num_blocks_per_stage[stage]
+                if impl == Quiver.csv
+                    Quiver.next_dimension!(reader)
+                else
+                    Quiver.goto!(reader; stage, scenario, block)
+                end
+                @test reader.data == [scenario, stage]
+            end
+        end
+    end
+
+    Quiver.close!(reader)
+
+    reader = Quiver.Reader{impl}(filename; labels_to_read = ["agent_2", "agent_1", "agent_3"])
+    for stage in 1:num_stages
+        for scenario in 1:num_scenarios
+            for block in 1:num_blocks_per_stage[stage]
+                if impl == Quiver.csv
+                    Quiver.next_dimension!(reader)
+                else
+                    Quiver.goto!(reader; stage, scenario, block)
+                end
+                @test reader.data == [scenario, stage, block]
+            end
+        end
+    end
+
+    Quiver.close!(reader)
+
+    rm("$filename.$(Quiver.file_extension(impl))")
+    rm("$filename.toml")
+end
+
 function test_read_write_implementations()
     for impl in Quiver.implementations()
-        read_write_1(impl)
-        read_write_2(impl)
-        read_write_3(impl)
-        read_write_4(impl)
-        read_write_5(impl)
-        # read_write_carrousel(impl)
-        read_outside_bounds_1(impl)
-        read_outside_bounds_2(impl)
-        read_outside_bounds_3(impl)
-        read_outside_bounds_4(impl)
+        @testset "Read and Write $(impl)" begin
+            read_write_1(impl)
+            read_write_2(impl)
+            read_write_3(impl)
+            read_write_4(impl)
+            read_write_5(impl)
+            # read_write_carrousel(impl)
+            read_outside_bounds_1(impl)
+            read_outside_bounds_2(impl)
+            read_outside_bounds_3(impl)
+            read_outside_bounds_4(impl)
+            read_filtering_labels(impl)
+        end
     end
 end
 
