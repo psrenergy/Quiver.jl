@@ -83,6 +83,14 @@ function next_dimension!(reader::Reader)
     return reader.data
 end
 
+function max_index(reader::Reader, dimension::String)
+    index = findfirst(isequal(dimension), reader.metadata.dimensions)
+    if index === nothing
+        throw(ArgumentError("Dimension $dimension not found in metadata"))
+    end
+    return reader.metadata.dimension_size[index]
+end
+
 function close!(reader::Reader)
     _quiver_close!(reader)
     return nothing
