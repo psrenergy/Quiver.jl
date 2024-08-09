@@ -66,8 +66,16 @@ function _quiver_write!(writer::Quiver.Writer{binary}, data::Vector{T}) where T 
     # Check if we need to seek a new position or write directly in the io
     # This is absolutely necessary for performance in the binary operation
     current_pos = position(writer.writer)
-    if current_pos != next_pos
+    if current_pos > next_pos
         seek(writer.writer, next_pos)
+    elseif current_pos < next_pos
+        space_of_a_row = 4 * writer.metadata.number_of_time_series
+        number_of_empty_rows = (next_pos - current_pos) / space_of_a_row
+        for _ in 1:number_of_empty_rows
+            @inbounds for i in eachindex(data)
+                write(writer.writer, NaN32)
+            end
+        end
     end
     @inbounds for i in eachindex(data)
         write(writer.writer, Float32(data[i]))
@@ -133,5 +141,36 @@ end
 
 function _quiver_close!(reader::Quiver.Reader{binary})
     close(reader.reader)
+    return nothing
+end
+
+function convert(
+    filename::String,
+    from::Type{binary},
+    to::Type{impl},
+) where impl <: Implementation
+    reader = Quiver.Reader{from}(filename)
+    metadata = reader.metadata
+    writer = Quiver.Writer{to}(
+        filename;
+        dimensions = metadata.dimensions,
+        labels = metadata.labels,
+        time_dimension = metadata.time_dimension,
+        dimension_size = metadata.dimension_size,
+        initial_date = metadata.initial_date,
+    )
+
+    for dims in Iterators.product([1:size for size in reverse(metadata.dimension_size)]...)
+        dim_kwargs = OrderedDict(Symbol.(metadata.dimensions) .=> reverse(dims))
+        Quiver.goto!(reader; dim_kwargs...)
+        if all(isnan.(reader.data))
+            continue
+        end
+        Quiver.write!(writer, reader.data; dim_kwargs...)
+    end
+
+    Quiver.close!(reader)
+    Quiver.close!(writer)
+
     return nothing
 end
