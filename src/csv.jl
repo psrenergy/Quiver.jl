@@ -123,3 +123,31 @@ function _quiver_close!(reader::Quiver.Reader{csv})
     GC.gc()
     return nothing
 end
+
+function convert(
+    filename::String,
+    from::Type{csv},
+    to::Type{impl},
+) where impl <: Implementation
+    reader = Quiver.Reader{from}(filename)
+    metadata = reader.metadata
+    writer = Quiver.Writer{to}(
+        filename;
+        dimensions = metadata.dimensions,
+        labels = metadata.labels,
+        time_dimension = metadata.time_dimension,
+        dimension_size = metadata.dimension_size,
+        initial_date = metadata.initial_date,
+    )
+
+    while reader.reader.next !== nothing
+        Quiver.next_dimension!(reader)
+        dim_kwargs = OrderedDict(Symbol.(metadata.dimensions) .=> reader.last_dimension_read)
+        Quiver.write!(writer, reader.data; dim_kwargs...)
+    end
+
+    Quiver.close!(reader)
+    Quiver.close!(writer)
+
+    return nothing
+end
