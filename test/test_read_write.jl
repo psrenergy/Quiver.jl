@@ -327,7 +327,6 @@ function read_write_carrousel(impl)
         time_dimension,
         dimension_size,
         initial_date = initial_date,
-        # carrousel = true
     )
 
     for stage in 1:num_stages
@@ -344,7 +343,10 @@ function read_write_carrousel(impl)
     number_of_stages_to_read = 50
     number_of_scenarios_to_read = 10
 
-    reader = Quiver.Reader{impl}(filename)
+    reader = Quiver.Reader{impl}(
+        filename;
+        carrousel = true,
+    )
     for stage in 1:number_of_stages_to_read
         inbounds_stage = mod1(stage, num_stages)
         for scenario in 1:number_of_scenarios_to_read
@@ -837,7 +839,7 @@ function test_read_write_implementations()
             read_write_3(impl)
             read_write_4(impl)
             read_write_5(impl)
-            # read_write_carrousel(impl)
+            read_write_carrousel(impl)
             read_outside_bounds_1(impl)
             read_outside_bounds_2(impl)
             read_outside_bounds_3(impl)

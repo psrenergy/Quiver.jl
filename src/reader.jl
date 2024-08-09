@@ -7,12 +7,14 @@ mutable struct Reader{I <: Implementation, R}
     data::Vector{Float32}
     labels_to_read::Vector{String}
     indices_of_labels_to_read::Vector{Int}
+    carrousel::Bool
     function Reader{I}(
         reader::R, 
         filename::String, 
         metadata::Metadata,
         last_dimension_read::Vector{Int};
-        labels_to_read::Vector{String} = metadata.labels
+        labels_to_read::Vector{String} = metadata.labels,
+        carrousel::Bool = false,
     ) where {I, R}
 
         # Argument validations
@@ -42,7 +44,8 @@ mutable struct Reader{I <: Implementation, R}
             all_labels_data_cache,
             data,
             labels_to_read,
-            indices_of_labels_to_read
+            indices_of_labels_to_read,
+            carrousel,
         )
         finalizer(Quiver.close!, reader)
         return reader
@@ -51,7 +54,11 @@ end
 
 function _build_last_dimension_read!(reader::Reader; dims...)
     for (i, dim) in enumerate(dims)
-        reader.last_dimension_read[i] = dim[2]
+        if reader.carrousel
+            reader.last_dimension_read[i] = mod1(dim[2], reader.metadata.dimension_size[i])
+        else
+            reader.last_dimension_read[i] = dim[2]
+        end
     end
     return nothing
 end

@@ -57,6 +57,7 @@ end
 function Reader{csv}(
     filename::String;
     labels_to_read::Vector{String} = String[],
+    carrousel::Bool = false,
 )
 
     filename_with_extensions = add_extension_to_file(filename, file_extension(csv))
@@ -81,7 +82,8 @@ function Reader{csv}(
             filename,
             metadata,
             last_dimension_read;
-            labels_to_read = isempty(labels_to_read) ? metadata.labels : labels_to_read
+            labels_to_read = isempty(labels_to_read) ? metadata.labels : labels_to_read,
+            carrousel = carrousel,
         )
     catch e
         row_reader = nothing
