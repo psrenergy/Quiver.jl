@@ -2,10 +2,10 @@ file_extension(::Type{binary}) = "quiv"
 
 function Writer{binary}(
     filename::String;
-    names_of_dimensions::Vector{String},
-    names_of_time_series::Vector{String},
+    dimensions::Vector{String},
+    labels::Vector{String},
     time_dimension::String,
-    maximum_value_of_each_dimension::Vector{Int},
+    dimension_size::Vector{Int},
     remove_if_exists::Bool = true,
     kwargs...,
 )
@@ -14,10 +14,10 @@ function Writer{binary}(
     rm_if_exists(filename_with_extensions, remove_if_exists)
 
     metadata = Quiver.Metadata(;
-        names_of_dimensions = names_of_dimensions,
+        dimensions = dimensions,
         time_dimension = time_dimension,
-        maximum_value_of_each_dimension = maximum_value_of_each_dimension,
-        names_of_time_series = names_of_time_series,
+        dimension_size = dimension_size,
+        labels = labels,
         kwargs...
     )
 
@@ -50,7 +50,7 @@ function _calculate_position_in_file(metadata::Quiver.Metadata, dims...)
     position = 0
     for i in 1:metadata.number_of_dimensions - 1
         position += (dims[i] - 1) * performant_product_from_index_i_to_j(
-            metadata.maximum_value_of_each_dimension, 
+            metadata.dimension_size, 
             i + 1, 
             metadata.number_of_dimensions
         )
@@ -82,6 +82,7 @@ end
 
 function Reader{binary}(
     filename::String;
+    labels_to_read::Vector{String} = String[],
 )
 
     filename_with_extensions = add_extension_to_file(filename, file_extension(binary))
@@ -94,15 +95,19 @@ function Reader{binary}(
     io = open(filename_with_extensions, "r")
 
     last_dimension_read = zeros(Int, metadata.number_of_dimensions)
-    data = zeros(Float32, metadata.number_of_time_series)
 
-    reader = Quiver.Reader{binary}(
-        io,
-        filename,
-        metadata,
-        last_dimension_read,
-        data
-    )
+    reader = try 
+        Quiver.Reader{binary}(
+            io,
+            filename,
+            metadata,
+            last_dimension_read;
+            labels_to_read = isempty(labels_to_read) ? metadata.labels : labels_to_read
+        )
+    catch e
+        close(io)
+        rethrow(e)
+    end
 
     return reader
 end
@@ -117,7 +122,7 @@ function _quiver_goto!(reader::Quiver.Reader{binary})
     else
         seek(reader.reader, next_pos)
     end
-    read!(reader.reader, reader.data)
+    read!(reader.reader, reader.all_labels_data_cache)
     return nothing
 end
 

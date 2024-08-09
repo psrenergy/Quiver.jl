@@ -3,15 +3,47 @@ mutable struct Reader{I <: Implementation, R}
     filename::String
     metadata::Metadata
     last_dimension_read::Vector{Int}
+    all_labels_data_cache::Vector{Float32}
     data::Vector{Float32}
+    labels_to_read::Vector{String}
+    indices_of_labels_to_read::Vector{Int}
     function Reader{I}(
         reader::R, 
         filename::String, 
-        metadata::Metadata, 
-        last_dimension_read::Vector{Int},
-        data::Vector{Float32}
+        metadata::Metadata,
+        last_dimension_read::Vector{Int};
+        labels_to_read::Vector{String} = metadata.labels
     ) where {I, R}
-        reader = new{I, R}(reader, filename, metadata, last_dimension_read, data)
+
+        # Argument validations
+        if length(labels_to_read) == 0
+            throw(ArgumentError("labels_to_read cannot be empty"))
+        end
+
+        # Find the indices of the labels to read
+        indices_of_labels_to_read = Vector{Int}(undef, length(labels_to_read))
+        for (i, label) in enumerate(labels_to_read)
+            index = findfirst(x -> x == label, metadata.labels)
+            if index === nothing
+                throw(ArgumentError("Label $label not found in metadata"))
+            end
+            indices_of_labels_to_read[i] = index
+        end
+
+        # Fill the buffer cache and data with NaNs
+        all_labels_data_cache = fill(NaN32, length(metadata.labels))
+        data = fill(NaN32, length(labels_to_read))
+
+        reader = new{I, R}(
+            reader, 
+            filename, 
+            metadata, 
+            last_dimension_read, 
+            all_labels_data_cache,
+            data,
+            labels_to_read,
+            indices_of_labels_to_read
+        )
         finalizer(Quiver.close!, reader)
         return reader
     end
@@ -24,14 +56,23 @@ function _build_last_dimension_read!(reader::Reader; dims...)
     return nothing
 end
 
+function _move_data_from_buffer_cache_to_data!(reader::Reader)
+    @inbounds for (i, index) in enumerate(reader.indices_of_labels_to_read)
+        reader.data[i] = reader.all_labels_data_cache[index]
+    end
+    return nothing
+end
+
 function goto!(reader::Reader; dims...)
     _build_last_dimension_read!(reader; dims...)
     _quiver_goto!(reader)
+    _move_data_from_buffer_cache_to_data!(reader)
     return reader.data
 end
 
 function next_dimension!(reader::Reader)
     _quiver_next_dimension!(reader)
+    _move_data_from_buffer_cache_to_data!(reader)
     return reader.data
 end
 
