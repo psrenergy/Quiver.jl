@@ -1,14 +1,13 @@
 module Quiver
 
-using Arrow
 using CSV
 using DataFrames
 using Dates
-using Tables
 using OrderedCollections
+using Tables
+using TOML
 
-export QuiverWriter, QuiverReader
-export arrow, csv
+const QUIVER_FILE_VERSION = 1
 
 include("metadata.jl")
 include("utils.jl")
@@ -17,9 +16,8 @@ include("implementations.jl")
 
 include("writer.jl")
 include("reader.jl")
-include("convert.jl")
 
 include("csv.jl")
-include("arrow.jl")
+include("binary.jl")
 
 end

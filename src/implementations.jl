@@ -1,11 +1,11 @@
-abstract type QuiverImplementation end
+abstract type Implementation end
 
-struct arrow <: QuiverImplementation end
-struct csv <: QuiverImplementation end
+struct csv <: Implementation end
+struct binary <: Implementation end
 
 function implementations()::Vector{DataType}
     return [
-        Quiver.arrow,
-        Quiver.csv
+        Quiver.csv,
+        Quiver.binary
     ]
 end

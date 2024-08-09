@@ -1,29 +1,89 @@
-mutable struct QuiverReader{I <: QuiverImplementation, R}
-    reader::Union{Nothing, R}
+mutable struct Reader{I <: Implementation, R}
+    reader::R
     filename::String
-    dimensions::Vector{Symbol}
-    agents_to_read::Vector{Symbol}
-    metadata::QuiverMetadata
-end
+    metadata::Metadata
+    last_dimension_read::Vector{Int}
+    all_labels_data_cache::Vector{Float32}
+    data::Vector{Float32}
+    labels_to_read::Vector{String}
+    indices_of_labels_to_read::Vector{Int}
+    carrousel::Bool
+    function Reader{I}(
+        reader::R, 
+        filename::String, 
+        metadata::Metadata,
+        last_dimension_read::Vector{Int};
+        labels_to_read::Vector{String} = metadata.labels,
+        carrousel::Bool = false,
+    ) where {I, R}
 
-function max_index(reader::QuiverReader, dimension::String)
-    index_of_dimension = findfirst(isequal(dimension), string.(reader.dimensions))
-    if index_of_dimension === nothing
-        error("Dimension $dimension not found in $(reader.dimensions)")
+        # Argument validations
+        if length(labels_to_read) == 0
+            throw(ArgumentError("labels_to_read cannot be empty"))
+        end
+
+        # Find the indices of the labels to read
+        indices_of_labels_to_read = Vector{Int}(undef, length(labels_to_read))
+        for (i, label) in enumerate(labels_to_read)
+            index = findfirst(x -> x == label, metadata.labels)
+            if index === nothing
+                throw(ArgumentError("Label $label not found in metadata"))
+            end
+            indices_of_labels_to_read[i] = index
+        end
+
+        # Fill the buffer cache and data with NaNs
+        all_labels_data_cache = fill(NaN32, length(metadata.labels))
+        data = fill(NaN32, length(labels_to_read))
+
+        reader = new{I, R}(
+            reader, 
+            filename, 
+            metadata, 
+            last_dimension_read, 
+            all_labels_data_cache,
+            data,
+            labels_to_read,
+            indices_of_labels_to_read,
+            carrousel,
+        )
+        finalizer(Quiver.close!, reader)
+        return reader
     end
-    return reader.metadata.maximum_value_of_each_dimension[index_of_dimension]
 end
 
-function read(reader::QuiverReader; dimensions_to_query...)
-    _assert_dimensions_are_in_order(reader; dimensions_to_query...)
-    return _quiver_read(reader; dimensions_to_query...)
+function _build_last_dimension_read!(reader::Reader; dims...)
+    for (i, dim) in enumerate(dims)
+        if reader.carrousel
+            reader.last_dimension_read[i] = mod1(dim[2], reader.metadata.dimension_size[i])
+        else
+            reader.last_dimension_read[i] = dim[2]
+        end
+    end
+    return nothing
 end
 
-function find_cols_of_agents(reader::QuiverReader, cols::Vector{Symbol})
-    return findall((in)(reader.agents_to_read), cols)
+function _move_data_from_buffer_cache_to_data!(reader::Reader)
+    @inbounds for (i, index) in enumerate(reader.indices_of_labels_to_read)
+        reader.data[i] = reader.all_labels_data_cache[index]
+    end
+    return nothing
 end
 
-function close!(writer::QuiverReader)
-    _quiver_close!(writer)
+function goto!(reader::Reader; dims...)
+    _build_last_dimension_read!(reader; dims...)
+    _quiver_goto!(reader)
+    _move_data_from_buffer_cache_to_data!(reader)
+    return reader.data
+end
+
+function next_dimension!(reader::Reader)
+    _quiver_next_dimension!(reader)
+    _move_data_from_buffer_cache_to_data!(reader)
+    return reader.data
+end
+
+function close!(reader::Reader)
+    _quiver_close!(reader)
     return nothing
 end

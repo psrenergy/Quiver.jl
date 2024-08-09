@@ -1,132 +1,155 @@
-function QuiverWriter{csv}(
-    filename::String,
-    dimension_names::Vector{String},
-    agent_names::Vector{String},
+file_extension(::Type{csv}) = "csv"
+
+mutable struct QuiverCSVRowReader
+    iterator
+    next
+end
+
+function Writer{csv}(
+    filename::String;
+    dimensions::Vector{String},
+    labels::Vector{String},
     time_dimension::String,
-    maximum_value_of_each_dimension::Vector{Int};
-    frequency::String = default_frequency(),
-    initial_date::Dates.DateTime = default_initial_date(),
-    unit::String = default_unit(),
-    remove_if_exists::Bool = true
+    dimension_size::Vector{Int},
+    remove_if_exists::Bool = true,
+    kwargs...,
 )
-    filename_with_extensions = add_extension_to_file(filename, "csv")
+
+    filename_with_extensions = add_extension_to_file(filename, file_extension(csv))
     rm_if_exists(filename_with_extensions, remove_if_exists)
 
-    metadata = QuiverMetadata(;
-        num_dimensions = length(dimension_names),
-        frequency,
-        initial_date,
-        unit,
-        time_dimension,
-        maximum_value_of_each_dimension
+    metadata = Quiver.Metadata(;
+        dimensions = dimensions,
+        time_dimension = time_dimension,
+        dimension_size = dimension_size,
+        labels = labels,
+        kwargs...
     )
 
-    quiver_empty_df = _create_quiver_empty_df(dimension_names, agent_names)
-    # Save header on buffer
-    iobuf = IOBuffer()
-    CSV.write(iobuf, quiver_empty_df)
+    # Open the file and write the header
+    io = open(filename_with_extensions, "w")
+    print(io, join(metadata.dimensions, ",") * "," * join(metadata.labels, ",") * "\n")
+    last_dimension_added = zeros(Int, metadata.number_of_dimensions)
 
-    # Write metadata on the top of the file
-    open(filename_with_extensions, "a+") do io
-        print(io, to_string(metadata))
-        print(io, String(take!(iobuf)))
-    end
-
-    return QuiverWriter{csv, Nothing}(
-        nothing,
-        filename_with_extensions,
-        dimension_names,
-        agent_names,
+    writer = Quiver.Writer{csv}(
+        io,
+        filename,
         metadata,
-        default_last_dimension_added(dimension_names)
+        last_dimension_added
     )
+
+    to_toml(metadata, "$filename.toml")
+
+    return writer
 end
 
-function _quiver_write!(writer::QuiverWriter{csv, Nothing}, df::DataFrames.DataFrame)
-    row_iterator = CSV.RowWriter(df)
-    open(writer.filename, "a+") do f     
-        for (i, row) in enumerate(row_iterator)
-            if i == 1
-                # avoid writing the header
-                continue
-            end
-            print(f, row)
-        end
-    end
+function _quiver_write!(writer::Quiver.Writer{csv}, data::Vector{T}) where T <: Real
+    # The last dimension added is calculated in the abstract implementation
+    print(writer.writer, join(writer.last_dimension_added, ","), ",", join(data, ","), "\n")
     return nothing
 end
 
-function _quiver_close!(::QuiverWriter{csv, Nothing})
+function _quiver_close!(writer::Quiver.Writer{csv})
+    close(writer.writer)
     return nothing
 end
 
-function QuiverReader{csv}(
-    filename::String; 
-    agents::Union{Nothing, Vector{Symbol}} = nothing,    
+function Reader{csv}(
+    filename::String;
+    labels_to_read::Vector{String} = String[],
+    carrousel::Bool = false,
 )
-    filename_with_extension = add_extension_to_file(filename, "csv")
-    @assert isfile(filename_with_extension) "File $filename_with_extension does not exist."
 
-    metadata_string = readuntil(open(filename_with_extension), "--- \n")
-    metadata = from_string(metadata_string)
-    header_line = 9
+    filename_with_extensions = add_extension_to_file(filename, file_extension(csv))
+    if !isfile(filename_with_extensions)
+        throw(ArgumentError("File $filename_with_extensions does not exist"))
+    end
 
-    # The first part is only to get the names
-    rows = CSV.Rows(filename_with_extension; header = header_line)
-    cols = rows.names
-    n_dim = num_dimensions(metadata)
+    metadata = from_toml("$filename.toml")
 
-    dimensions = cols[1:n_dim]
+    rows = CSV.Rows(filename_with_extensions; types = [fill(Int32, metadata.number_of_dimensions); fill(Float32, metadata.number_of_time_series)])
+
+    last_dimension_read = zeros(Int, metadata.number_of_dimensions)
+
+    next = iterate(rows)
+    (row, state) = next
+
     
-    agents_to_read = if agents === nothing
-        cols[n_dim + 1:end]
-    else
-        agents
+    reader = try
+        row_reader = QuiverCSVRowReader(rows, next)
+        Quiver.Reader{csv}(
+            row_reader,
+            filename,
+            metadata,
+            last_dimension_read;
+            labels_to_read = isempty(labels_to_read) ? metadata.labels : labels_to_read,
+            carrousel = carrousel,
+        )
+    catch e
+        row_reader = nothing
+        rows = nothing
+        next = nothing
+        row = nothing
+        state = nothing
+        GC.gc()
+        rethrow(e)
     end
 
-    num_agents = length(cols[n_dim + 1:end])
+    return reader
+end
 
-    _warn_if_file_is_bigger_than_ram(filename_with_extension, "CSV")
+function _quiver_next_dimension!(reader::Quiver.Reader{csv})
+    if reader.reader.next === nothing
+        error("No more data to read")
+        return nothing
+    end
+    (row, state) = reader.reader.next
+    for (i, dim) in enumerate(reader.metadata.dimensions)
+        reader.last_dimension_read[i] = row[Symbol(dim)]
+    end
+    for (i, ts) in enumerate(reader.metadata.labels)
+        reader.all_labels_data_cache[i] = row[Symbol(ts)]
+    end
+    next = iterate(reader.reader.iterator, state)
+    reader.reader.next = next
+    return nothing
+end
 
-    df = CSV.read(filename_with_extension, DataFrame; types = [fill(Int32, n_dim); fill(Float32, num_agents)], header = header_line)
+function _quiver_goto!(reader::Quiver.Reader{csv}, dims...)
+    error("_quiver_goto! not implemented for csv")
+    return nothing
+end
 
-    return QuiverReader{csv, DataFrame}(
-        df,
-        filename_with_extension,
-        dimensions,
-        agents_to_read,
-        metadata,
+function _quiver_close!(reader::Quiver.Reader{csv})
+    reader.reader.iterator = nothing
+    GC.gc()
+    return nothing
+end
+
+function convert(
+    filename::String,
+    from::Type{csv},
+    to::Type{impl},
+) where impl <: Implementation
+    reader = Quiver.Reader{from}(filename)
+    metadata = reader.metadata
+    writer = Quiver.Writer{to}(
+        filename;
+        dimensions = metadata.dimensions,
+        labels = metadata.labels,
+        time_dimension = metadata.time_dimension,
+        dimension_size = metadata.dimension_size,
+        initial_date = metadata.initial_date,
     )
-end
 
-function _quiver_read_df(reader::QuiverReader{csv, DataFrame}; kwargs...)
-    dimensions_to_query = values(kwargs)
-    if isempty(dimensions_to_query)
-        return reader.reader
+    while reader.reader.next !== nothing
+        Quiver.next_dimension!(reader)
+        dim_kwargs = OrderedDict(Symbol.(metadata.dimensions) .=> reader.last_dimension_read)
+        Quiver.write!(writer, reader.data; dim_kwargs...)
     end
-    indexes_to_search_at_dimension = Vector{UnitRange{Int}}(undef, length(dimensions_to_query) + 1)
-    indexes_found_at_dimension = Vector{UnitRange{Int}}(undef, length(dimensions_to_query))
-    indexes_to_search_at_dimension[1] = 1:size(reader.reader, 1)
-    for (i, dim_to_query) in enumerate(dimensions_to_query)
-        # The searchsorted function makes a binary search on the indexes_to_search
-        # TODO this needs better explanation. It is a series of chained binary searches
-        view_of_df = @view reader.reader[indexes_to_search_at_dimension[i], reader.dimensions[i]]
-        indexes_found_at_dimension[i] = searchsorted(view_of_df, dim_to_query)
-        indexes_to_search_at_dimension[i + 1] = indexes_found_at_dimension[i] .+ indexes_to_search_at_dimension[i][1] .- 1
-        if isempty(indexes_found_at_dimension[i])
-            error("Dimension $dimensions_to_query not found.")
-        end
-    end
-    return reader.reader[indexes_to_search_at_dimension[end], :]
-end
 
-function _quiver_read(reader::QuiverReader{csv, DataFrame}; dimensions_to_query...)
-    cols_of_agents = find_cols_of_agents(reader, Symbol.(names(reader.reader)))
-    view_df = _quiver_read_df(reader; dimensions_to_query...)
-    return Matrix{Float32}(view_df[:, cols_of_agents])
-end
+    Quiver.close!(reader)
+    Quiver.close!(writer)
 
-function _quiver_close!(reader::QuiverReader{csv, DataFrame})
-    reader.reader = nothing
     return nothing
 end
