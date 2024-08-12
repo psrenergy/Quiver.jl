@@ -37,6 +37,10 @@ function Writer{binary}(
     return writer
 end
 
+function _space_of_a_row_in_binary(metadata::Quiver.Metadata)
+    return 4 * metadata.number_of_time_series
+end
+
 function performant_product_from_index_i_to_j(arr::Vector{Int}, i::Int, j::Int)
     result = 1
     @inbounds for k in i:j
@@ -46,7 +50,7 @@ function performant_product_from_index_i_to_j(arr::Vector{Int}, i::Int, j::Int)
 end
 
 function _calculate_position_in_file(metadata::Quiver.Metadata, dims...)
-    space_of_a_row = 4 * metadata.number_of_time_series
+    space_of_a_row = _space_of_a_row_in_binary(metadata)
     position = 0
     for i in 1:metadata.number_of_dimensions - 1
         position += (dims[i] - 1) * performant_product_from_index_i_to_j(
@@ -69,7 +73,7 @@ function _quiver_write!(writer::Quiver.Writer{binary}, data::Vector{T}) where T 
     if current_pos > next_pos
         seek(writer.writer, next_pos)
     elseif current_pos < next_pos
-        space_of_a_row = 4 * writer.metadata.number_of_time_series
+        space_of_a_row = _space_of_a_row_in_binary(writer.metadata)
         number_of_empty_rows = (next_pos - current_pos) / space_of_a_row
         for _ in 1:number_of_empty_rows
             @inbounds for i in eachindex(data)
