@@ -421,10 +421,10 @@ function read_outside_bounds_1(impl)
         end
     end
 
-    @test_throws EOFError Quiver.goto!(reader; stage = num_stages+1, num_scenarios, max_num_blocks, max_num_segments)
-    @test_throws EOFError Quiver.goto!(reader; num_stages, scenario = num_scenarios+1, max_num_blocks, max_num_segments)
-    @test_throws EOFError Quiver.goto!(reader; num_stages, num_scenarios, block = max_num_blocks+1, max_num_segments)
-    @test_throws EOFError Quiver.goto!(reader; num_stages, num_scenarios, max_num_blocks, segment = max_num_segments+1)
+    @test_throws EOFError Quiver.goto!(reader; stage = num_stages+1, scenario = num_scenarios, block = max_num_blocks, segment = max_num_segments)
+    @test_throws EOFError Quiver.goto!(reader; stage = num_stages, scenario = num_scenarios+1, block = max_num_blocks, segment = max_num_segments)
+    @test_throws EOFError Quiver.goto!(reader; stage = num_stages, scenario = num_scenarios, block = max_num_blocks+1, segment = max_num_segments)
+    @test_throws EOFError Quiver.goto!(reader; stage = num_stages, scenario = num_scenarios, block = max_num_blocks, segment = max_num_segments+1)
 
     Quiver.close!(reader)
 
@@ -490,10 +490,10 @@ function read_outside_bounds_2(impl)
         end
     end
 
-    @test_throws EOFError Quiver.goto!(reader; stage = num_stages+1, num_scenarios, max_num_blocks, max_num_segments)
-    @test_throws EOFError Quiver.goto!(reader; num_stages, scenario = num_scenarios+1, max_num_blocks, max_num_segments)
-    @test_throws EOFError Quiver.goto!(reader; num_stages, num_scenarios, block = max_num_blocks+1, max_num_segments)
-    @test_throws EOFError Quiver.goto!(reader; num_stages, num_scenarios, max_num_blocks, segment = max_num_segments+1)
+    @test_throws EOFError Quiver.goto!(reader; stage = num_stages+1, scenario = num_scenarios, block = max_num_blocks, segment = max_num_segments)
+    @test_throws EOFError Quiver.goto!(reader; stage = num_stages, scenario = num_scenarios+1, block = max_num_blocks, segment = max_num_segments)
+    @test_throws EOFError Quiver.goto!(reader; stage = num_stages, scenario = num_scenarios, block = max_num_blocks+1, segment = max_num_segments)
+    @test_throws EOFError Quiver.goto!(reader; stage = num_stages, scenario = num_scenarios, block = max_num_blocks, segment = max_num_segments+1)
 
     Quiver.close!(reader)
 
@@ -558,10 +558,10 @@ function read_outside_bounds_3(impl)
         end
     end
 
-    @test_throws EOFError Quiver.goto!(reader; stage = num_stages+1, max_num_scenarios, num_blocks, max_num_segments)
-    @test_throws EOFError Quiver.goto!(reader; num_stages, scenario = max_num_scenarios+1, num_blocks, max_num_segments)
-    @test_throws EOFError Quiver.goto!(reader; num_stages, max_num_scenarios, block = num_blocks+1, max_num_segments)
-    @test_throws EOFError Quiver.goto!(reader; num_stages, max_num_scenarios, num_blocks, segment = max_num_segments+1)
+    @test_throws EOFError Quiver.goto!(reader; stage = num_stages+1, scenario = max_num_scenarios, block = num_blocks, segment = max_num_segments)
+    @test_throws EOFError Quiver.goto!(reader; stage = num_stages, scenario = max_num_scenarios+1, block = num_blocks, segment = max_num_segments)
+    @test_throws EOFError Quiver.goto!(reader; stage = num_stages, scenario = max_num_scenarios, block = num_blocks+1, segment = max_num_segments)
+    @test_throws EOFError Quiver.goto!(reader; stage = num_stages, scenario = max_num_scenarios, block = num_blocks, segment = max_num_segments+1)
 
     Quiver.close!(reader)
 
@@ -625,10 +625,10 @@ function read_outside_bounds_4(impl)
         end
     end
 
-    @test_throws EOFError Quiver.goto!(reader; stage = num_stages+1, num_scenarios, num_blocks, max_num_segments)
-    @test_throws EOFError Quiver.goto!(reader; num_stages, scenario = num_scenarios+1, num_blocks, max_num_segments)
-    @test_throws EOFError Quiver.goto!(reader; num_stages, num_scenarios, block = num_blocks+1, max_num_segments)
-    @test_throws EOFError Quiver.goto!(reader; num_stages, num_scenarios, num_blocks, segment = max_num_segments+1)
+    @test_throws EOFError Quiver.goto!(reader; stage = num_stages+1, scenario = num_scenarios, block = num_blocks, segment = max_num_segments)
+    @test_throws EOFError Quiver.goto!(reader; stage = num_stages, scenario = num_scenarios+1, block = num_blocks, segment = max_num_segments)
+    @test_throws EOFError Quiver.goto!(reader; stage = num_stages, scenario = num_scenarios, block = num_blocks+1, segment = max_num_segments)
+    @test_throws EOFError Quiver.goto!(reader; stage = num_stages, scenario = num_scenarios, block = num_blocks, segment = max_num_segments+1)
 
     Quiver.close!(reader)
 
@@ -716,6 +716,65 @@ function read_filtering_labels(impl)
             end
         end
     end
+
+    Quiver.close!(reader)
+
+    rm("$filename.$(Quiver.file_extension(impl))")
+    rm("$filename.toml")
+end
+
+function read_write_out_of_order_kwargs(impl)
+    filename = joinpath(@__DIR__, "test_read_write_out_of_order_kwargs")
+
+    initial_date = DateTime(2006, 1, 1)
+    num_stages = 10
+    dates = collect(initial_date:Dates.Month(1):initial_date + Dates.Month(num_stages - 1))
+    num_scenarios = 12
+    num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
+    num_time_series = 3
+    
+    dimensions = ["stage", "scenario", "block"]
+    labels = ["agent_$i" for i in 1:num_time_series]
+    time_dimension = "stage"
+    dimension_size = [num_stages, num_scenarios, maximum(num_blocks_per_stage)]
+
+    writer = Quiver.Writer{impl}(
+        filename;
+        dimensions,
+        labels,
+        time_dimension,
+        dimension_size,
+        initial_date = initial_date
+    )
+
+    for stage in 1:num_stages
+        for scenario in 1:num_scenarios
+            for block in 1:num_blocks_per_stage[stage]
+                data = [stage, scenario, block]
+                Quiver.write!(writer, data; block, stage, scenario)
+            end
+        end
+    end
+    
+    @test_throws ErrorException Quiver.write!(writer, [1, 1, 1]; wrong_name = 1, scenario = 1, block = 1)
+
+    Quiver.close!(writer)
+
+    reader = Quiver.Reader{impl}(filename)
+    for stage in 1:num_stages
+        for scenario in 1:num_scenarios
+            for block in 1:num_blocks_per_stage[stage]
+                if impl == Quiver.csv
+                    Quiver.next_dimension!(reader)
+                else
+                    Quiver.goto!(reader; scenario, block, stage)
+                end
+                @test reader.data == [stage, scenario, block]
+            end
+        end
+    end
+
+    @test_throws ErrorException Quiver.goto!(reader; wrong_name = 1, scenario = 1, block = 1)
 
     Quiver.close!(reader)
 
@@ -845,6 +904,7 @@ function test_read_write_implementations()
             read_outside_bounds_3(impl)
             read_outside_bounds_4(impl)
             read_filtering_labels(impl)
+            read_write_out_of_order_kwargs(impl)
         end
     end
     @testset "Converter" begin

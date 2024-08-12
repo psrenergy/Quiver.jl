@@ -6,9 +6,9 @@ mutable struct Metadata
     # number of dimensions columns in file
     number_of_dimensions::Int
     # names of the dimensions
-    dimensions::Vector{String}
+    dimensions::Vector{Symbol}
     # Inform which dimension represent time
-    time_dimension::String
+    time_dimension::Symbol
     # unit of the time series
     unit::String
     # Maximum index for each dimension
@@ -43,8 +43,8 @@ function Metadata(;
         frequency,
         initial_date,
         length(dimensions),
-        dimensions,
-        time_dimension,
+        Symbol.(dimensions),
+        Symbol(time_dimension),
         unit,
         dimension_size,
         length(labels),
@@ -60,10 +60,10 @@ end
 function to_toml(metadata::Metadata, filename::String)
     dict_metadata = OrderedDict(
         "version" => metadata.version,
-        "dimensions" => metadata.dimensions,
+        "dimensions" => String.(metadata.dimensions),
         "dimension_size" => metadata.dimension_size,
         "initial_date" => Dates.format(metadata.initial_date, "yyyy-mm-dd HH:MM:SS"),
-        "time_dimension" => metadata.time_dimension,
+        "time_dimension" => String(metadata.time_dimension),
         "frequency" => metadata.frequency,
         "unit" => metadata.unit,
         "labels" => metadata.labels,
