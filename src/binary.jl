@@ -159,9 +159,9 @@ function convert(
     metadata = reader.metadata
     writer = Quiver.Writer{to}(
         filename;
-        dimensions = metadata.dimensions,
+        dimensions = String.(metadata.dimensions),
         labels = metadata.labels,
-        time_dimension = metadata.time_dimension,
+        time_dimension = String(metadata.time_dimension),
         dimension_size = metadata.dimension_size,
         initial_date = metadata.initial_date,
     )

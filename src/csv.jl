@@ -105,7 +105,7 @@ function _quiver_next_dimension!(reader::Quiver.Reader{csv})
     end
     (row, state) = reader.reader.next
     for (i, dim) in enumerate(reader.metadata.dimensions)
-        reader.last_dimension_read[i] = row[Symbol(dim)]
+        reader.last_dimension_read[i] = row[dim]
     end
     for (i, ts) in enumerate(reader.metadata.labels)
         reader.all_labels_data_cache[i] = row[Symbol(ts)]
@@ -135,9 +135,9 @@ function convert(
     metadata = reader.metadata
     writer = Quiver.Writer{to}(
         filename;
-        dimensions = metadata.dimensions,
+        dimensions = String.(metadata.dimensions),
         labels = metadata.labels,
-        time_dimension = metadata.time_dimension,
+        time_dimension = String(metadata.time_dimension),
         dimension_size = metadata.dimension_size,
         initial_date = metadata.initial_date,
     )

@@ -53,11 +53,11 @@ mutable struct Reader{I <: Implementation, R}
 end
 
 function _build_last_dimension_read!(reader::Reader; dims...)
-    for (i, dim) in enumerate(dims)
+    for (i, dim) in enumerate(reader.metadata.dimensions)
         if reader.carrousel
-            reader.last_dimension_read[i] = mod1(dim[2], reader.metadata.dimension_size[i])
+            reader.last_dimension_read[i] = mod1(dims[dim], reader.metadata.dimension_size[i])
         else
-            reader.last_dimension_read[i] = dim[2]
+            reader.last_dimension_read[i] = dims[dim]
         end
     end
     return nothing
@@ -71,6 +71,7 @@ function _move_data_from_buffer_cache_to_data!(reader::Reader)
 end
 
 function goto!(reader::Reader; dims...)
+    validate_dimensions(reader.metadata, dims...)
     _build_last_dimension_read!(reader; dims...)
     _quiver_goto!(reader)
     _move_data_from_buffer_cache_to_data!(reader)
