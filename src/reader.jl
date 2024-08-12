@@ -85,7 +85,8 @@ function next_dimension!(reader::Reader)
 end
 
 function max_index(reader::Reader, dimension::String)
-    index = findfirst(isequal(dimension), reader.metadata.dimensions)
+    symbol_dim = Symbol(dimension)
+    index = findfirst(isequal(symbol_dim), reader.metadata.dimensions)
     if index === nothing
         throw(ArgumentError("Dimension $dimension not found in metadata"))
     end
