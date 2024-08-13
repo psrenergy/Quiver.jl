@@ -140,6 +140,7 @@ function convert(
         time_dimension = String(metadata.time_dimension),
         dimension_size = metadata.dimension_size,
         initial_date = metadata.initial_date,
+        unit = metadata.unit,
     )
 
     while reader.reader.next !== nothing

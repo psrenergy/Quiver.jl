@@ -164,6 +164,7 @@ function convert(
         time_dimension = String(metadata.time_dimension),
         dimension_size = metadata.dimension_size,
         initial_date = metadata.initial_date,
+        unit = metadata.unit,
     )
 
     for dims in Iterators.product([1:size for size in reverse(metadata.dimension_size)]...)
