@@ -151,14 +151,17 @@ function _quiver_close!(reader::Quiver.Reader{binary})
 end
 
 function convert(
-    filename::String,
+    filepath::String,
     from::Type{binary},
-    to::Type{impl},
+    to::Type{impl};
+    destination_directory::String = dirname(filepath),
 ) where impl <: Implementation
-    reader = Quiver.Reader{from}(filename)
+    reader = Quiver.Reader{from}(filepath)
     metadata = reader.metadata
+    filename = basename(filepath)
+    destination_path = joinpath(destination_directory, filename)
     writer = Quiver.Writer{to}(
-        filename;
+        destination_path;
         dimensions = String.(metadata.dimensions),
         labels = metadata.labels,
         time_dimension = String(metadata.time_dimension),
