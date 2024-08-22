@@ -9,6 +9,10 @@ const PSRI = PSRClassesInterface
 function build_initial_date(initial_stage::Int, initial_year::Int, stage_type::PSRI.StageType)
     if stage_type == PSRI.STAGE_MONTH
         return DateTime(initial_year, initial_stage, 1)
+    elseif stage_type == PSRI.STAGE_DAY
+        return DateTime(initial_year, 1, 1) + Dates.Day(initial_stage - 1)
+    elseif stage_type == PSRI.STAGE_WEEK
+        return DateTime(initial_year, 1, 1) + Dates.Week(initial_stage - 1)
     else
         error("Convertion of graf file with stage type $stage_type is not supported.")
     end

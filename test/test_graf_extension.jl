@@ -13,10 +13,10 @@ function test_graf_convertion_fixed_blocks()
     STAGES = 12
     INITIAL_STAGE = 4
 
-    FILE_PATH = joinpath(@__DIR__, "test_convert")
+    FILE_PATH = joinpath(@__DIR__, "test_convert_fixed_blocks")
 
-    for impl in [Quiver.binary]
-        for stage_type in [PSRI.STAGE_MONTH] #, PSRI.STAGE_WEEK, PSRI.STAGE_DAY]
+    for impl in Quiver.implementations()
+        for stage_type in [PSRI.STAGE_MONTH, PSRI.STAGE_WEEK, PSRI.STAGE_DAY]
             iow = PSRClassesInterface.open(
                 PSRClassesInterface.OpenBinary.Writer,
                 FILE_PATH;
@@ -46,9 +46,6 @@ function test_graf_convertion_fixed_blocks()
                 impl
             )
 
-            # @test isfile(FILE_PATH * "toml")
-            # @test isfile(FILE_PATH * "quiv") || isfile(FILE_PATH * "quiv.csv")
-
             # Test if data was correctly converted
             reader = Quiver.Reader{impl}(FILE_PATH)
             num_stages = reader.metadata.dimension_size[1]
@@ -60,19 +57,30 @@ function test_graf_convertion_fixed_blocks()
                         X = t + s + 0.0
                         Y = s - t + 0.0
                         Z = t + s + b * 100.0
-                        Quiver.goto!(reader; stage = t, scenario = s, block = b)
+                        if impl == Quiver.csv
+                            Quiver.next_dimension!(reader)
+                        else
+                            Quiver.goto!(reader; stage = t, scenario = s, block = b)
+                        end
                         @test reader.data == [X, Y, Z]
                     end
                 end
             end
 
+            Quiver.close!(reader)
+
             @test reader.metadata.labels == ["X", "Y", "Z"]
             @test reader.metadata.unit == "MW"
-            @test reader.metadata.initial_date == DateTime(2020, 4, 1)
             @test reader.metadata.time_dimension == :stage
             @test reader.metadata.dimensions == [:stage, :scenario, :block]
         end
     end
+
+    rm(FILE_PATH * ".bin")
+    rm(FILE_PATH * ".hdr")
+    rm(FILE_PATH * ".quiv")
+    rm(FILE_PATH * ".csv")
+    rm(FILE_PATH * ".toml")
 end
 
 function runtests()

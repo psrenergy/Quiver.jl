@@ -21,10 +21,10 @@ PSRClassesInterfaceExt = "PSRClassesInterface"
 CSV = "0.10"
 DataFrames = "1"
 Dates = "1"
-julia = "1.8"
 OrderedCollections = "1"
-Tables = "1"
 TOML = "1"
+Tables = "1"
+julia = "1.8"
 
 [extras]
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
