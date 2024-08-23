@@ -1,6 +1,7 @@
 file_extension(::Type{csv}) = "csv"
 
 mutable struct QuiverCSVRowReader
+    io
     iterator
     next
 end
@@ -59,6 +60,9 @@ function Reader{csv}(
     labels_to_read::Vector{String} = String[],
     carrousel::Bool = false,
 )
+    # Note to the future https://discourse.julialang.org/t/closing-files-when-using-csv-rows/29169/2
+    # CSV.jl mmaps the file and keeps it open until the rows object is garbage collected
+    # To avoid this we can follow the recommendation in the link above
 
     filename_with_extensions = add_extension_to_file(filename, file_extension(csv))
     if !isfile(filename_with_extensions)
@@ -67,7 +71,14 @@ function Reader{csv}(
 
     metadata = from_toml("$filename.toml")
 
-    rows = CSV.Rows(filename_with_extensions; types = [fill(Int32, metadata.number_of_dimensions); fill(Float32, metadata.number_of_time_series)])
+    io = open(filename_with_extensions, "r")
+
+    rows = CSV.Rows(
+        io; 
+        types = [fill(Int32, metadata.number_of_dimensions); fill(Float32, metadata.number_of_time_series)],
+        buffer_in_memory = true,
+        reusebuffer = true,
+    )
 
     last_dimension_read = zeros(Int, metadata.number_of_dimensions)
 
@@ -76,7 +87,7 @@ function Reader{csv}(
 
     
     reader = try
-        row_reader = QuiverCSVRowReader(rows, next)
+        row_reader = QuiverCSVRowReader(io, rows, next)
         Quiver.Reader{csv}(
             row_reader,
             filename,
@@ -86,12 +97,7 @@ function Reader{csv}(
             carrousel = carrousel,
         )
     catch e
-        row_reader = nothing
-        rows = nothing
-        next = nothing
-        row = nothing
-        state = nothing
-        GC.gc()
+        close(io)
         rethrow(e)
     end
 
@@ -121,8 +127,7 @@ function _quiver_goto!(reader::Quiver.Reader{csv}, dims...)
 end
 
 function _quiver_close!(reader::Quiver.Reader{csv})
-    reader.reader.iterator = nothing
-    GC.gc()
+    close(reader.reader.io)
     return nothing
 end
 
