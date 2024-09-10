@@ -40,23 +40,27 @@ function merge(
         append!(labels, current_label)
     end
 
+    msg = ""
     if num_dimensions_errors > 0
-        throw(ArgumentError("Dimensions are different."))
+        msg = "$(msg)Dimensions are different.\n"
     end
     if num_dimension_size_errors > 0
-        throw(ArgumentError("Dimension sizes are different."))
+        msg = "$(msg)Dimension sizes are different.\n"
     end
     if num_time_dimension_errors > 0
-        throw(ArgumentError("Time dimensions are different."))
+        msg = "$(msg)Time dimensions are different.\n"
     end
     if num_initial_date_errors > 0
-        throw(ArgumentError("Initial dates are different."))
+        msg = "$(msg)Initial dates are different.\n"
     end
     if num_unit_errors > 0
-        throw(ArgumentError("Units are different."))
+        msg = "$(msg)Units are different.\n"
     end
     if num_label_errors > 0
-        throw(ArgumentError("Labels must not repeat."))
+        msg = "$(msg)Labels must not repeat.\n"
+    end
+    if !isempty(msg)
+        throw(ArgumentError(msg))
     end
     
     writer = Quiver.Writer{impl}(
