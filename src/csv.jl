@@ -116,13 +116,72 @@ function _quiver_next_dimension!(reader::Quiver.Reader{csv})
     for (i, ts) in enumerate(reader.metadata.labels)
         reader.all_labels_data_cache[i] = row[Symbol(ts)]
     end
-    next = iterate(reader.reader.iterator, state)
-    reader.reader.next = next
+    reader.reader.next = iterate(reader.reader.iterator, state)
     return nothing
 end
 
-function _quiver_goto!(reader::Quiver.Reader{csv}, dims...)
-    error("_quiver_goto! not implemented for csv")
+function _calculate_order_in_file(metadata::Quiver.Metadata, dims...)
+    position = 0
+    for i in 1:metadata.number_of_dimensions - 1
+        position += (dims[i] - 1) * performant_product_from_index_i_to_j(
+            metadata.dimension_size, 
+            i + 1, 
+            metadata.number_of_dimensions
+        )
+    end
+    position += (dims[end] - 1)
+    return position
+end
+
+function _current_dimension_in_iterator(reader::Quiver.Reader{csv})
+    if reader.reader.next === nothing
+        error("No more data to read")
+    end
+    (row, state) = reader.reader.next
+    dims = zeros(Int, reader.metadata.number_of_dimensions)
+    for (i, dim) in enumerate(reader.metadata.dimensions)
+        dims[i] = row[dim]
+    end
+    return dims
+end
+
+function _quiver_goto!(reader::Quiver.Reader{csv})
+    if reader.reader.next === nothing
+        error("No more data to read")
+        return nothing
+    end
+
+    dimension_in_iterator = _current_dimension_in_iterator(reader)
+    dimension_to_read = reader.last_dimension_read
+
+    order_of_dimension_in_iterator = _calculate_order_in_file(reader.metadata, dimension_in_iterator...)
+    order_of_dimension_to_read = _calculate_order_in_file(reader.metadata, dimension_to_read...)
+
+    if order_of_dimension_in_iterator > order_of_dimension_to_read
+        error("Cannot read a dimension that is posterior to the current dimension")
+    elseif order_of_dimension_in_iterator == order_of_dimension_to_read
+        (row, state) = reader.reader.next
+        is_first_index = true
+        for (i, dim) in enumerate(reader.metadata.dimensions)
+            reader.last_dimension_read[i] = row[dim]
+            is_first_index = is_first_index && row[dim] == 1
+        end
+        
+        for (i, ts) in enumerate(reader.metadata.labels)
+            if is_first_index
+                reader.all_labels_data_cache[i] = row[Symbol(ts)]
+            else
+                reader.all_labels_data_cache[i] = NaN
+            end
+        end
+        return nothing
+    else
+        while order_of_dimension_in_iterator < order_of_dimension_to_read
+            _quiver_next_dimension!(reader)
+            dimension_in_iterator = _current_dimension_in_iterator(reader)
+            order_of_dimension_in_iterator = _calculate_order_in_file(reader.metadata, dimension_in_iterator...)
+        end
+    end
     return nothing
 end
 

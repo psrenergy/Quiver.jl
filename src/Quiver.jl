@@ -20,4 +20,6 @@ include("reader.jl")
 include("csv.jl")
 include("binary.jl")
 
+include("merge.jl")
+
 end
