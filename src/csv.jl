@@ -174,9 +174,11 @@ function _quiver_goto!(reader::Quiver.Reader{csv})
                 reader.all_labels_data_cache[i] = NaN
             end
         end
+
+        _quiver_next_dimension!(reader)
         return nothing
     else
-        while order_of_dimension_in_iterator < order_of_dimension_to_read
+        while order_of_dimension_in_iterator <= order_of_dimension_to_read
             _quiver_next_dimension!(reader)
             dimension_in_iterator = _current_dimension_in_iterator(reader)
             order_of_dimension_in_iterator = _calculate_order_in_file(reader.metadata, dimension_in_iterator...)
