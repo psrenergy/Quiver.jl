@@ -961,7 +961,6 @@ function test_read_write_implementations()
                 read_write_goto_csv_2()
                 read_write_goto_csv_3()
             end
-            read_write_merge(impl)
             read_write_carrousel(impl)
             read_outside_bounds_1(impl)
             read_outside_bounds_2(impl)

@@ -1,4 +1,3 @@
-
 function merge(
     output_filename::String,
     filenames::Vector{String},
