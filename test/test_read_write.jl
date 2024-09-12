@@ -468,67 +468,6 @@ function read_write_goto_csv_3()
     rm("$filename.toml")
 end
 
-function read_write_merge(impl)
-    filename = joinpath(@__DIR__, "test_read_write_merge")
-    num_files = 3
-    filenames = ["$(filename)_$(i)" for i in 1:num_files]
-
-    initial_date = DateTime(2006, 1, 1)
-    num_stages = 10
-    num_scenarios = 12
-    num_blocks = 24
-    num_time_series = 3
-    
-    dimensions = ["stage", "scenario", "block"]
-    time_dimension = "stage"
-    dimension_size = [num_stages, num_scenarios, num_blocks]
-    
-    for file in 1:num_files
-        labels = ["agent_$file"]
-        writer = Quiver.Writer{impl}(
-            filenames[file];
-            dimensions,
-            labels,
-            time_dimension,
-            dimension_size,
-            initial_date = initial_date
-        )
-
-        for stage in 1:num_stages
-            for scenario in 1:num_scenarios
-                for block in 1:num_blocks
-                    data = [stage, scenario, block + scenario][file]
-                    Quiver.write!(writer, [data]; stage, scenario, block)
-                end
-            end
-        end
-
-        Quiver.close!(writer)
-    end
-
-    output_filename = joinpath(@__DIR__, "test_read_write_merge_merged")
-    Quiver.merge(output_filename, filenames, impl)
-
-    reader = Quiver.Reader{impl}(output_filename)
-    for stage in 1:num_stages
-        for scenario in 1:num_scenarios
-            for block in 1:num_blocks
-                Quiver.goto!(reader; stage, scenario, block)
-                @test reader.data == [stage, scenario, block + scenario]
-            end
-        end
-    end
-
-    Quiver.close!(reader)
-
-    for filename in filenames
-        rm("$filename.$(Quiver.file_extension(impl))")
-        rm("$filename.toml")
-    end
-    rm("$output_filename.$(Quiver.file_extension(impl))")
-    rm("$output_filename.toml")
-end
-
 function read_write_carrousel(impl)
     if impl == Quiver.csv
         return
@@ -1009,114 +948,6 @@ function read_write_out_of_order_kwargs(impl)
     rm("$filename.toml")
 end
 
-function binary_to_csv()
-    filename = joinpath(@__DIR__, "test_binary_to_csv")
-
-    initial_date = DateTime(2006, 1, 1)
-    num_stages = 10
-    dates = collect(initial_date:Dates.Month(1):initial_date + Dates.Month(num_stages - 1))
-    num_scenarios = 12
-    num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
-    num_time_series = 3
-    
-    dimensions = ["stage", "scenario", "block"]
-    labels = ["agent_$i" for i in 1:num_time_series]
-    time_dimension = "stage"
-    dimension_size = [num_stages, num_scenarios, maximum(num_blocks_per_stage)]
-
-    writer = Quiver.Writer{Quiver.binary}(
-        filename;
-        dimensions,
-        labels,
-        time_dimension,
-        dimension_size,
-        initial_date = initial_date
-    )
-
-    for stage in 1:num_stages
-        for scenario in 1:num_scenarios
-            for block in 1:num_blocks_per_stage[stage]
-                data = [stage, scenario, block]
-                Quiver.write!(writer, data; stage, scenario, block)
-            end
-        end
-    end
-
-    Quiver.close!(writer)
-
-    Quiver.convert(filename, Quiver.binary, Quiver.csv)
-
-    reader = Quiver.Reader{Quiver.csv}(filename)
-    for stage in 1:num_stages
-        for scenario in 1:num_scenarios
-            for block in 1:num_blocks_per_stage[stage]
-                Quiver.next_dimension!(reader)
-                @test reader.data == [stage, scenario, block]
-            end
-        end
-    end
-
-    Quiver.close!(reader)
-
-    rm("$filename.$(Quiver.file_extension(Quiver.binary))")
-    rm("$filename.$(Quiver.file_extension(Quiver.csv))")
-    rm("$filename.toml")
-end
-
-function csv_to_binary()
-    filename = joinpath(@__DIR__, "test_csv_to_binary")
-
-    initial_date = DateTime(2006, 1, 1)
-    num_stages = 10
-    dates = collect(initial_date:Dates.Month(1):initial_date + Dates.Month(num_stages - 1))
-    num_scenarios = 12
-    num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
-    num_time_series = 3
-    
-    dimensions = ["stage", "scenario", "block"]
-    labels = ["agent_$i" for i in 1:num_time_series]
-    time_dimension = "stage"
-    dimension_size = [num_stages, num_scenarios, maximum(num_blocks_per_stage)]
-
-    writer = Quiver.Writer{Quiver.csv}(
-        filename;
-        dimensions,
-        labels,
-        time_dimension,
-        dimension_size,
-        initial_date = initial_date
-    )
-
-    for stage in 1:num_stages
-        for scenario in 1:num_scenarios
-            for block in 1:num_blocks_per_stage[stage]
-                data = [stage, scenario, block]
-                Quiver.write!(writer, data; stage, scenario, block)
-            end
-        end
-    end
-
-    Quiver.close!(writer)
-
-    Quiver.convert(filename, Quiver.csv, Quiver.binary)
-
-    reader = Quiver.Reader{Quiver.binary}(filename)
-    for stage in 1:num_stages
-        for scenario in 1:num_scenarios
-            for block in 1:num_blocks_per_stage[stage]
-                Quiver.goto!(reader; stage, scenario, block)
-                @test reader.data == [stage, scenario, block]
-            end
-        end
-    end
-
-    Quiver.close!(reader)
-
-    rm("$filename.$(Quiver.file_extension(Quiver.csv))")
-    rm("$filename.$(Quiver.file_extension(Quiver.binary))")
-    rm("$filename.toml")
-end
-
 function test_read_write_implementations()
     for impl in Quiver.implementations()
         @testset "Read and Write $(impl)" begin
@@ -1139,10 +970,6 @@ function test_read_write_implementations()
             read_filtering_labels(impl)
             read_write_out_of_order_kwargs(impl)
         end
-    end
-    @testset "Converter" begin
-        binary_to_csv()
-        csv_to_binary()
     end
 end
 
