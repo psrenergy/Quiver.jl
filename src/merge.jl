@@ -8,59 +8,41 @@ function merge(
     metadata = first(readers).metadata
     labels = String[]
 
-    num_dimensions_errors = 0
-    num_dimension_size_errors = 0
-    num_time_dimension_errors = 0
-    num_initial_date_errors = 0
-    num_unit_errors = 0
-    num_label_errors = 0
-    
+    iterator = 0
+    msg = ""
     for reader in readers
         if metadata.dimensions != reader.metadata.dimensions
-            num_dimensions_errors += 1
+            iterator += 1
+            msg = "$(msg)[Error $iterator] Dimensions are different. Dimensions in file $(first(readers).filename) is $(metadata.dimensions) and in file $(reader.filename) is $(reader.metadata.dimensions).\n\n"
         end
         if metadata.dimension_size != reader.metadata.dimension_size
-            num_dimension_size_errors += 1
+            iterator += 1
+            msg = "$(msg)[Error $iterator] Dimension sizes are different. Dimension size in file $(first(readers).filename) is $(metadata.dimension_size) and in file $(reader.filename) is $(reader.metadata.dimension_size).\n\n"
         end
         if metadata.time_dimension != reader.metadata.time_dimension
-            num_time_dimension_errors += 1
+            iterator += 1
+            msg = "$(msg)[Error $iterator] Time dimensions are different. Time dimension in file $(first(readers).filename) is $(metadata.time_dimension) and in file $(reader.filename) is $(reader.metadata.time_dimension).\n\n"
         end
         if metadata.initial_date != reader.metadata.initial_date
-            num_initial_date_errors += 1
+            iterator += 1
+            msg = "$(msg)[Error $iterator] Initial dates are different. Initial date in file $(first(readers).filename) is $(metadata.initial_date) and in file $(reader.filename) is $(reader.metadata.initial_date).\n\n"
         end
         if metadata.unit != reader.metadata.unit
-            num_unit_errors += 1
+            iterator += 1
+            msg = "$(msg)[Error $iterator] Units are different. Unit in file $(first(readers).filename) is $(metadata.unit) and in file $(reader.filename) is $(reader.metadata.unit).\n\n"
         end
         current_label = reader.metadata.labels
         for label in current_label
             if label in labels
-                num_label_errors += 1                
+                iterator += 1
+                msg = "$(msg)[Error $iterator] Label $(label) in file $(reader.metadata.dimensions) is already in the merged labels.\n\n"
             end
         end
         append!(labels, current_label)
     end
 
-    msg = ""
-    if num_dimensions_errors > 0
-        msg = "$(msg)Dimensions are different.\n"
-    end
-    if num_dimension_size_errors > 0
-        msg = "$(msg)Dimension sizes are different.\n"
-    end
-    if num_time_dimension_errors > 0
-        msg = "$(msg)Time dimensions are different.\n"
-    end
-    if num_initial_date_errors > 0
-        msg = "$(msg)Initial dates are different.\n"
-    end
-    if num_unit_errors > 0
-        msg = "$(msg)Units are different.\n"
-    end
-    if num_label_errors > 0
-        msg = "$(msg)Labels must not repeat.\n"
-    end
     if !isempty(msg)
-        throw(ArgumentError(msg))
+        throw(ArgumentError("Merge has $iterator errors.\n\n$msg"))
     end
     
     writer = Quiver.Writer{impl}(
