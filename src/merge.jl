@@ -1,7 +1,8 @@
 function merge(
     output_filename::String,
     filenames::Vector{String},
-    impl::Type{<:Implementation},
+    impl::Type{<:Implementation};
+    digits::Union{Int, Nothing} = nothing,
 )
     readers = [Quiver.Reader{impl}(filename) for filename in filenames]
     metadata = first(readers).metadata
@@ -34,7 +35,7 @@ function merge(
         for label in current_label
             if label in labels
                 iterator += 1
-                msg = "$(msg)[Error $iterator] Label $(label) in file $(reader.metadata.dimensions) is already in the merged labels.\n\n"
+                msg = "$(msg)[Error $iterator] Label $(label) in file $(first(readers).filename) is already in the merged labels.\n\n"
             end
         end
         append!(labels, current_label)
@@ -71,7 +72,7 @@ function merge(
         if all(isnan.(data))
             continue
         end
-        Quiver.write!(writer, data; dim_kwargs...)
+        Quiver.write!(writer, round_digits(data, digits); dim_kwargs...)
     end
 
     for reader in readers
