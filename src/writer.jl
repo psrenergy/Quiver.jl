@@ -44,7 +44,7 @@ end
         dimension_size::Vector{Int},
         initial_date::Union{String, DateTime} = "",
         unit::String = "",
-        round_digits::Union{Int, Nothing} = nothing,
+        digits::Union{Int, Nothing} = nothing,
     ) where {I <:Implementation, T, N}
 
 Write a time series file in Quiver format.
@@ -61,7 +61,7 @@ Required arguments:
   - `initial_date::Union{String, DateTime}`: Initial date of the time series. If a string is provided, it should be in the format "yyyy-mm-ddTHH:MM:SS".
 
 Optional arguments:
-  - `round_digits::Union{Int, Nothing}`: Number of digits to round the data. If nothing is provided, the data is not rounded.
+  - `digits::Union{Int, Nothing}`: Number of digits to round the data. If nothing is provided, the data is not rounded.
   - `unit::String`: Unit of the time series data.
 """
 function array_to_file(
@@ -115,5 +115,5 @@ function round_digits(vec::Vector{T}, ::Nothing) where {T}
 end
 
 function round_digits(vec::Vector{T}, digits::Int) where {T}
-    return round.(vec, digits)
+    return round.(vec; digits)
 end
