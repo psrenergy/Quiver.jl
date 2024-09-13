@@ -952,9 +952,9 @@ function read_file_to_array(impl)
     filename = joinpath(@__DIR__, "test_read_file_to_array")
 
     initial_date = DateTime(2006, 1, 1)
-    num_stages = 10
+    num_stages = 4
     dates = collect(initial_date:Dates.Month(1):initial_date + Dates.Month(num_stages - 1))
-    num_scenarios = 12
+    num_scenarios = 3
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     num_time_series = 3
     
@@ -977,10 +977,11 @@ function read_file_to_array(impl)
     Quiver.array_to_file(
         filename,
         data,
-        impl,
-        dimensions, 
-        labels, 
-        time_dimension, 
+        impl;
+        dimensions,
+        labels,
+        time_dimension,
+        dimension_size,
         initial_date
     )
 
@@ -1008,6 +1009,7 @@ function test_read_write_implementations()
             read_outside_bounds_4(impl)
             read_filtering_labels(impl)
             read_write_out_of_order_kwargs(impl)
+            read_file_to_array(impl)
             if impl == Quiver.csv
                 read_write_goto_csv_1()
                 read_write_goto_csv_2()

@@ -101,18 +101,18 @@ end
 """
     file_to_array(
         filename::String,
-        implementation::DataType;
+        implementation::Type{I};
         labels_to_read::Vector{String} = String[],
-    )
+    ) where {I <: Implementation}
 
 Reads a file and returns the data and metadata as a tuple.
 """
 function file_to_array(
     filename::String,
-    implementation::DataType;
+    implementation::Type{I};
     labels_to_read::Vector{String} = String[],
-)
-    reader = Reader{implementation}(
+) where {I <: Implementation}
+    reader = Reader{I}(
         filename;
         labels_to_read,
         carrousel = false, # carrousel does not make sense in this implemetations
@@ -124,7 +124,7 @@ function file_to_array(
     data = zeros(
         Float32,
         length(reader.labels_to_read),
-        dimensions_sizes...,
+        dimension_sizes...,
     )
 
     for dims in Iterators.product([1:size for size in dimension_sizes]...)
