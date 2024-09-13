@@ -948,6 +948,51 @@ function read_write_out_of_order_kwargs(impl)
     rm("$filename.toml")
 end
 
+function read_file_to_array(impl)
+    filename = joinpath(@__DIR__, "test_read_file_to_array")
+
+    initial_date = DateTime(2006, 1, 1)
+    num_stages = 10
+    dates = collect(initial_date:Dates.Month(1):initial_date + Dates.Month(num_stages - 1))
+    num_scenarios = 12
+    num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
+    num_time_series = 3
+    
+    dimensions = ["stage", "scenario", "block"]
+    labels = ["agent_$i" for i in 1:num_time_series]
+    time_dimension = "stage"
+    dimension_size = [num_stages, num_scenarios, maximum(num_blocks_per_stage)]
+
+    data = zeros(num_time_series, maximum(num_blocks_per_stage), num_scenarios, num_stages)
+    for stage in 1:num_stages
+        for scenario in 1:num_scenarios
+            for block in 1:num_blocks_per_stage[stage]
+                for i in 1:num_time_series
+                    data[i, block, scenario, stage] = stage + scenario + block + i
+                end
+            end
+        end
+    end
+
+    Quiver.array_to_file(
+        filename,
+        data,
+        impl,
+        dimensions, 
+        labels, 
+        time_dimension, 
+        initial_date
+    )
+
+    data_read, metadata = Quiver.file_to_array(filename, impl)
+
+    @test size(data) == size(data_read)
+
+    for i in eachindex(data)
+        @test data[i] == data_read[i]
+    end
+end
+
 function test_read_write_implementations()
     for impl in Quiver.implementations()
         @testset "Read and Write $(impl)" begin
@@ -956,11 +1001,6 @@ function test_read_write_implementations()
             read_write_3(impl)
             read_write_4(impl)
             read_write_5(impl)
-            if impl == Quiver.csv
-                read_write_goto_csv_1()
-                read_write_goto_csv_2()
-                read_write_goto_csv_3()
-            end
             read_write_carrousel(impl)
             read_outside_bounds_1(impl)
             read_outside_bounds_2(impl)
@@ -968,6 +1008,11 @@ function test_read_write_implementations()
             read_outside_bounds_4(impl)
             read_filtering_labels(impl)
             read_write_out_of_order_kwargs(impl)
+            if impl == Quiver.csv
+                read_write_goto_csv_1()
+                read_write_goto_csv_2()
+                read_write_goto_csv_3()
+            end
         end
     end
 end

@@ -97,3 +97,43 @@ function close!(reader::Reader)
     _quiver_close!(reader)
     return nothing
 end
+
+"""
+    file_to_array(
+        filename::String,
+        implementation::DataType;
+        labels_to_read::Vector{String} = String[],
+    )
+
+Reads a file and returns the data and metadata as a tuple.
+"""
+function file_to_array(
+    filename::String,
+    implementation::DataType;
+    labels_to_read::Vector{String} = String[],
+)
+    reader = Reader{implementation}(
+        filename;
+        labels_to_read,
+        carrousel = false, # carrousel does not make sense in this implemetations
+    )
+
+    metadata = reader.metadata
+    dimension_names = reverse(metadata.dimensions)
+    dimension_sizes = reverse(metadata.dimension_size)
+    data = zeros(
+        Float32,
+        length(reader.labels_to_read),
+        dimensions_sizes...,
+    )
+
+    for dims in Iterators.product([1:size for size in dimension_sizes]...)
+        dim_kwargs = OrderedDict(Symbol.(dimension_names) .=> dims)
+        Quiver.goto!(reader; dim_kwargs...)
+        data[:, dims...] = reader.data
+    end
+
+    Quiver.close!(reader)
+
+    return data, metadata
+end
