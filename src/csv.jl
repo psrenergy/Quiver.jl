@@ -80,7 +80,8 @@ function Reader{csv}(
         reusebuffer = true,
     )
 
-    last_dimension_read = zeros(Int, metadata.number_of_dimensions)
+    dimension_in_cache = zeros(Int, metadata.number_of_dimensions)
+    dimension_to_read = zeros(Int, metadata.number_of_dimensions)
 
     next = iterate(rows)
     (row, state) = next
@@ -92,7 +93,8 @@ function Reader{csv}(
             row_reader,
             filename,
             metadata,
-            last_dimension_read;
+            dimension_in_cache,
+            dimension_to_read;
             labels_to_read = isempty(labels_to_read) ? metadata.labels : labels_to_read,
             carrousel = carrousel,
         )
@@ -111,7 +113,7 @@ function _quiver_next_dimension!(reader::Quiver.Reader{csv})
     end
     (row, state) = reader.reader.next
     for (i, dim) in enumerate(reader.metadata.dimensions)
-        reader.last_dimension_read[i] = row[dim]
+        reader.dimension_to_read[i] = row[dim]
     end
     for (i, ts) in enumerate(reader.metadata.labels)
         reader.all_labels_data_cache[i] = row[Symbol(ts)]
@@ -153,7 +155,7 @@ function convert(
 
     while reader.reader.next !== nothing
         Quiver.next_dimension!(reader)
-        dim_kwargs = OrderedDict(Symbol.(metadata.dimensions) .=> reader.last_dimension_read)
+        dim_kwargs = OrderedDict(Symbol.(metadata.dimensions) .=> reader.dimension_to_read)
         Quiver.write!(writer, reader.data; dim_kwargs...)
     end
 
