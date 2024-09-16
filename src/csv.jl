@@ -153,38 +153,41 @@ function _quiver_goto!(reader::Quiver.Reader{csv})
         return nothing
     end
 
+    dimension_in_cache = reader.dimension_in_cache
+    dimension_to_read = reader.dimension_to_read
     dimension_in_iterator = _current_dimension_in_iterator(reader)
-    dimension_to_read = reader.last_dimension_read
 
-    order_of_dimension_in_iterator = _calculate_order_in_file(reader.metadata, dimension_in_iterator...)
-    order_of_dimension_to_read = _calculate_order_in_file(reader.metadata, dimension_to_read...)
-
-    if order_of_dimension_in_iterator > order_of_dimension_to_read
-        error("Cannot read a dimension that is posterior to the current dimension")
-    elseif order_of_dimension_in_iterator == order_of_dimension_to_read
+    if dimension_to_read == reader.metadata.dimension_size
         (row, state) = reader.reader.next
-        is_first_index = true
         for (i, dim) in enumerate(reader.metadata.dimensions)
-            reader.last_dimension_read[i] = row[dim]
-            is_first_index = is_first_index && row[dim] == 1
+            reader.dimension_to_read[i] = row[dim]
         end
-        
         for (i, ts) in enumerate(reader.metadata.labels)
-            if is_first_index
-                reader.all_labels_data_cache[i] = row[Symbol(ts)]
-            else
+            reader.all_labels_data_cache[i] = row[Symbol(ts)]
+        end
+        return nothing
+    end
+
+    order_of_dimension_in_cache = _calculate_order_in_file(reader.metadata, dimension_in_cache...)
+    order_of_dimension_to_read = _calculate_order_in_file(reader.metadata, dimension_to_read...)
+    order_of_dimension_in_iterator = _calculate_order_in_file(reader.metadata, dimension_in_iterator...)
+
+    if order_of_dimension_in_cache > order_of_dimension_to_read
+        error("Cannot read a dimension that is prior to the last dimension read")
+    elseif order_of_dimension_in_cache < order_of_dimension_to_read
+        if order_of_dimension_in_iterator > order_of_dimension_to_read
+            for (i, ts) in enumerate(reader.metadata.labels)
                 reader.all_labels_data_cache[i] = NaN
             end
+        else
+            while order_of_dimension_in_iterator <= order_of_dimension_to_read
+                _quiver_next_dimension!(reader)
+                dimension_in_iterator = _current_dimension_in_iterator(reader)
+                order_of_dimension_in_iterator = _calculate_order_in_file(reader.metadata, dimension_in_iterator...)
+            end
         end
-
-        _quiver_next_dimension!(reader)
-        return nothing
     else
-        while order_of_dimension_in_iterator <= order_of_dimension_to_read
-            _quiver_next_dimension!(reader)
-            dimension_in_iterator = _current_dimension_in_iterator(reader)
-            order_of_dimension_in_iterator = _calculate_order_in_file(reader.metadata, dimension_in_iterator...)
-        end
+        return nothing
     end
     return nothing
 end

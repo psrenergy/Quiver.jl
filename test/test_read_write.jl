@@ -448,9 +448,6 @@ function read_write_goto_csv_3()
             for block in 1:num_blocks
                 for segment in 1:num_segments_per_block_scenario[block, scenario]
                     data = [stage, scenario, block + segment]
-                    if stage == scenario == block == segment == 1
-                        continue
-                    end
                     Quiver.write!(writer, data; stage, scenario, block, segment)
                 end
             end
@@ -460,7 +457,132 @@ function read_write_goto_csv_3()
     Quiver.close!(writer)
 
     reader = Quiver.Reader{Quiver.csv}(filename)
-    @test_throws ErrorException Quiver.goto!(reader; stage = 1, scenario = 1, block = 1, segment = 1)
+    for stage in 1:num_stages
+        for scenario in 1:num_scenarios
+            for block in 1:num_blocks
+                for segment in 1:max_num_segments
+                    Quiver.goto!(reader; stage, scenario, block, segment)
+                    if all(isnan.(reader.data))
+                        continue
+                    end
+                    @test reader.data == [stage, scenario, block + segment]
+                end
+            end
+        end
+    end
+
+    Quiver.close!(reader)
+
+    rm("$filename.$(Quiver.file_extension(Quiver.csv))")
+    rm("$filename.toml")
+end
+
+function read_write_goto_csv_4()
+    filename = joinpath(@__DIR__, "test_read_goto_csv_4")
+
+    initial_date = DateTime(2006, 1, 1)
+    num_stages = 10
+    num_scenarios = 12
+    num_blocks = 24
+    num_segments_per_block_scenario = [s + b for b in 1:num_blocks, s in 1:num_scenarios]
+    max_num_segments = maximum(num_segments_per_block_scenario)
+    num_time_series = 3
+    
+    dimensions = ["stage", "scenario", "block", "segment"]
+    labels = ["agent_$i" for i in 1:num_time_series]
+    time_dimension = "stage"
+    dimension_size = [num_stages, num_scenarios, num_blocks, max_num_segments]
+
+    writer = Quiver.Writer{Quiver.csv}(
+        filename;
+        dimensions,
+        labels,
+        time_dimension,
+        dimension_size,
+        initial_date = initial_date
+    )
+
+    for stage in 1:num_stages
+        for scenario in 1:num_scenarios
+            for block in 1:num_blocks
+                for segment in 1:num_segments_per_block_scenario[block, scenario]
+                    data = [stage, scenario, block + segment]
+                    Quiver.write!(writer, data; stage, scenario, block, segment)
+                end
+            end
+        end
+    end
+
+    Quiver.close!(writer)
+
+    reader = Quiver.Reader{Quiver.csv}(filename)
+    for stage in 1:num_stages
+        for scenario in 1:num_scenarios
+            for block in 1:num_blocks
+                for segment in 1:max_num_segments
+                    Quiver.goto!(reader; stage, scenario, block, segment)
+                    if iseven(scenario)
+                        continue
+                    end
+                    if all(isnan.(reader.data))
+                        continue
+                    end
+                    @test reader.data == [stage, scenario, block + segment]
+                end
+            end
+        end
+    end
+
+    Quiver.close!(reader)
+
+    rm("$filename.$(Quiver.file_extension(Quiver.csv))")
+    rm("$filename.toml")
+end
+
+function read_write_goto_csv_5()
+    filename = joinpath(@__DIR__, "test_read_goto_csv_5")
+
+    initial_date = DateTime(2006, 1, 1)
+    num_stages = 1
+    num_scenarios = 1
+    num_blocks = 1
+    num_segments_per_block_scenario = [s + b for b in 1:num_blocks, s in 1:num_scenarios]
+    max_num_segments = maximum(num_segments_per_block_scenario)
+    num_time_series = 3
+    
+    dimensions = ["stage", "scenario", "block", "segment"]
+    labels = ["agent_$i" for i in 1:num_time_series]
+    time_dimension = "stage"
+    dimension_size = [num_stages, num_scenarios, num_blocks, max_num_segments]
+
+    writer = Quiver.Writer{Quiver.csv}(
+        filename;
+        dimensions,
+        labels,
+        time_dimension,
+        dimension_size,
+        initial_date = initial_date
+    )
+
+    for stage in 1:num_stages
+        for scenario in 1:num_scenarios
+            for block in 1:num_blocks
+                for segment in 1:num_segments_per_block_scenario[block, scenario]
+                    data = [stage, scenario, block + segment]
+                    Quiver.write!(writer, data; stage, scenario, block, segment)
+                end
+            end
+        end
+    end
+
+    Quiver.close!(writer)
+
+    reader = Quiver.Reader{Quiver.csv}(filename)
+    stage = scenario = block = segment = 1
+    Quiver.goto!(reader; stage, scenario, block, segment)
+    @test reader.data == [stage, scenario, block + segment]
+    Quiver.goto!(reader; stage, scenario, block, segment)
+    @test reader.data == [stage, scenario, block + segment]
 
     Quiver.close!(reader)
 
@@ -1014,6 +1136,8 @@ function test_read_write_implementations()
                 read_write_goto_csv_1()
                 read_write_goto_csv_2()
                 read_write_goto_csv_3()
+                read_write_goto_csv_4()
+                read_write_goto_csv_5()
             end
         end
     end

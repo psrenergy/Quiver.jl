@@ -67,7 +67,9 @@ function _build_dimension_to_read!(reader::Reader; dims...)
 end
 
 function _build_dimension_in_cache!(reader::Reader)
-    reader.dimension_in_cache = reader.dimension_to_read
+    for i in 1:reader.metadata.number_of_dimensions
+        reader.dimension_in_cache[i] = reader.dimension_to_read[i]
+    end
     return nothing
 end
 
