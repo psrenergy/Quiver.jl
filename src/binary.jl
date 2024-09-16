@@ -143,7 +143,7 @@ function _quiver_goto!(reader::Quiver.Reader{binary})
 end
 
 function _quiver_next_dimension!(reader::Quiver.Reader{binary})
-    error("Not implemented")
+    error("`next_dimension!`: not implemented for the `binary` implementaiton, use `goto` instead.")
     return nothing
 end
 
