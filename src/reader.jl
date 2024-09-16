@@ -2,7 +2,8 @@ mutable struct Reader{I <: Implementation, R}
     reader::R
     filename::String
     metadata::Metadata
-    last_dimension_read::Vector{Int}
+    dimension_in_cache::Vector{Int}
+    dimension_to_read::Vector{Int}
     all_labels_data_cache::Vector{Float32}
     data::Vector{Float32}
     labels_to_read::Vector{String}
@@ -12,7 +13,8 @@ mutable struct Reader{I <: Implementation, R}
         reader::R, 
         filename::String, 
         metadata::Metadata,
-        last_dimension_read::Vector{Int};
+        dimension_in_cache::Vector{Int},
+        dimension_to_read::Vector{Int};
         labels_to_read::Vector{String} = metadata.labels,
         carrousel::Bool = false,
     ) where {I, R}
@@ -40,7 +42,8 @@ mutable struct Reader{I <: Implementation, R}
             reader, 
             filename, 
             metadata, 
-            last_dimension_read, 
+            dimension_in_cache,
+            dimension_to_read, 
             all_labels_data_cache,
             data,
             labels_to_read,
@@ -52,13 +55,20 @@ mutable struct Reader{I <: Implementation, R}
     end
 end
 
-function _build_last_dimension_read!(reader::Reader; dims...)
+function _build_dimension_to_read!(reader::Reader; dims...)
     for (i, dim) in enumerate(reader.metadata.dimensions)
         if reader.carrousel
-            reader.last_dimension_read[i] = mod1(dims[dim], reader.metadata.dimension_size[i])
+            reader.dimension_to_read[i] = mod1(dims[dim], reader.metadata.dimension_size[i])
         else
-            reader.last_dimension_read[i] = dims[dim]
+            reader.dimension_to_read[i] = dims[dim]
         end
+    end
+    return nothing
+end
+
+function _build_dimension_in_cache!(reader::Reader)
+    for i in 1:reader.metadata.number_of_dimensions
+        reader.dimension_in_cache[i] = reader.dimension_to_read[i]
     end
     return nothing
 end
@@ -72,8 +82,9 @@ end
 
 function goto!(reader::Reader; dims...)
     validate_dimensions(reader.metadata, dims...)
-    _build_last_dimension_read!(reader; dims...)
+    _build_dimension_to_read!(reader; dims...)
     _quiver_goto!(reader)
+    _build_dimension_in_cache!(reader)
     _move_data_from_buffer_cache_to_data!(reader)
     return reader.data
 end

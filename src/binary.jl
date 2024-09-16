@@ -107,14 +107,16 @@ function Reader{binary}(
 
     io = open(filename_with_extensions, "r")
 
-    last_dimension_read = zeros(Int, metadata.number_of_dimensions)
+    dimension_in_cache = zeros(Int, metadata.number_of_dimensions)
+    dimension_to_read = zeros(Int, metadata.number_of_dimensions)
 
     reader = try 
         Quiver.Reader{binary}(
             io,
             filename,
             metadata,
-            last_dimension_read;
+            dimension_in_cache,
+            dimension_to_read;
             labels_to_read = isempty(labels_to_read) ? metadata.labels : labels_to_read,
             carrousel = carrousel,
         )
@@ -127,7 +129,7 @@ function Reader{binary}(
 end
 
 function _quiver_goto!(reader::Quiver.Reader{binary})
-    next_pos = _calculate_position_in_file(reader.metadata, reader.last_dimension_read...)
+    next_pos = _calculate_position_in_file(reader.metadata, reader.dimension_to_read...)
     # Check if we need to seek a new position or write directly in the io
     # This is absolutely necessary for performance in the binary operation
     current_pos = position(reader.reader)
