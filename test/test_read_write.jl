@@ -1115,6 +1115,9 @@ function read_file_to_array(impl)
     for i in eachindex(data)
         @test data[i] == data_read[i]
     end
+    
+    rm("$filename.$(Quiver.file_extension(impl))")
+    rm("$filename.toml")
 end
 
 function read_file_to_df(impl)
@@ -1164,6 +1167,9 @@ function read_file_to_df(impl)
     @test DataFrames.metadata(df, "time_dimension") == "stage"
     @test DataFrames.metadata(df, "dimensions") == ["stage", "scenario", "block"]
     @test DataFrames.metadata(df, "labels") == ["agent_1", "agent_2", "agent_3"]
+
+    rm("$filename.$(Quiver.file_extension(impl))")
+    rm("$filename.toml")
 end
 
 function test_read_write_implementations()

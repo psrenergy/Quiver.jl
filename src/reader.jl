@@ -80,6 +80,14 @@ function _move_data_from_buffer_cache_to_data!(reader::Reader)
     return nothing
 end
 
+"""
+    goto!(
+        reader::Reader;
+        dims...
+    )
+
+Move the reader to the specified dimensions and return the data.
+"""
 function goto!(reader::Reader; dims...)
     validate_dimensions(reader.metadata, dims...)
     _build_dimension_to_read!(reader; dims...)
@@ -89,12 +97,22 @@ function goto!(reader::Reader; dims...)
     return reader.data
 end
 
+"""
+    next_dimension!(reader::Reader)
+
+Move the reader to the next dimension and return the data.
+"""
 function next_dimension!(reader::Reader)
     _quiver_next_dimension!(reader)
     _move_data_from_buffer_cache_to_data!(reader)
     return reader.data
 end
 
+"""
+    max_index(reader::Reader, dimension::String)
+
+Return the maximum index of the specified dimension.
+"""
 function max_index(reader::Reader, dimension::String)
     symbol_dim = Symbol(dimension)
     index = findfirst(isequal(symbol_dim), reader.metadata.dimensions)
@@ -104,6 +122,11 @@ function max_index(reader::Reader, dimension::String)
     return reader.metadata.dimension_size[index]
 end
 
+"""
+    close!(reader::Reader)
+
+Close the reader.
+"""
 function close!(reader::Reader)
     _quiver_close!(reader)
     return nothing
@@ -148,6 +171,15 @@ function file_to_array(
     return data, metadata
 end
 
+"""
+    file_to_df(
+        filename::String,
+        implementation::Type{I};
+        labels_to_read::Vector{String} = String[],
+    ) where {I <: Implementation}
+
+Reads a file and returns the data and metadata as a DataFrame.
+"""
 function file_to_df(
     filename::String,
     implementation::Type{I};
