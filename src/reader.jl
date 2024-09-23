@@ -126,7 +126,6 @@ function file_to_array(
     reader = Reader{I}(
         filename;
         labels_to_read,
-        carrousel = false, # carrousel does not make sense in this implemetations
     )
 
     metadata = reader.metadata
@@ -147,4 +146,49 @@ function file_to_array(
     Quiver.close!(reader)
 
     return data, metadata
+end
+
+function file_to_df(
+    filename::String,
+    implementation::Type{I};
+    labels_to_read::Vector{String} = String[],
+) where {I <: Implementation}
+    reader = Reader{I}(
+        filename;
+        labels_to_read,
+    )
+
+    metadata = reader.metadata
+    dimension_names = reverse(metadata.dimensions)
+    dimension_sizes = reverse(metadata.dimension_size)
+
+    df = DataFrame()
+
+    # Add all columns to the DataFrame
+    for dim in metadata.dimensions
+        DataFrames.insertcols!(df, dim => Int[])
+    end
+    for label in reader.labels_to_read
+        DataFrames.insertcols!(df, label => Float32[])
+    end
+
+    for dims in Iterators.product([1:size for size in dimension_sizes]...)
+        dim_kwargs = OrderedDict(Symbol.(dimension_names) .=> dims)
+        Quiver.goto!(reader; dim_kwargs...)
+        if all(isnan.(reader.data))
+            continue
+        end
+        # Construct the data frame row by row
+        push!(df, [reverse(dims)...; reader.data...])
+    end
+
+    # Add metadata to DataFrame
+    orderec_dict_metadata = to_ordered_dict(metadata)
+    for (k, v) in orderec_dict_metadata
+        DataFrames.metadata!(df, k, v)
+    end
+
+    Quiver.close!(reader)
+
+    return df
 end
