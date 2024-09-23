@@ -2,6 +2,7 @@ module TestWriter
 
 using Test
 using Quiver
+using DataFrames
 using Dates
 
 function read_write_1(impl)
@@ -1114,6 +1115,61 @@ function read_file_to_array(impl)
     for i in eachindex(data)
         @test data[i] == data_read[i]
     end
+    
+    rm("$filename.$(Quiver.file_extension(impl))")
+    rm("$filename.toml")
+end
+
+function read_file_to_df(impl)
+    filename = joinpath(@__DIR__, "test_read_file_to_df")
+
+    initial_date = DateTime(2006, 1, 1)
+    num_stages = 4
+    dates = collect(initial_date:Dates.Month(1):initial_date + Dates.Month(num_stages - 1))
+    num_scenarios = 3
+    num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
+    num_time_series = 3
+    
+    dimensions = ["stage", "scenario", "block"]
+    labels = ["agent_$i" for i in 1:num_time_series]
+    time_dimension = "stage"
+    dimension_size = [num_stages, num_scenarios, maximum(num_blocks_per_stage)]
+
+    data = zeros(num_time_series, maximum(num_blocks_per_stage), num_scenarios, num_stages)
+    for stage in 1:num_stages
+        for scenario in 1:num_scenarios
+            for block in 1:num_blocks_per_stage[stage]
+                for i in 1:num_time_series
+                    data[i, block, scenario, stage] = stage + scenario + block + i
+                end
+            end
+        end
+    end
+
+    Quiver.array_to_file(
+        filename,
+        data,
+        impl;
+        dimensions,
+        labels,
+        time_dimension,
+        dimension_size,
+        initial_date,
+        unit = " - "
+    )
+
+    df = Quiver.file_to_df(filename, impl)
+
+    # This might be innacurate, if it fails these tests can be removed
+    @test size(df, 1) == 8928
+    @test size(df, 2) == 6
+
+    @test DataFrames.metadata(df, "time_dimension") == "stage"
+    @test DataFrames.metadata(df, "dimensions") == ["stage", "scenario", "block"]
+    @test DataFrames.metadata(df, "labels") == ["agent_1", "agent_2", "agent_3"]
+
+    rm("$filename.$(Quiver.file_extension(impl))")
+    rm("$filename.toml")
 end
 
 function test_read_write_implementations()
@@ -1132,6 +1188,7 @@ function test_read_write_implementations()
             read_filtering_labels(impl)
             read_write_out_of_order_kwargs(impl)
             read_file_to_array(impl)
+            read_file_to_df(impl)
             if impl == Quiver.csv
                 read_write_goto_csv_1()
                 read_write_goto_csv_2()

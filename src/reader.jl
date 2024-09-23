@@ -80,6 +80,14 @@ function _move_data_from_buffer_cache_to_data!(reader::Reader)
     return nothing
 end
 
+"""
+    goto!(
+        reader::Reader;
+        dims...
+    )
+
+Move the reader to the specified dimensions and return the data.
+"""
 function goto!(reader::Reader; dims...)
     validate_dimensions(reader.metadata, dims...)
     _build_dimension_to_read!(reader; dims...)
@@ -89,12 +97,22 @@ function goto!(reader::Reader; dims...)
     return reader.data
 end
 
+"""
+    next_dimension!(reader::Reader)
+
+Move the reader to the next dimension and return the data.
+"""
 function next_dimension!(reader::Reader)
     _quiver_next_dimension!(reader)
     _move_data_from_buffer_cache_to_data!(reader)
     return reader.data
 end
 
+"""
+    max_index(reader::Reader, dimension::String)
+
+Return the maximum index of the specified dimension.
+"""
 function max_index(reader::Reader, dimension::String)
     symbol_dim = Symbol(dimension)
     index = findfirst(isequal(symbol_dim), reader.metadata.dimensions)
@@ -104,6 +122,11 @@ function max_index(reader::Reader, dimension::String)
     return reader.metadata.dimension_size[index]
 end
 
+"""
+    close!(reader::Reader)
+
+Close the reader.
+"""
 function close!(reader::Reader)
     _quiver_close!(reader)
     return nothing
@@ -126,7 +149,6 @@ function file_to_array(
     reader = Reader{I}(
         filename;
         labels_to_read,
-        carrousel = false, # carrousel does not make sense in this implemetations
     )
 
     metadata = reader.metadata
@@ -147,4 +169,58 @@ function file_to_array(
     Quiver.close!(reader)
 
     return data, metadata
+end
+
+"""
+    file_to_df(
+        filename::String,
+        implementation::Type{I};
+        labels_to_read::Vector{String} = String[],
+    ) where {I <: Implementation}
+
+Reads a file and returns the data and metadata as a DataFrame.
+"""
+function file_to_df(
+    filename::String,
+    implementation::Type{I};
+    labels_to_read::Vector{String} = String[],
+) where {I <: Implementation}
+    reader = Reader{I}(
+        filename;
+        labels_to_read,
+    )
+
+    metadata = reader.metadata
+    dimension_names = reverse(metadata.dimensions)
+    dimension_sizes = reverse(metadata.dimension_size)
+
+    df = DataFrame()
+
+    # Add all columns to the DataFrame
+    for dim in metadata.dimensions
+        DataFrames.insertcols!(df, dim => Int[])
+    end
+    for label in reader.labels_to_read
+        DataFrames.insertcols!(df, label => Float32[])
+    end
+
+    for dims in Iterators.product([1:size for size in dimension_sizes]...)
+        dim_kwargs = OrderedDict(Symbol.(dimension_names) .=> dims)
+        Quiver.goto!(reader; dim_kwargs...)
+        if all(isnan.(reader.data))
+            continue
+        end
+        # Construct the data frame row by row
+        push!(df, [reverse(dims)...; reader.data...])
+    end
+
+    # Add metadata to DataFrame
+    orderec_dict_metadata = to_ordered_dict(metadata)
+    for (k, v) in orderec_dict_metadata
+        DataFrames.metadata!(df, k, v)
+    end
+
+    Quiver.close!(reader)
+
+    return df
 end

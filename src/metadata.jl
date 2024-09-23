@@ -57,8 +57,8 @@ function Metadata(;
     return metadata
 end
 
-function to_toml(metadata::Metadata, filename::String)
-    dict_metadata = OrderedDict(
+function to_ordered_dict(metadata::Metadata)
+    return OrderedDict(
         "version" => metadata.version,
         "dimensions" => String.(metadata.dimensions),
         "dimension_size" => metadata.dimension_size,
@@ -68,6 +68,10 @@ function to_toml(metadata::Metadata, filename::String)
         "unit" => metadata.unit,
         "labels" => metadata.labels,
     )
+end
+
+function to_toml(metadata::Metadata, filename::String)
+    dict_metadata = to_ordered_dict(metadata)
     open(filename, "w") do io
         TOML.print(io, dict_metadata)
     end
