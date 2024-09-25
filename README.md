@@ -1,4 +1,4 @@
-# PSRClassesInterface.jl
+# Quiver.jl
 
 | **Build Status** | **Coverage** | **Documentation** |
 |:-----------------:|:-----------------:|:-----------------:|
