@@ -8,7 +8,7 @@ Pkg.instantiate()
 using Documenter
 
 makedocs(;
-    modules = [Quiver],
+    modules = [GNoMo],
     doctest = false,
     clean = true,
     format = Documenter.HTML(;
@@ -17,9 +17,11 @@ makedocs(;
         # Prevents the edit on github button from showing up
         edit_link = nothing,
         footer = nothing,
-        disable_git = true,
-        # repolink = nothing,
+        # disable_git = true,
+        repolink = nothing,
     ),
+    sitename = "GNoMo.jl",
+    warnonly = true,
     pages = [
         "Home" => [
             "Overview" => "home.md",
