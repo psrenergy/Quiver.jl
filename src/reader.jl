@@ -1,3 +1,26 @@
+"""
+    Reader{I <: Implementation, R}(reader::R, filename::String, metadata::Metadata,
+                                   dimension_in_cache::Vector{Int}, dimension_to_read::Vector{Int};
+                                   labels_to_read::Vector{String} = metadata.labels,
+                                   carrousel::Bool = false)
+
+Creates a new instance of `Reader`, which is used to manage time series files.
+The `Reader` manages the dimensions and labels of the file and allows data access via functions like `goto!` and `next_dimension!`.
+
+# Parameters
+
+  - `reader::R`: The reader responsible for reading the file (can be for binary or CSV formats).
+  - `filename::String`: The name of the file containing the time series data.
+  - `metadata::Metadata`: Metadata describing the file’s dimensions and labels.
+  - `dimension_in_cache::Vector{Int}`: Vector of dimensions kept in cache.
+  - `dimension_to_read::Vector{Int}`: Specific dimensions to be read.
+  - `labels_to_read::Vector{String}`: Labels to be read from the file (optional).
+  - `carrousel::Bool`: Defines whether the reader uses a carousel to access dimensions (optional).
+
+# Returns
+
+  - A new `Reader` object.
+"""
 mutable struct Reader{I <: Implementation, R}
     reader::R
     filename::String
@@ -10,8 +33,8 @@ mutable struct Reader{I <: Implementation, R}
     indices_of_labels_to_read::Vector{Int}
     carrousel::Bool
     function Reader{I}(
-        reader::R, 
-        filename::String, 
+        reader::R,
+        filename::String,
         metadata::Metadata,
         dimension_in_cache::Vector{Int},
         dimension_to_read::Vector{Int};
@@ -39,11 +62,11 @@ mutable struct Reader{I <: Implementation, R}
         data = fill(NaN32, length(labels_to_read))
 
         reader = new{I, R}(
-            reader, 
-            filename, 
-            metadata, 
+            reader,
+            filename,
+            metadata,
             dimension_in_cache,
-            dimension_to_read, 
+            dimension_to_read,
             all_labels_data_cache,
             data,
             labels_to_read,
@@ -81,12 +104,28 @@ function _move_data_from_buffer_cache_to_data!(reader::Reader)
 end
 
 """
-    goto!(
-        reader::Reader;
-        dims...
-    )
+    goto!(reader::Reader; dims...)
 
-Move the reader to the specified dimensions and return the data.
+This function moves the reader to the specified dimensions and returns the corresponding data. It updates the internal cache and retrieves the necessary time series values.
+
+For **binary files**, `goto!` allows random access to any part of the time series, meaning you can jump between stages, scenarios, and blocks in any order. This provides greater flexibility for accessing specific points in the data.
+
+For **CSV files**, `goto!` works differently. It only supports forward sequential access, meaning that while you can still navigate through stages, scenarios, and blocks, you cannot randomly jump to previous positions. The function moves forward through the file, reading data sequentially.
+
+# Parameters
+
+  - `reader::Reader`: The time series reader.
+  - `dims...`: Specific dimensions to move the reader to.
+
+# Returns
+
+  - The data at the specified dimensions.
+
+# Simple Example:
+
+```julia
+data = goto!(reader, stage = 1, scenario = 2, block = 5)
+```
 """
 function goto!(reader::Reader; dims...)
     validate_dimensions(reader.metadata, dims...)
@@ -100,7 +139,21 @@ end
 """
     next_dimension!(reader::Reader)
 
-Move the reader to the next dimension and return the data.
+This function advances the reader to the next dimension and returns the updated data. It's useful when iterating over multiple dimensions sequentially. This function is especially useful for **CSV files**, where random access is not available. It allows for easy iteration through multiple dimensions in a forward-only manner.
+
+# Parameters
+
+  - `reader::Reader`: The time series reader.
+
+# Returns
+
+  - The data in the next dimension.
+
+# Simples Example:
+
+```julia
+next_data = next_dimension!(reader)
+```
 """
 function next_dimension!(reader::Reader)
     _quiver_next_dimension!(reader)
@@ -111,7 +164,16 @@ end
 """
     max_index(reader::Reader, dimension::String)
 
-Return the maximum index of the specified dimension.
+Returns the maximum index of the specified dimension.
+
+# Parameters
+
+  - `reader::Reader`: The time series reader.
+  - `dimension::String`: The name of the dimension to find the index for.
+
+# Returns
+
+  - The maximum index of the specified dimension.
 """
 function max_index(reader::Reader, dimension::String)
     symbol_dim = Symbol(dimension)
@@ -125,7 +187,21 @@ end
 """
     close!(reader::Reader)
 
-Close the reader.
+Closes the reader and releases associated resources.
+
+# Parameters
+
+  - `reader::Reader`: The time series reader to close.
+
+# Returns
+
+  - `nothing`.
+
+# Simple Example:
+
+```julia
+close!(reader)
+```
 """
 function close!(reader::Reader)
     _quiver_close!(reader)
@@ -133,13 +209,19 @@ function close!(reader::Reader)
 end
 
 """
-    file_to_array(
-        filename::String,
-        implementation::Type{I};
-        labels_to_read::Vector{String} = String[],
-    ) where {I <: Implementation}
+    file_to_array(filename::String, implementation::Type{I}; labels_to_read::Vector{String} = String[]) where {I <: Implementation}
 
 Reads a file and returns the data and metadata as a tuple.
+
+# Parameters
+
+  - `filename::String`: The name of the file to be read.
+  - `implementation::Type{I}`: The implementation type for reading the file (binary or CSV).
+  - `labels_to_read::Vector{String}`: Specific labels to read (optional).
+
+# Returns
+
+  - A tuple containing the read data and associated metadata.
 """
 function file_to_array(
     filename::String,
@@ -172,13 +254,19 @@ function file_to_array(
 end
 
 """
-    file_to_df(
-        filename::String,
-        implementation::Type{I};
-        labels_to_read::Vector{String} = String[],
-    ) where {I <: Implementation}
+    file_to_df(filename::String, implementation::Type{I}; labels_to_read::Vector{String} = String[]) where {I <: Implementation}
 
 Reads a file and returns the data and metadata as a DataFrame.
+
+# Parameters
+
+  - `filename::String`: The name of the file to be read.
+  - `implementation::Type{I}`: The implementation type for reading the file (binary or CSV).
+  - `labels_to_read::Vector{String}`: Specific labels to read (optional).
+
+# Returns
+
+  - A DataFrame with the read data and metadata.
 """
 function file_to_df(
     filename::String,
