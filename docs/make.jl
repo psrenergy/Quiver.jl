@@ -15,10 +15,10 @@ makedocs(;
         mathengine = Documenter.MathJax2(),
         prettyurls = false,
         # Prevents the edit on github button from showing up
-        edit_link = nothing,
-        footer = nothing,
+        # edit_link = nothing,
+        # footer = nothing,
         # disable_git = true,
-        repolink = nothing,
+        # repolink = nothing,
     ),
     sitename = "GNoMo.jl",
     warnonly = true,
