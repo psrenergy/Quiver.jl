@@ -6,7 +6,7 @@ To write time series data in Quiver, you can leverage different implementations,
   - **CSV Format**: This format is human-readable and easy to inspect manually, storing data in a plain-text, tabular form. It is ideal when ease of access and manual editing are priorities.
 
   - **Binary Format**: Optimized for large-scale data, the binary format provides significantly better performance, making it suitable for scenarios where efficiency and speed are critical.
-  
+
 #### Writer Fields:
 
   - **filename**: The path where the time series data will be written.
@@ -179,7 +179,6 @@ Required arguments:
   - `initial_date::Union{String, DateTime}`: Initial date of the time series. If a string is provided, it should be in the format "yyyy-mm-ddTHH:MM:SS".
 
 Optional arguments:
-
   - `digits::Union{Int, Nothing}`: Number of digits to round the data. If nothing is provided, the data is not rounded.
   - `unit::String`: Unit of the time series data.
 """

@@ -28,6 +28,14 @@ Quiver.goto!
 Quiver.next_dimension!
 ```
 
+```@docs
+Quiver.file_to_array
+```
+
+```@docs
+Quiver.file_to_df
+```
+
 #### Closing the Reader:
 
 Always close the reader when done to release resources.
