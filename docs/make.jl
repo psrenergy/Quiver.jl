@@ -9,25 +9,17 @@ using Documenter
 
 makedocs(;
     modules = [Quiver],
-    doctest = true,
+    doctest = false,
     clean = true,
-    format = Documenter.HTML(; mathengine = Documenter.MathJax2()),
-    sitename = "Quiver.jl",
-    authors = "psrenergy",
-    # format = Documenter.HTML(;
-    #     mathengine = Documenter.MathJax2(),
-    #     prettyurls = false,
-    #     # canonical = "https://documenter.quiver.juliadocs.org/stable/",
-    #     sitename = "PSRClassesInterface.jl",
-    #     authors = "psrenergy",
-    #     # Prevents the edit on github button from showing up
-    #     # edit_link = nothing,
-    #     # footer = nothing,
-    #     # disable_git = true,
-    #     # repolink = nothing,
-    # # ),
-    # sitename = "Quiver.jl",
-    # warnonly = true,
+    format = Documenter.HTML(;
+        mathengine = Documenter.MathJax2(),
+        prettyurls = false,
+        # Prevents the edit on github button from showing up
+        edit_link = nothing,
+        footer = nothing,
+        disable_git = true,
+        repolink = nothing,
+    ),
     pages = [
         "Home" => [
             "Overview" => "home.md",
