@@ -18,7 +18,7 @@ makedocs(;
         edit_link = nothing,
         footer = nothing,
         disable_git = true,
-        repolink = nothing,
+        # repolink = nothing,
     ),
     pages = [
         "Home" => [
