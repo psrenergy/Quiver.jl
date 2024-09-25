@@ -6,11 +6,7 @@ To write time series data in Quiver, you can leverage different implementations,
   - **CSV Format**: This format is human-readable and easy to inspect manually, storing data in a plain-text, tabular form. It is ideal when ease of access and manual editing are priorities.
 
   - **Binary Format**: Optimized for large-scale data, the binary format provides significantly better performance, making it suitable for scenarios where efficiency and speed are critical.
-
-### Writer Structure
-
-The `Writer` structure facilitates writing data efficiently, handling dimensions, labels, and time-related information directly.
-
+  
 #### Writer Fields:
 
   - **filename**: The path where the time series data will be written.
