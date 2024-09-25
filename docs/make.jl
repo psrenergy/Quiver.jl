@@ -14,6 +14,7 @@ makedocs(;
     format = Documenter.HTML(;
         mathengine = Documenter.MathJax2(),
         prettyurls = false,
+        canonical = "https://documenter.quiver.juliadocs.org/stable/",
         # Prevents the edit on github button from showing up
         edit_link = nothing,
         footer = nothing,
