@@ -33,3 +33,8 @@ makedocs(;
         ],
     ],
 )
+
+Documenter.deploydocs(;
+    repo = "https://github.com/psrenergy/Quiver.jl.git",  
+    push_preview = true,  
+)
