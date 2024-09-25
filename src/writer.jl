@@ -1,13 +1,131 @@
+"""
+## Writing
+
+To write time series data in Quiver, you can leverage different implementations, such as binary and CSV, depending on your performance or readability requirements:
+
+  - **CSV Format**: This format is human-readable and easy to inspect manually, storing data in a plain-text, tabular form. It is ideal when ease of access and manual editing are priorities.
+
+  - **Binary Format**: Optimized for large-scale data, the binary format provides significantly better performance, making it suitable for scenarios where efficiency and speed are critical.
+
+#### Writer Fields:
+
+  - **filename**: The path where the time series data will be written.
+  - **dimensions**: An array that specifies the dimensions of the time series (e.g., `["stage", "scenario", "block"]`).
+  - **labels**: Labels for each time series (e.g., `["agent_1", "agent_2", "agent_3"]`).
+  - **time_dimension**: The primary time-related dimension, such as "stage".
+  - **dimension_size**: An array specifying the size of each dimension (e.g., `[num_stages, num_scenarios, num_blocks]`).
+  - **initial_date**: The starting date of the time series, used for associating data with time.
+
+### Key Functions:
+
+#### `write!`
+
+This function writes data to the specified dimensions in the file. It validates the dimensions, updates the cache, and writes the provided data.
+
+#### `close!`
+
+This function closes the writer and finalizes the writing process.
+
+```julia
+close!(writer)
+```
+
+#### Example of writing to binary:
+
+```julia
+using Quiver
+using Dates
+
+# Define the file path and time series characteristics
+filename = "path/to/output/file"
+initial_date = DateTime(2024, 1, 1)
+num_stages = 10
+num_scenarios = 12
+num_blocks = 24
+
+# Define dimensions, labels, and time information
+dimensions = ["stage", "scenario", "block"]
+labels = ["agent_1", "agent_2", "agent_3"]
+time_dimension = "stage"
+dimension_size = [num_stages, num_scenarios, num_blocks]
+
+# Initialize the Writer for binary format
+writer = Quiver.Writer{Quiver.binary}(
+    filename;
+    dimensions,
+    labels,
+    time_dimension,
+    dimension_size,
+    initial_date = initial_date,
+)
+
+# Write data
+for stage in 1:num_stages
+    for scenario in 1:num_scenarios
+        for block in 1:num_blocks
+            data = [stage, scenario, block]  # Example data
+            Quiver.write!(writer, data; stage, scenario, block)
+        end
+    end
+end
+
+# Close the writer
+Quiver.close!(writer)
+```
+
+#### Example of writing to CSV:
+
+```julia
+using Quiver
+using Dates
+
+# Define the file path and time series characteristics
+filename = "path/to/output/file"
+initial_date = DateTime(2024, 1, 1)
+num_stages = 10
+num_scenarios = 12
+num_blocks = 24
+
+# Define dimensions, labels, and time information
+dimensions = ["stage", "scenario", "block"]
+labels = ["agent_1", "agent_2", "agent_3"]
+time_dimension = "stage"
+dimension_size = [num_stages, num_scenarios, num_blocks]
+
+# Initialize the Writer for CSV format
+writer = Quiver.Writer{Quiver.csv}(
+    filename;
+    dimensions,
+    labels,
+    time_dimension,
+    dimension_size,
+    initial_date = initial_date,
+)
+
+# Write data
+for stage in 1:num_stages
+    for scenario in 1:num_scenarios
+        for block in 1:num_blocks
+            data = [stage, scenario, block]  # Example data
+            Quiver.write!(writer, data; stage, scenario, block)
+        end
+    end
+end
+
+# Close the writer
+Quiver.close!(writer)
+```
+"""
 mutable struct Writer{I <: Implementation, W}
     writer::W
     filename::String
     metadata::Metadata
     last_dimension_added::Vector{Int}
     function Writer{I}(
-        writer::W, 
-        filename::String, 
-        metadata::Metadata, 
-        last_dimension_added::Vector{Int}
+        writer::W,
+        filename::String,
+        metadata::Metadata,
+        last_dimension_added::Vector{Int},
     ) where {I, W}
         writer = new{I, W}(writer, filename, metadata, last_dimension_added)
         finalizer(Quiver.close!, writer)
@@ -22,10 +140,10 @@ function _build_last_dimension_added!(writer::Writer; dims...)
     return nothing
 end
 
-function write!(writer::Writer, data::Vector{T}; dims...) where T <: Real
+function write!(writer::Writer, data::Vector{T}; dims...) where {T <: Real}
     validate_dimensions(writer.metadata, dims...)
     _build_last_dimension_added!(writer; dims...)
-    _quiver_write!(writer, data)
+    return _quiver_write!(writer, data)
 end
 
 function close!(writer::Writer)
