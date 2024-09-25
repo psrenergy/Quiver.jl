@@ -12,7 +12,7 @@ makedocs(;
     doctest = true,
     clean = true,
     format = Documenter.HTML(; mathengine = Documenter.MathJax2()),
-    sitename = "PSRClassesInterface.jl",
+    sitename = "Quiver.jl",
     authors = "psrenergy",
     # format = Documenter.HTML(;
     #     mathengine = Documenter.MathJax2(),
@@ -25,9 +25,9 @@ makedocs(;
     #     # footer = nothing,
     #     # disable_git = true,
     #     # repolink = nothing,
-    # ),
-    sitename = "Quiver.jl",
-    warnonly = true,
+    # # ),
+    # sitename = "Quiver.jl",
+    # warnonly = true,
     pages = [
         "Home" => [
             "Overview" => "home.md",
