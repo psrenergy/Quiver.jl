@@ -108,9 +108,9 @@ end
 
 This function moves the reader to the specified dimensions and returns the corresponding data. It updates the internal cache and retrieves the necessary time series values.
 
-For **binary files**, `goto!` allows random access to any part of the time series, meaning you can jump between stages, scenarios, and blocks in any order. This provides greater flexibility for accessing specific points in the data.
+- For **binary files**, `goto!` allows random access to any part of the time series, meaning you can jump between stages, scenarios, and blocks in any order. This provides greater flexibility for accessing specific points in the data.
 
-For **CSV files**, `goto!` works differently. It only supports forward sequential access, meaning that while you can still navigate through stages, scenarios, and blocks, you cannot randomly jump to previous positions. The function moves forward through the file, reading data sequentially.
+- For **CSV files**, `goto!` works differently. It only supports forward sequential access, meaning that while you can still navigate through stages, scenarios, and blocks, you cannot randomly jump to previous positions. The function moves forward through the file, reading data sequentially.
 
 # Parameters
 
