@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Examples · Quiver.jl</title><meta name="title" content="Examples · Quiver.jl"/><meta property="og:title" content="Examples · Quiver.jl"/><meta property="twitter:title" content="Examples · Quiver.jl"/><meta name="description" content="Documentation for Quiver.jl."/><meta property="og:description" content="Documentation for Quiver.jl."/><meta property="twitter:description" content="Documentation for Quiver.jl."/><script data-outdated-warner src="assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="assets/documenter.js"></script><script src="search_index.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="home.html">Quiver.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><span class="tocitem">Home</span><ul><li><a class="tocitem" href="home.html">Overview</a></li></ul></li><li><span class="tocitem">Manual</span><ul><li><a class="tocitem" href="reading.html">Reading Data</a></li><li><a class="tocitem" href="writing.html">Writing Data</a></li><li class="is-active"><a class="tocitem" href="examples.html">Examples</a><ul class="internal"><li><a class="tocitem" href="#Examples"><span>Examples</span></a></li></ul></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Manual</a></li><li class="is-active"><a href="examples.html">Examples</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href="examples.html">Examples</a></li></ul></nav><div class="docs-right"><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h2 id="Examples"><a class="docs-heading-anchor" href="#Examples">Examples</a><a id="Examples-1"></a><a class="docs-heading-anchor-permalink" href="#Examples" title="Permalink"></a></h2><p>Here are some practical examples demonstrating how to use Quiver for time series data operations, such as writing, reading, merging, and converting between formats.</p><h3 id="1.-Writing-and-Reading-Time-Series"><a class="docs-heading-anchor" href="#1.-Writing-and-Reading-Time-Series">1. Writing and Reading Time Series</a><a id="1.-Writing-and-Reading-Time-Series-1"></a><a class="docs-heading-anchor-permalink" href="#1.-Writing-and-Reading-Time-Series" title="Permalink"></a></h3><p>This example shows how to write and read time series data with Quiver, using multiple dimensions like stage, scenario, and block.</p><pre><code class="language-julia hljs">using Quiver
+using Dates
+
+# Define the dimensions and metadata
+filename = &quot;path/to/output/file&quot;
+initial_date = DateTime(2006, 1, 1)
+num_stages = 10
+num_scenarios = 12
+num_blocks_per_stage = Int32.(Dates.daysinmonth.(initial_date:Dates.Month(1):initial_date + Dates.Month(num_stages - 1)) .* 24)
+dimensions = [&quot;stage&quot;, &quot;scenario&quot;, &quot;block&quot;]
+labels = [&quot;agent_1&quot;, &quot;agent_2&quot;, &quot;agent_3&quot;]
+time_dimension = &quot;stage&quot;
+dimension_size = [num_stages, num_scenarios, maximum(num_blocks_per_stage)]
+
+# Initialize the Writer
+writer = Quiver.Writer{Quiver.binary}(
+    filename;
+    dimensions,
+    labels,
+    time_dimension,
+    dimension_size,
+    initial_date = initial_date
+)
+
+# Write data
+for stage in 1:num_stages
+    for scenario in 1:num_scenarios
+        for block in 1:num_blocks_per_stage[stage]
+            data = [stage, scenario, block]
+            Quiver.write!(writer, data, stage=stage, scenario=scenario, block=block)
+        end
+    end
+end
+
+# Close the writer
+Quiver.close!(writer)
+
+# Now, read the data back
+reader = Quiver.Reader{Quiver.binary}(filename)
+
+for stage in 1:num_stages
+    for scenario in 1:num_scenarios
+        for block in 1:num_blocks_per_stage[stage]
+            data = Quiver.goto!(reader, stage=stage, scenario=scenario, block=block)
+            println(data)
+        end
+    end
+end
+
+Quiver.close!(reader)</code></pre><h3 id="2.-Converting-Between-Formats"><a class="docs-heading-anchor" href="#2.-Converting-Between-Formats">2. Converting Between Formats</a><a id="2.-Converting-Between-Formats-1"></a><a class="docs-heading-anchor-permalink" href="#2.-Converting-Between-Formats" title="Permalink"></a></h3><p>This example demonstrates how to convert time series data from binary format to CSV. To convert the data in the opposite direction (from CSV to binary), simply switch the positions of <code>Quiver.binary</code> and <code>Quiver.csv</code> in the function below.</p><pre><code class="language-julia hljs">using Quiver
+
+# Convert binary file to CSV
+filename = &quot;path/to/file&quot;
+Quiver.convert(filename, Quiver.binary, Quiver.csv)</code></pre><h3 id="3.-Merging-Multiple-Files"><a class="docs-heading-anchor" href="#3.-Merging-Multiple-Files">3. Merging Multiple Files</a><a id="3.-Merging-Multiple-Files-1"></a><a class="docs-heading-anchor-permalink" href="#3.-Merging-Multiple-Files" title="Permalink"></a></h3><p>This example shows how to merge multiple time series files into a binary single file.</p><pre><code class="language-julia hljs">using Quiver
+using Dates
+
+# Define metadata and filenames
+filename = &quot;path/to/output/file&quot;
+filenames = [&quot;path/to/input_file_1&quot;, &quot;path/to/input_file_2&quot;, &quot;path/to/input_file_3&quot;]
+initial_date = DateTime(2006, 1, 1)
+num_stages = 10
+num_scenarios = 12
+num_blocks = 24
+dimensions = [&quot;stage&quot;, &quot;scenario&quot;, &quot;block&quot;]
+time_dimension = &quot;stage&quot;
+dimension_size = [num_stages, num_scenarios, num_blocks]
+
+# Merge the files
+Quiver.merge(filename, filenames, Quiver.binary)</code></pre><hr/></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="writing.html">« Writing Data</a><div class="flexbox-break"></div></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Thursday 26 September 2024 16:58">Thursday 26 September 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
