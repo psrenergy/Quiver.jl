@@ -8,7 +8,7 @@
 
 | **Build Status** | **Coverage** | **Documentation** |
 |:-----------------:|:-----------------:|:-----------------:|
-| [![Build Status][build-img]][build-url] | [![Codecov branch][codecov-img]][codecov-url] |[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://psrenergy.github.io/PSRClassesInterface.jl/dev/)
+| [![Build Status][build-img]][build-url] | [![Codecov branch][codecov-img]][codecov-url] |[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://psrenergy.github.io/Quiver.jl/dev/)
 
 Quiver is an alternative data-structure to represent time series data. It is designed for time series that can have extra dimensions such as scenarios, blocks, segments, etc.
 
