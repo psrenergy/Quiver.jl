@@ -15,6 +15,41 @@ function rm_if_exists(filename::AbstractString, remove_if_exists::Bool)
     end
 end
 
+function create_empty_time_series(
+    filename::AbstractString,
+    impl::Type{<:Implementation},
+    dimensions::Vector{String},
+    labels::Vector{String},
+    time_dimension::String,
+    dimension_size::Vector{Int},
+    initial_date::Union{String, DateTime} = "",
+    unit::String = "",
+    digits::Int = 6,
+)
+    file_created = 0
+    filename_with_extensions = add_extension_to_file(filename, file_extension(impl))
+    if isfile(filename_with_extensions)
+        return file_created
+    end
+
+    @warn("Creating empty time series file at $(filename).")
+    file_created = 1
+    data = zeros(Float64, length(labels), reverse(dimension_size)...)
+    array_to_file(
+        filename,
+        data,
+        impl;
+        dimensions,
+        labels,
+        time_dimension,
+        dimension_size,
+        initial_date,
+        unit,
+        digits,
+    )
+    return file_created
+end
+
 function add_extension_to_file(filename::AbstractString, ext::AbstractString)
     # This regex is to check if a file has an extension
     # https://stackoverflow.com/questions/22863973/regex-check-if-a-file-has-any-extension

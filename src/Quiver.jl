@@ -10,7 +10,6 @@ using TOML
 const QUIVER_FILE_VERSION = 1
 
 include("metadata.jl")
-include("utils.jl")
 
 include("implementations.jl")
 
@@ -19,6 +18,8 @@ include("reader.jl")
 
 include("csv.jl")
 include("binary.jl")
+
+include("utils.jl")
 
 include("merge.jl")
 
