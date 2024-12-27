@@ -12,7 +12,7 @@ function test_create_metadata()
         time_dimension = "stage",
         unit = "m",
         dimension_size = [10, 20],
-        labels = ["ts1", "ts2", " ts3"]
+        labels = ["ts1", "ts2", " ts3"],
     )
 
     @test metadata.frequency == "M"
@@ -29,7 +29,7 @@ function test_creating_invalid_metadata()
         time_dimension = "some_other_thing",
         unit = "m",
         dimension_size = [10, 20],
-        labels = ["ts1", "ts2", " ts3"]
+        labels = ["ts1", "ts2", " ts3"],
     )
 
     @test_throws ErrorException Quiver.Metadata(
@@ -39,7 +39,7 @@ function test_creating_invalid_metadata()
         time_dimension = "stage",
         unit = "m",
         dimension_size = [10, 20, 30],
-        labels = ["ts1", "ts2", " ts3"]
+        labels = ["ts1", "ts2", " ts3"],
     )
 
     @test_throws ErrorException Quiver.Metadata(
@@ -49,7 +49,7 @@ function test_creating_invalid_metadata()
         time_dimension = "stage",
         unit = "m",
         dimension_size = [10, 20],
-        labels = String[]
+        labels = String[],
     )
 
     @test_throws ErrorException Quiver.Metadata(
@@ -59,7 +59,7 @@ function test_creating_invalid_metadata()
         time_dimension = "stage",
         unit = "m",
         dimension_size = [10, 20],
-        labels = ["ts1", "ts2", "ts1"]
+        labels = ["ts1", "ts2", "ts1"],
     )
 end
 
@@ -71,7 +71,7 @@ function test_writing_and_reading_toml()
         time_dimension = "stage",
         unit = "m",
         dimension_size = [10, 20],
-        labels = ["ts1", "ts2", "ts3"]
+        labels = ["ts1", "ts2", "ts3"],
     )
 
     Quiver.to_toml(metadata, "test_metadata.toml")
@@ -80,6 +80,8 @@ function test_writing_and_reading_toml()
     @test metadata == metadata2
 
     rm("test_metadata.toml")
+
+    return nothing
 end
 
 function runtests()
@@ -96,4 +98,4 @@ end
 
 TestMetadata.runtests()
 
-end # end module
+end

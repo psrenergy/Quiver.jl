@@ -23,6 +23,6 @@ makedocs(;
 )
 
 Documenter.deploydocs(;
-    repo = "https://github.com/psrenergy/Quiver.jl.git",  
-    push_preview = true,  
+    repo = "https://github.com/psrenergy/Quiver.jl.git",
+    push_preview = true,
 )

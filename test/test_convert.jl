@@ -9,11 +9,11 @@ function binary_to_csv()
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
-    dates = collect(initial_date:Dates.Month(1):initial_date + Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
     num_scenarios = 12
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     num_time_series = 3
-    
+
     dimensions = ["stage", "scenario", "block"]
     labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
@@ -25,7 +25,7 @@ function binary_to_csv()
         labels,
         time_dimension,
         dimension_size,
-        initial_date = initial_date
+        initial_date = initial_date,
     )
 
     for stage in 1:num_stages
@@ -56,6 +56,8 @@ function binary_to_csv()
     rm("$filename.$(Quiver.file_extension(Quiver.binary))")
     rm("$filename.$(Quiver.file_extension(Quiver.csv))")
     rm("$filename.toml")
+
+    return nothing
 end
 
 function csv_to_binary()
@@ -63,11 +65,11 @@ function csv_to_binary()
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
-    dates = collect(initial_date:Dates.Month(1):initial_date + Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
     num_scenarios = 12
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     num_time_series = 3
-    
+
     dimensions = ["stage", "scenario", "block"]
     labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
@@ -79,7 +81,7 @@ function csv_to_binary()
         labels,
         time_dimension,
         dimension_size,
-        initial_date = initial_date
+        initial_date = initial_date,
     )
 
     for stage in 1:num_stages
@@ -110,11 +112,15 @@ function csv_to_binary()
     rm("$filename.$(Quiver.file_extension(Quiver.csv))")
     rm("$filename.$(Quiver.file_extension(Quiver.binary))")
     rm("$filename.toml")
+
+    return nothing
 end
 
 function test_convert()
     binary_to_csv()
     csv_to_binary()
+
+    return nothing
 end
 
 function runtests()

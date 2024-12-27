@@ -9,7 +9,6 @@ function Writer{binary}(
     remove_if_exists::Bool = true,
     kwargs...,
 )
-
     filename_with_extensions = add_extension_to_file(filename, file_extension(binary))
     rm_if_exists(filename_with_extensions, remove_if_exists)
 
@@ -18,7 +17,7 @@ function Writer{binary}(
         time_dimension = time_dimension,
         dimension_size = dimension_size,
         labels = labels,
-        kwargs...
+        kwargs...,
     )
 
     # Open the file and write the header
@@ -29,7 +28,7 @@ function Writer{binary}(
         io,
         filename,
         metadata,
-        last_dimension_added
+        last_dimension_added,
     )
 
     to_toml(metadata, "$filename.toml")
@@ -52,11 +51,11 @@ end
 function _calculate_position_in_file(metadata::Quiver.Metadata, dims...)
     space_of_a_row = _space_of_a_row_in_binary(metadata)
     position = 0
-    for i in 1:metadata.number_of_dimensions - 1
+    for i in 1:metadata.number_of_dimensions-1
         position += (dims[i] - 1) * performant_product_from_index_i_to_j(
-            metadata.dimension_size, 
-            i + 1, 
-            metadata.number_of_dimensions
+            metadata.dimension_size,
+            i + 1,
+            metadata.number_of_dimensions,
         )
     end
     position += (dims[end] - 1)
@@ -64,7 +63,7 @@ function _calculate_position_in_file(metadata::Quiver.Metadata, dims...)
     return position
 end
 
-function _quiver_write!(writer::Quiver.Writer{binary}, data::Vector{T}) where T <: Real
+function _quiver_write!(writer::Quiver.Writer{binary}, data::Vector{T}) where {T <: Real}
     # The last dimension added is calculated in the abstract implementation
     next_pos = _calculate_position_in_file(writer.metadata, writer.last_dimension_added...)
     # Check if we need to seek a new position or write directly in the io
@@ -97,7 +96,6 @@ function Reader{binary}(
     labels_to_read::Vector{String} = String[],
     carrousel::Bool = false,
 )
-
     filename_with_extensions = add_extension_to_file(filename, file_extension(binary))
     if !isfile(filename_with_extensions)
         throw(ArgumentError("File $filename_with_extensions does not exist"))
@@ -110,7 +108,7 @@ function Reader{binary}(
     dimension_in_cache = zeros(Int, metadata.number_of_dimensions)
     dimension_to_read = zeros(Int, metadata.number_of_dimensions)
 
-    reader = try 
+    reader = try
         Quiver.Reader{binary}(
             io,
             filename,
@@ -157,7 +155,7 @@ function convert(
     from::Type{binary},
     to::Type{impl};
     destination_directory::String = dirname(filepath),
-) where impl <: Implementation
+) where {impl <: Implementation}
     reader = Quiver.Reader{from}(filepath)
     metadata = reader.metadata
     filename = basename(filepath)

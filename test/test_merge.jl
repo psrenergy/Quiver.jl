@@ -14,11 +14,11 @@ function merge_files(impl)
     num_scenarios = 12
     num_blocks = 24
     num_time_series = 3
-    
+
     dimensions = ["stage", "scenario", "block"]
     time_dimension = "stage"
     dimension_size = [num_stages, num_scenarios, num_blocks]
-    
+
     for file in 1:num_files
         labels = ["agent_$file"]
         writer = Quiver.Writer{impl}(
@@ -27,7 +27,7 @@ function merge_files(impl)
             labels,
             time_dimension,
             dimension_size,
-            initial_date = initial_date
+            initial_date = initial_date,
         )
 
         for stage in 1:num_stages
@@ -63,6 +63,8 @@ function merge_files(impl)
     end
     rm("$output_filename.$(Quiver.file_extension(impl))")
     rm("$output_filename.toml")
+
+    return nothing
 end
 
 function merge_dimension_error(impl)
@@ -75,11 +77,11 @@ function merge_dimension_error(impl)
     num_scenarios = 12
     num_blocks = 24
     num_time_series = 3
-    
+
     dimensions = ["stage", "scenario", "block"]
     time_dimension = "stage"
     dimension_size = [num_stages, num_scenarios, num_blocks]
-    
+
     for file in 1:num_files
         labels = ["agent_$file"]
         writer = Quiver.Writer{impl}(
@@ -88,7 +90,7 @@ function merge_dimension_error(impl)
             labels,
             time_dimension,
             dimension_size,
-            initial_date = initial_date
+            initial_date = initial_date,
         )
 
         for stage in 1:num_stages
@@ -102,7 +104,7 @@ function merge_dimension_error(impl)
 
         Quiver.close!(writer)
     end
-    
+
     output_filename = joinpath(@__DIR__, "test_merge_dimension_error_merged")
     @test_throws ArgumentError Quiver.merge(output_filename, filenames, impl)
 
@@ -112,6 +114,8 @@ function merge_dimension_error(impl)
     end
     rm("$output_filename.$(Quiver.file_extension(impl))")
     rm("$output_filename.toml")
+
+    return nothing
 end
 
 function merge_dimension_size_error(impl)
@@ -124,11 +128,11 @@ function merge_dimension_size_error(impl)
     num_scenarios = 12
     num_blocks = 24
     num_time_series = 3
-    
+
     dimensions = ["stage", "scenario", "block"]
     time_dimension = "stage"
     dimension_size = [num_stages, num_scenarios, num_blocks]
-    
+
     for file in 1:num_files
         labels = ["agent_$file"]
         writer = Quiver.Writer{impl}(
@@ -137,7 +141,7 @@ function merge_dimension_size_error(impl)
             labels,
             time_dimension,
             dimension_size = dimension_size .+ file,
-            initial_date = initial_date
+            initial_date = initial_date,
         )
 
         for stage in 1:num_stages
@@ -151,7 +155,7 @@ function merge_dimension_size_error(impl)
 
         Quiver.close!(writer)
     end
-    
+
     output_filename = joinpath(@__DIR__, "test_merge_dimension_size_error_merged")
     @test_throws ArgumentError Quiver.merge(output_filename, filenames, impl)
 
@@ -161,6 +165,8 @@ function merge_dimension_size_error(impl)
     end
     rm("$output_filename.$(Quiver.file_extension(impl))")
     rm("$output_filename.toml")
+
+    return nothing
 end
 
 function merge_time_dimension_error(impl)
@@ -173,11 +179,11 @@ function merge_time_dimension_error(impl)
     num_scenarios = 12
     num_blocks = 24
     num_time_series = 3
-    
+
     dimensions = ["stage", "scenario", "block"]
     time_dimension = "stage"
     dimension_size = [num_stages, num_scenarios, num_blocks]
-    
+
     for file in 1:num_files
         labels = ["agent_$file"]
         writer = Quiver.Writer{impl}(
@@ -186,7 +192,7 @@ function merge_time_dimension_error(impl)
             labels,
             time_dimension = time_dimension .* "$file",
             dimension_size,
-            initial_date = initial_date
+            initial_date = initial_date,
         )
 
         for stage in 1:num_stages
@@ -200,7 +206,7 @@ function merge_time_dimension_error(impl)
 
         Quiver.close!(writer)
     end
-    
+
     output_filename = joinpath(@__DIR__, "test_merge_time_dimension_error_merged")
     @test_throws ArgumentError Quiver.merge(output_filename, filenames, impl)
 
@@ -210,6 +216,8 @@ function merge_time_dimension_error(impl)
     end
     rm("$output_filename.$(Quiver.file_extension(impl))")
     rm("$output_filename.toml")
+
+    return nothing
 end
 
 function merge_initial_date_error(impl)
@@ -222,11 +230,11 @@ function merge_initial_date_error(impl)
     num_scenarios = 12
     num_blocks = 24
     num_time_series = 3
-    
+
     dimensions = ["stage", "scenario", "block"]
     time_dimension = "stage"
     dimension_size = [num_stages, num_scenarios, num_blocks]
-    
+
     for file in 1:num_files
         labels = ["agent_$file"]
         writer = Quiver.Writer{impl}(
@@ -235,7 +243,7 @@ function merge_initial_date_error(impl)
             labels,
             time_dimension,
             dimension_size,
-            initial_date = initial_date + Dates.Day(file)
+            initial_date = initial_date + Dates.Day(file),
         )
 
         for stage in 1:num_stages
@@ -249,7 +257,7 @@ function merge_initial_date_error(impl)
 
         Quiver.close!(writer)
     end
-    
+
     output_filename = joinpath(@__DIR__, "test_merge_initial_date_error_merged")
     @test_throws ArgumentError Quiver.merge(output_filename, filenames, impl)
 
@@ -259,6 +267,8 @@ function merge_initial_date_error(impl)
     end
     rm("$output_filename.$(Quiver.file_extension(impl))")
     rm("$output_filename.toml")
+
+    return nothing
 end
 
 function merge_unit_error(impl)
@@ -271,11 +281,11 @@ function merge_unit_error(impl)
     num_scenarios = 12
     num_blocks = 24
     num_time_series = 3
-    
+
     dimensions = ["stage", "scenario", "block"]
     time_dimension = "stage"
     dimension_size = [num_stages, num_scenarios, num_blocks]
-    
+
     for file in 1:num_files
         labels = ["agent_$file"]
         writer = Quiver.Writer{impl}(
@@ -285,7 +295,7 @@ function merge_unit_error(impl)
             time_dimension,
             dimension_size,
             initial_date = initial_date,
-            unit = "m$file"
+            unit = "m$file",
         )
 
         for stage in 1:num_stages
@@ -299,7 +309,7 @@ function merge_unit_error(impl)
 
         Quiver.close!(writer)
     end
-    
+
     output_filename = joinpath(@__DIR__, "test_merge_unit_error_merged")
     @test_throws ArgumentError Quiver.merge(output_filename, filenames, impl)
 
@@ -309,6 +319,8 @@ function merge_unit_error(impl)
     end
     rm("$output_filename.$(Quiver.file_extension(impl))")
     rm("$output_filename.toml")
+
+    return nothing
 end
 
 function merge_label_error(impl)
@@ -321,11 +333,11 @@ function merge_label_error(impl)
     num_scenarios = 12
     num_blocks = 24
     num_time_series = 3
-    
+
     dimensions = ["stage", "scenario", "block"]
     time_dimension = "stage"
     dimension_size = [num_stages, num_scenarios, num_blocks]
-    
+
     for file in 1:num_files
         labels = ["agent_1"]
         writer = Quiver.Writer{impl}(
@@ -334,7 +346,7 @@ function merge_label_error(impl)
             labels,
             time_dimension,
             dimension_size,
-            initial_date = initial_date
+            initial_date = initial_date,
         )
 
         for stage in 1:num_stages
@@ -348,7 +360,7 @@ function merge_label_error(impl)
 
         Quiver.close!(writer)
     end
-    
+
     output_filename = joinpath(@__DIR__, "test_merge_label_error_merged")
     @test_throws ArgumentError Quiver.merge(output_filename, filenames, impl)
 
@@ -358,6 +370,8 @@ function merge_label_error(impl)
     end
     rm("$output_filename.$(Quiver.file_extension(impl))")
     rm("$output_filename.toml")
+
+    return nothing
 end
 
 function test_merge()
