@@ -1,14 +1,8 @@
 # Quiver.jl
 
-[build-img]: https://github.com/psrenergy/Quiver.jl/actions/workflows/ci.yml/badge.svg?branch=master
-[build-url]: https://github.com/psrenergy/Quiver.jl/actions?query=workflow%3ACI
-
-[codecov-img]: https://codecov.io/gh/psrenergy/Quiver.jl/coverage.svg?branch=master
-[codecov-url]: https://codecov.io/gh/psrenergy/Quiver.jl?branch=master
-
-| **Build Status** | **Coverage** | **Documentation** |
-|:-----------------:|:-----------------:|:-----------------:|
-| [![Build Status][build-img]][build-url] | [![Codecov branch][codecov-img]][codecov-url] |[![](https://img.shields.io/badge/docs-latest-blue.svg)](https://psrenergy.github.io/Quiver.jl/dev/)
+[![Documentation](https://img.shields.io/badge/docs-dev-blue.svg)](https://psrenergy.github.io/Quiver.jl/dev)
+[![CI](https://github.com/psrenergy/Quiver.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/psrenergy/Quiver.jl/actions/workflows/CI.yml)
+[![codecov](https://codecov.io/gh/psrenergy/Quiver.jl/graph/badge.svg?token=RIZWL1OPRT)](https://codecov.io/gh/psrenergy/Quiver.jl)
 
 Quiver is an alternative data-structure to represent time series data. It is designed for time series that can have extra dimensions such as scenarios, blocks, segments, etc.
 
