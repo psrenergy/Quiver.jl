@@ -15,7 +15,6 @@ function Writer{csv}(
     remove_if_exists::Bool = true,
     kwargs...,
 )
-
     filename_with_extensions = add_extension_to_file(filename, file_extension(csv))
     rm_if_exists(filename_with_extensions, remove_if_exists)
 
@@ -24,7 +23,7 @@ function Writer{csv}(
         time_dimension = time_dimension,
         dimension_size = dimension_size,
         labels = labels,
-        kwargs...
+        kwargs...,
     )
 
     # Open the file and write the header
@@ -36,7 +35,7 @@ function Writer{csv}(
         io,
         filename,
         metadata,
-        last_dimension_added
+        last_dimension_added,
     )
 
     to_toml(metadata, "$filename.toml")
@@ -44,7 +43,7 @@ function Writer{csv}(
     return writer
 end
 
-function _quiver_write!(writer::Quiver.Writer{csv}, data::Vector{T}) where T <: Real
+function _quiver_write!(writer::Quiver.Writer{csv}, data::Vector{T}) where {T <: Real}
     # The last dimension added is calculated in the abstract implementation
     print(writer.writer, join(writer.last_dimension_added, ","), ",", join(data, ","), "\n")
     return nothing
@@ -74,7 +73,7 @@ function Reader{csv}(
     io = open(filename_with_extensions, "r")
 
     rows = CSV.Rows(
-        io; 
+        io;
         types = [fill(Int32, metadata.number_of_dimensions); fill(Float32, metadata.number_of_time_series)],
         buffer_in_memory = true,
         reusebuffer = true,
@@ -86,7 +85,6 @@ function Reader{csv}(
     next = iterate(rows)
     (row, state) = next
 
-    
     reader = try
         row_reader = QuiverCSVRowReader(io, rows, next)
         Quiver.Reader{csv}(
@@ -124,11 +122,11 @@ end
 
 function _calculate_order_in_file(metadata::Quiver.Metadata, dims...)
     position = 0
-    for i in 1:metadata.number_of_dimensions - 1
+    for i in 1:metadata.number_of_dimensions-1
         position += (dims[i] - 1) * performant_product_from_index_i_to_j(
-            metadata.dimension_size, 
-            i + 1, 
-            metadata.number_of_dimensions
+            metadata.dimension_size,
+            i + 1,
+            metadata.number_of_dimensions,
         )
     end
     position += (dims[end] - 1)
@@ -202,7 +200,7 @@ function convert(
     from::Type{csv},
     to::Type{impl};
     destination_directory::String = dirname(filepath),
-) where impl <: Implementation
+) where {impl <: Implementation}
     reader = Quiver.Reader{from}(filepath)
     metadata = reader.metadata
     filename = basename(filepath)

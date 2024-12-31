@@ -74,6 +74,7 @@ function to_toml(metadata::Metadata, filename::String)
     dict_metadata = to_ordered_dict(metadata)
     open(filename, "w") do io
         TOML.print(io, dict_metadata)
+        return nothing
     end
     return nothing
 end
@@ -94,7 +95,6 @@ function from_toml(filename::String)
 end
 
 function validate_metadata(metadata::Metadata)
-
     num_errors = 0
 
     if metadata.number_of_dimensions != length(metadata.dimensions)
@@ -103,7 +103,9 @@ function validate_metadata(metadata::Metadata)
     end
 
     if metadata.number_of_dimensions != length(metadata.dimension_size)
-        @error("The number_of_dimensions ($(metadata.number_of_dimensions)) must be equal to the length of dimension_size ($(metadata.dimension_size)).")
+        @error(
+            "The number_of_dimensions ($(metadata.number_of_dimensions)) must be equal to the length of dimension_size ($(metadata.dimension_size))."
+        )
         num_errors += 1
     end
 

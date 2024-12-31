@@ -23,7 +23,7 @@ function Quiver.convert(
     from::Type{PSRI.OpenBinary.Reader},
     to::Type{impl};
     destination_directory::String = dirname(filepath),
-) where impl <: Quiver.Implementation
+) where {impl <: Quiver.Implementation}
     filename = basename(filepath)
     destination_path = joinpath(destination_directory, filename)
 

@@ -10,11 +10,11 @@ function test_compare_files_with_different_metadata()
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
-    dates = collect(initial_date:Dates.Month(1):initial_date + Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
     num_scenarios = 12
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     num_time_series = 3
-    
+
     dimensions = ["stage", "scenario", "block"]
     labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
@@ -26,7 +26,7 @@ function test_compare_files_with_different_metadata()
         labels,
         time_dimension,
         dimension_size,
-        initial_date = initial_date
+        initial_date = initial_date,
     )
 
     writer2 = Quiver.Writer{Quiver.binary}(
@@ -35,7 +35,7 @@ function test_compare_files_with_different_metadata()
         labels,
         time_dimension,
         dimension_size,
-        initial_date = initial_date + Dates.Month(1)
+        initial_date = initial_date + Dates.Month(1),
     )
 
     for stage in 1:num_stages
@@ -57,6 +57,8 @@ function test_compare_files_with_different_metadata()
     rm("$filename2.$(Quiver.file_extension(Quiver.binary))")
     rm("$filename1.toml")
     rm("$filename2.toml")
+
+    return nothing
 end
 
 function test_compare_files_with_different_data()
@@ -65,11 +67,11 @@ function test_compare_files_with_different_data()
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
-    dates = collect(initial_date:Dates.Month(1):initial_date + Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
     num_scenarios = 12
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     num_time_series = 3
-    
+
     dimensions = ["stage", "scenario", "block"]
     labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
@@ -81,7 +83,7 @@ function test_compare_files_with_different_data()
         labels,
         time_dimension,
         dimension_size,
-        initial_date = initial_date
+        initial_date = initial_date,
     )
 
     writer2 = Quiver.Writer{Quiver.binary}(
@@ -90,7 +92,7 @@ function test_compare_files_with_different_data()
         labels,
         time_dimension,
         dimension_size,
-        initial_date = initial_date
+        initial_date = initial_date,
     )
 
     for stage in 1:num_stages
@@ -112,6 +114,8 @@ function test_compare_files_with_different_data()
     rm("$filename2.$(Quiver.file_extension(Quiver.binary))")
     rm("$filename1.toml")
     rm("$filename2.toml")
+
+    return nothing
 end
 
 function test_compare_equal_files()
@@ -120,11 +124,11 @@ function test_compare_equal_files()
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
-    dates = collect(initial_date:Dates.Month(1):initial_date + Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
     num_scenarios = 12
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     num_time_series = 3
-    
+
     dimensions = ["stage", "scenario", "block"]
     labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
@@ -136,7 +140,7 @@ function test_compare_equal_files()
         labels,
         time_dimension,
         dimension_size,
-        initial_date = initial_date
+        initial_date = initial_date,
     )
 
     writer2 = Quiver.Writer{Quiver.binary}(
@@ -145,7 +149,7 @@ function test_compare_equal_files()
         labels,
         time_dimension,
         dimension_size,
-        initial_date = initial_date
+        initial_date = initial_date,
     )
 
     for stage in 1:num_stages
@@ -167,6 +171,8 @@ function test_compare_equal_files()
     rm("$filename2.$(Quiver.file_extension(Quiver.binary))")
     rm("$filename1.toml")
     rm("$filename2.toml")
+
+    return nothing
 end
 
 function runtests()

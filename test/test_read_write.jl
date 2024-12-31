@@ -10,11 +10,11 @@ function read_write_1(impl)
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
-    dates = collect(initial_date:Dates.Month(1):initial_date + Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
     num_scenarios = 12
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     num_time_series = 3
-    
+
     dimensions = ["stage", "scenario", "block"]
     labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
@@ -26,7 +26,7 @@ function read_write_1(impl)
         labels,
         time_dimension,
         dimension_size,
-        initial_date = initial_date
+        initial_date = initial_date,
     )
 
     for stage in 1:num_stages
@@ -58,6 +58,8 @@ function read_write_1(impl)
 
     rm("$filename.$(Quiver.file_extension(impl))")
     rm("$filename.toml")
+
+    return nothing
 end
 
 function read_write_2(impl)
@@ -65,12 +67,12 @@ function read_write_2(impl)
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
-    dates = collect(initial_date:Dates.Month(1):initial_date + Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
     num_scenarios = 12
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
-    num_segments_per_scenario = [2*s for s in 1:num_scenarios]
+    num_segments_per_scenario = [2 * s for s in 1:num_scenarios]
     num_time_series = 3
-    
+
     dimensions = ["stage", "scenario", "block", "segment"]
     labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
@@ -82,7 +84,7 @@ function read_write_2(impl)
         labels,
         time_dimension,
         dimension_size,
-        initial_date = initial_date
+        initial_date = initial_date,
     )
 
     for stage in 1:num_stages
@@ -118,6 +120,8 @@ function read_write_2(impl)
 
     rm("$filename.$(Quiver.file_extension(impl))")
     rm("$filename.toml")
+
+    return nothing
 end
 
 function read_write_3(impl)
@@ -125,14 +129,14 @@ function read_write_3(impl)
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
-    dates = collect(initial_date:Dates.Month(1):initial_date + Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
     num_scenarios = 12
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     max_num_blocks = maximum(num_blocks_per_stage)
-    num_segments_per_block = [round(Int, b/20) for b in 1:max_num_blocks]
+    num_segments_per_block = [round(Int, b / 20) for b in 1:max_num_blocks]
     max_num_segments = maximum(num_segments_per_block)
     num_time_series = 3
-    
+
     dimensions = ["stage", "scenario", "block", "segment"]
     labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
@@ -144,7 +148,7 @@ function read_write_3(impl)
         labels,
         time_dimension,
         dimension_size,
-        initial_date = initial_date
+        initial_date = initial_date,
     )
 
     for stage in 1:num_stages
@@ -180,6 +184,8 @@ function read_write_3(impl)
 
     rm("$filename.$(Quiver.file_extension(impl))")
     rm("$filename.toml")
+
+    return nothing
 end
 
 function read_write_4(impl)
@@ -187,13 +193,13 @@ function read_write_4(impl)
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
-    num_scenarios_per_stage = [2*s + 10 for s in 1:num_stages]
+    num_scenarios_per_stage = [2 * s + 10 for s in 1:num_stages]
     max_num_scenarios = maximum(num_scenarios_per_stage)
     num_blocks = 24
-    num_segments_per_block = [round(Int, b/20) for b in 1:num_blocks]
+    num_segments_per_block = [round(Int, b / 20) for b in 1:num_blocks]
     max_num_segments = maximum(num_segments_per_block)
     num_time_series = 3
-    
+
     dimensions = ["stage", "scenario", "block", "segment"]
     labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
@@ -205,7 +211,7 @@ function read_write_4(impl)
         labels,
         time_dimension,
         dimension_size,
-        initial_date = initial_date
+        initial_date = initial_date,
     )
 
     for stage in 1:num_stages
@@ -241,6 +247,8 @@ function read_write_4(impl)
 
     rm("$filename.$(Quiver.file_extension(impl))")
     rm("$filename.toml")
+
+    return nothing
 end
 
 function read_write_5(impl)
@@ -253,7 +261,7 @@ function read_write_5(impl)
     num_segments_per_block_scenario = [s + b for b in 1:num_blocks, s in 1:num_scenarios]
     max_num_segments = maximum(num_segments_per_block_scenario)
     num_time_series = 3
-    
+
     dimensions = ["stage", "scenario", "block", "segment"]
     labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
@@ -265,7 +273,7 @@ function read_write_5(impl)
         labels,
         time_dimension,
         dimension_size,
-        initial_date = initial_date
+        initial_date = initial_date,
     )
 
     for stage in 1:num_stages
@@ -301,6 +309,8 @@ function read_write_5(impl)
 
     rm("$filename.$(Quiver.file_extension(impl))")
     rm("$filename.toml")
+
+    return nothing
 end
 
 function read_write_goto_csv_1()
@@ -313,7 +323,7 @@ function read_write_goto_csv_1()
     num_segments_per_block_scenario = [s + b for b in 1:num_blocks, s in 1:num_scenarios]
     max_num_segments = maximum(num_segments_per_block_scenario)
     num_time_series = 3
-    
+
     dimensions = ["stage", "scenario", "block", "segment"]
     labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
@@ -325,7 +335,7 @@ function read_write_goto_csv_1()
         labels,
         time_dimension,
         dimension_size,
-        initial_date = initial_date
+        initial_date = initial_date,
     )
 
     for stage in 1:num_stages
@@ -357,6 +367,8 @@ function read_write_goto_csv_1()
 
     rm("$filename.$(Quiver.file_extension(Quiver.csv))")
     rm("$filename.toml")
+
+    return nothing
 end
 
 function read_write_goto_csv_2()
@@ -369,7 +381,7 @@ function read_write_goto_csv_2()
     num_segments_per_block_scenario = [s + b for b in 1:num_blocks, s in 1:num_scenarios]
     max_num_segments = maximum(num_segments_per_block_scenario)
     num_time_series = 3
-    
+
     dimensions = ["stage", "scenario", "block", "segment"]
     labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
@@ -381,7 +393,7 @@ function read_write_goto_csv_2()
         labels,
         time_dimension,
         dimension_size,
-        initial_date = initial_date
+        initial_date = initial_date,
     )
 
     for stage in 1:num_stages
@@ -417,6 +429,8 @@ function read_write_goto_csv_2()
 
     rm("$filename.$(Quiver.file_extension(Quiver.csv))")
     rm("$filename.toml")
+
+    return nothing
 end
 
 function read_write_goto_csv_3()
@@ -429,7 +443,7 @@ function read_write_goto_csv_3()
     num_segments_per_block_scenario = [s + b for b in 1:num_blocks, s in 1:num_scenarios]
     max_num_segments = maximum(num_segments_per_block_scenario)
     num_time_series = 3
-    
+
     dimensions = ["stage", "scenario", "block", "segment"]
     labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
@@ -441,7 +455,7 @@ function read_write_goto_csv_3()
         labels,
         time_dimension,
         dimension_size,
-        initial_date = initial_date
+        initial_date = initial_date,
     )
 
     for stage in 1:num_stages
@@ -476,6 +490,8 @@ function read_write_goto_csv_3()
 
     rm("$filename.$(Quiver.file_extension(Quiver.csv))")
     rm("$filename.toml")
+
+    return nothing
 end
 
 function read_write_goto_csv_4()
@@ -488,7 +504,7 @@ function read_write_goto_csv_4()
     num_segments_per_block_scenario = [s + b for b in 1:num_blocks, s in 1:num_scenarios]
     max_num_segments = maximum(num_segments_per_block_scenario)
     num_time_series = 3
-    
+
     dimensions = ["stage", "scenario", "block", "segment"]
     labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
@@ -500,7 +516,7 @@ function read_write_goto_csv_4()
         labels,
         time_dimension,
         dimension_size,
-        initial_date = initial_date
+        initial_date = initial_date,
     )
 
     for stage in 1:num_stages
@@ -538,6 +554,8 @@ function read_write_goto_csv_4()
 
     rm("$filename.$(Quiver.file_extension(Quiver.csv))")
     rm("$filename.toml")
+
+    return nothing
 end
 
 function read_write_goto_csv_5()
@@ -550,7 +568,7 @@ function read_write_goto_csv_5()
     num_segments_per_block_scenario = [s + b for b in 1:num_blocks, s in 1:num_scenarios]
     max_num_segments = maximum(num_segments_per_block_scenario)
     num_time_series = 3
-    
+
     dimensions = ["stage", "scenario", "block", "segment"]
     labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
@@ -562,7 +580,7 @@ function read_write_goto_csv_5()
         labels,
         time_dimension,
         dimension_size,
-        initial_date = initial_date
+        initial_date = initial_date,
     )
 
     for stage in 1:num_stages
@@ -589,6 +607,8 @@ function read_write_goto_csv_5()
 
     rm("$filename.$(Quiver.file_extension(Quiver.csv))")
     rm("$filename.toml")
+
+    return nothing
 end
 
 function read_write_carrousel(impl)
@@ -599,11 +619,11 @@ function read_write_carrousel(impl)
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
-    dates = collect(initial_date:Dates.Month(1):initial_date + Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
     num_scenarios = 1
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     num_time_series = 3
-    
+
     dimensions = ["stage", "scenario", "block"]
     labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
@@ -651,6 +671,8 @@ function read_write_carrousel(impl)
 
     rm("$filename.$(Quiver.file_extension(impl))")
     rm("$filename.toml")
+
+    return nothing
 end
 
 function read_outside_bounds_1(impl)
@@ -661,14 +683,14 @@ function read_outside_bounds_1(impl)
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
-    dates = collect(initial_date:Dates.Month(1):initial_date + Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
     num_scenarios = 12
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     max_num_blocks = maximum(num_blocks_per_stage)
-    num_segments_per_scenario = [2*s for s in 1:num_scenarios]
+    num_segments_per_scenario = [2 * s for s in 1:num_scenarios]
     max_num_segments = maximum(num_segments_per_scenario)
     num_time_series = 3
-    
+
     dimensions = ["stage", "scenario", "block", "segment"]
     labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
@@ -680,7 +702,7 @@ function read_outside_bounds_1(impl)
         labels,
         time_dimension,
         dimension_size,
-        initial_date = initial_date
+        initial_date = initial_date,
     )
 
     for stage in 1:num_stages
@@ -719,6 +741,8 @@ function read_outside_bounds_1(impl)
 
     rm("$filename.$(Quiver.file_extension(impl))")
     rm("$filename.toml")
+
+    return nothing
 end
 
 function read_outside_bounds_2(impl)
@@ -729,14 +753,14 @@ function read_outside_bounds_2(impl)
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
-    dates = collect(initial_date:Dates.Month(1):initial_date + Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
     num_scenarios = 12
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     max_num_blocks = maximum(num_blocks_per_stage)
-    num_segments_per_block = [round(Int, b/20) for b in 1:max_num_blocks]
+    num_segments_per_block = [round(Int, b / 20) for b in 1:max_num_blocks]
     max_num_segments = maximum(num_segments_per_block)
     num_time_series = 3
-    
+
     dimensions = ["stage", "scenario", "block", "segment"]
     labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
@@ -748,7 +772,7 @@ function read_outside_bounds_2(impl)
         labels,
         time_dimension,
         dimension_size,
-        initial_date = initial_date
+        initial_date = initial_date,
     )
 
     for stage in 1:num_stages
@@ -788,6 +812,8 @@ function read_outside_bounds_2(impl)
 
     rm("$filename.$(Quiver.file_extension(impl))")
     rm("$filename.toml")
+
+    return nothing
 end
 
 function read_outside_bounds_3(impl)
@@ -798,13 +824,13 @@ function read_outside_bounds_3(impl)
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
-    num_scenarios_per_stage = [2*s + 10 for s in 1:num_stages]
+    num_scenarios_per_stage = [2 * s + 10 for s in 1:num_stages]
     max_num_scenarios = maximum(num_scenarios_per_stage)
     num_blocks = 24
-    num_segments_per_block = [round(Int, b/20) for b in 1:num_blocks]
+    num_segments_per_block = [round(Int, b / 20) for b in 1:num_blocks]
     max_num_segments = maximum(num_segments_per_block)
     num_time_series = 3
-    
+
     dimensions = ["stage", "scenario", "block", "segment"]
     labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
@@ -816,7 +842,7 @@ function read_outside_bounds_3(impl)
         labels,
         time_dimension,
         dimension_size,
-        initial_date = initial_date
+        initial_date = initial_date,
     )
 
     for stage in 1:num_stages
@@ -856,6 +882,8 @@ function read_outside_bounds_3(impl)
 
     rm("$filename.$(Quiver.file_extension(impl))")
     rm("$filename.toml")
+
+    return nothing
 end
 
 function read_outside_bounds_4(impl)
@@ -871,7 +899,7 @@ function read_outside_bounds_4(impl)
     num_segments_per_block_scenario = [s + b for b in 1:num_blocks, s in 1:num_scenarios]
     max_num_segments = maximum(num_segments_per_block_scenario)
     num_time_series = 3
-    
+
     dimensions = ["stage", "scenario", "block", "segment"]
     labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
@@ -883,7 +911,7 @@ function read_outside_bounds_4(impl)
         labels,
         time_dimension,
         dimension_size,
-        initial_date = initial_date
+        initial_date = initial_date,
     )
 
     for stage in 1:num_stages
@@ -914,15 +942,17 @@ function read_outside_bounds_4(impl)
         end
     end
 
-    @test_throws EOFError Quiver.goto!(reader; stage = num_stages+1, scenario = num_scenarios, block = num_blocks, segment = max_num_segments)
-    @test_throws EOFError Quiver.goto!(reader; stage = num_stages, scenario = num_scenarios+1, block = num_blocks, segment = max_num_segments)
-    @test_throws EOFError Quiver.goto!(reader; stage = num_stages, scenario = num_scenarios, block = num_blocks+1, segment = max_num_segments)
-    @test_throws EOFError Quiver.goto!(reader; stage = num_stages, scenario = num_scenarios, block = num_blocks, segment = max_num_segments+1)
+    @test_throws EOFError Quiver.goto!(reader; stage = num_stages + 1, scenario = num_scenarios, block = num_blocks, segment = max_num_segments)
+    @test_throws EOFError Quiver.goto!(reader; stage = num_stages, scenario = num_scenarios + 1, block = num_blocks, segment = max_num_segments)
+    @test_throws EOFError Quiver.goto!(reader; stage = num_stages, scenario = num_scenarios, block = num_blocks + 1, segment = max_num_segments)
+    @test_throws EOFError Quiver.goto!(reader; stage = num_stages, scenario = num_scenarios, block = num_blocks, segment = max_num_segments + 1)
 
     Quiver.close!(reader)
 
     rm("$filename.$(Quiver.file_extension(impl))")
     rm("$filename.toml")
+
+    return nothing
 end
 
 function read_filtering_labels(impl)
@@ -930,11 +960,11 @@ function read_filtering_labels(impl)
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
-    dates = collect(initial_date:Dates.Month(1):initial_date + Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
     num_scenarios = 12
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     num_time_series = 3
-    
+
     dimensions = ["stage", "scenario", "block"]
     labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
@@ -946,7 +976,7 @@ function read_filtering_labels(impl)
         labels,
         time_dimension,
         dimension_size,
-        initial_date = initial_date
+        initial_date = initial_date,
     )
 
     for stage in 1:num_stages
@@ -1010,6 +1040,8 @@ function read_filtering_labels(impl)
 
     rm("$filename.$(Quiver.file_extension(impl))")
     rm("$filename.toml")
+
+    return nothing
 end
 
 function read_write_out_of_order_kwargs(impl)
@@ -1017,11 +1049,11 @@ function read_write_out_of_order_kwargs(impl)
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
-    dates = collect(initial_date:Dates.Month(1):initial_date + Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
     num_scenarios = 12
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     num_time_series = 3
-    
+
     dimensions = ["stage", "scenario", "block"]
     labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
@@ -1033,7 +1065,7 @@ function read_write_out_of_order_kwargs(impl)
         labels,
         time_dimension,
         dimension_size,
-        initial_date = initial_date
+        initial_date = initial_date,
     )
 
     for stage in 1:num_stages
@@ -1044,7 +1076,7 @@ function read_write_out_of_order_kwargs(impl)
             end
         end
     end
-    
+
     @test_throws ErrorException Quiver.write!(writer, [1, 1, 1]; wrong_name = 1, scenario = 1, block = 1)
 
     Quiver.close!(writer)
@@ -1069,6 +1101,8 @@ function read_write_out_of_order_kwargs(impl)
 
     rm("$filename.$(Quiver.file_extension(impl))")
     rm("$filename.toml")
+
+    return nothing
 end
 
 function read_file_to_array(impl)
@@ -1076,60 +1110,11 @@ function read_file_to_array(impl)
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 4
-    dates = collect(initial_date:Dates.Month(1):initial_date + Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
     num_scenarios = 3
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     num_time_series = 3
-    
-    dimensions = ["stage", "scenario", "block"]
-    labels = ["agent_$i" for i in 1:num_time_series]
-    time_dimension = "stage"
-    dimension_size = [num_stages, num_scenarios, maximum(num_blocks_per_stage)]
 
-    data = zeros(num_time_series, maximum(num_blocks_per_stage), num_scenarios, num_stages)
-    for stage in 1:num_stages
-        for scenario in 1:num_scenarios
-            for block in 1:num_blocks_per_stage[stage]
-                for i in 1:num_time_series
-                    data[i, block, scenario, stage] = stage + scenario + block + i
-                end
-            end
-        end
-    end
-
-    Quiver.array_to_file(
-        filename,
-        data,
-        impl;
-        dimensions,
-        labels,
-        time_dimension,
-        dimension_size,
-        initial_date
-    )
-
-    data_read, metadata = Quiver.file_to_array(filename, impl)
-
-    @test size(data) == size(data_read)
-
-    for i in eachindex(data)
-        @test data[i] == data_read[i]
-    end
-    
-    rm("$filename.$(Quiver.file_extension(impl))")
-    rm("$filename.toml")
-end
-
-function read_file_to_df(impl)
-    filename = joinpath(@__DIR__, "test_read_file_to_df")
-
-    initial_date = DateTime(2006, 1, 1)
-    num_stages = 4
-    dates = collect(initial_date:Dates.Month(1):initial_date + Dates.Month(num_stages - 1))
-    num_scenarios = 3
-    num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
-    num_time_series = 3
-    
     dimensions = ["stage", "scenario", "block"]
     labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
@@ -1155,7 +1140,58 @@ function read_file_to_df(impl)
         time_dimension,
         dimension_size,
         initial_date,
-        unit = " - "
+    )
+
+    data_read, metadata = Quiver.file_to_array(filename, impl)
+
+    @test size(data) == size(data_read)
+
+    for i in eachindex(data)
+        @test data[i] == data_read[i]
+    end
+
+    rm("$filename.$(Quiver.file_extension(impl))")
+    rm("$filename.toml")
+
+    return nothing
+end
+
+function read_file_to_df(impl)
+    filename = joinpath(@__DIR__, "test_read_file_to_df")
+
+    initial_date = DateTime(2006, 1, 1)
+    num_stages = 4
+    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
+    num_scenarios = 3
+    num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
+    num_time_series = 3
+
+    dimensions = ["stage", "scenario", "block"]
+    labels = ["agent_$i" for i in 1:num_time_series]
+    time_dimension = "stage"
+    dimension_size = [num_stages, num_scenarios, maximum(num_blocks_per_stage)]
+
+    data = zeros(num_time_series, maximum(num_blocks_per_stage), num_scenarios, num_stages)
+    for stage in 1:num_stages
+        for scenario in 1:num_scenarios
+            for block in 1:num_blocks_per_stage[stage]
+                for i in 1:num_time_series
+                    data[i, block, scenario, stage] = stage + scenario + block + i
+                end
+            end
+        end
+    end
+
+    Quiver.array_to_file(
+        filename,
+        data,
+        impl;
+        dimensions,
+        labels,
+        time_dimension,
+        dimension_size,
+        initial_date,
+        unit = " - ",
     )
 
     df = Quiver.file_to_df(filename, impl)
@@ -1170,6 +1206,8 @@ function read_file_to_df(impl)
 
     rm("$filename.$(Quiver.file_extension(impl))")
     rm("$filename.toml")
+
+    return nothing
 end
 
 function test_read_write_implementations()
@@ -1214,4 +1252,4 @@ end
 
 TestWriter.runtests()
 
-end # end module
+end

@@ -43,7 +43,7 @@ function test_graf_convertion_fixed_blocks()
             Quiver.convert(
                 FILE_PATH,
                 PSRClassesInterface.OpenBinary.Reader,
-                impl
+                impl,
             )
 
             # Test if data was correctly converted
@@ -81,6 +81,8 @@ function test_graf_convertion_fixed_blocks()
     rm(FILE_PATH * ".quiv")
     rm(FILE_PATH * ".csv")
     rm(FILE_PATH * ".toml")
+
+    return nothing
 end
 
 function runtests()

@@ -44,7 +44,7 @@ function merge(
     if !isempty(msg)
         throw(ArgumentError("Merge has $iterator errors.\n\n$msg"))
     end
-    
+
     writer = Quiver.Writer{impl}(
         output_filename;
         labels = labels,

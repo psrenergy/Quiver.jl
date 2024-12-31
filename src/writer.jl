@@ -179,6 +179,7 @@ Required arguments:
   - `initial_date::Union{String, DateTime}`: Initial date of the time series. If a string is provided, it should be in the format "yyyy-mm-ddTHH:MM:SS".
 
 Optional arguments:
+
   - `digits::Union{Int, Nothing}`: Number of digits to round the data. If nothing is provided, the data is not rounded.
   - `unit::String`: Unit of the time series data.
 """

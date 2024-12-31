@@ -6,6 +6,6 @@ struct binary <: Implementation end
 function implementations()::Vector{DataType}
     return [
         Quiver.csv,
-        Quiver.binary
+        Quiver.binary,
     ]
 end
