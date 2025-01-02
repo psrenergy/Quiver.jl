@@ -1,7 +1,7 @@
 name = "Quiver"
 uuid = "cdbb3f72-2527-4dbd-9d0e-93533a5519ac"
 authors = ["raphasampaio", "guilhermebodin"]
-version = "0.1.7"
+version = "0.1.8"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
@@ -18,17 +18,22 @@ PSRClassesInterface = "1eab49e5-27d8-4905-b9f6-327b6ea666c4"
 PSRClassesInterfaceExt = "PSRClassesInterface"
 
 [compat]
+Aqua = "0.8"
 CSV = "0.10"
 DataFrames = "1"
 Dates = "1"
 OrderedCollections = "1"
+PSRClassesInterface = "0.17.4"
+Random = "1"
 TOML = "1"
 Tables = "1"
+Test = "1"
 julia = "1.8"
 
 [extras]
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Random", "Test", "PSRClassesInterface"]
+test = ["Aqua", "Random", "Test", "PSRClassesInterface"]
