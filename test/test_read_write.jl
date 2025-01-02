@@ -732,10 +732,34 @@ function read_outside_bounds_1(impl)
         end
     end
 
-    @test_throws EOFError Quiver.goto!(reader; stage = num_stages+1, scenario = num_scenarios, block = max_num_blocks, segment = max_num_segments)
-    @test_throws EOFError Quiver.goto!(reader; stage = num_stages, scenario = num_scenarios+1, block = max_num_blocks, segment = max_num_segments)
-    @test_throws EOFError Quiver.goto!(reader; stage = num_stages, scenario = num_scenarios, block = max_num_blocks+1, segment = max_num_segments)
-    @test_throws EOFError Quiver.goto!(reader; stage = num_stages, scenario = num_scenarios, block = max_num_blocks, segment = max_num_segments+1)
+    @test_throws EOFError Quiver.goto!(
+        reader;
+        stage = num_stages + 1,
+        scenario = num_scenarios,
+        block = max_num_blocks,
+        segment = max_num_segments,
+    )
+    @test_throws EOFError Quiver.goto!(
+        reader;
+        stage = num_stages,
+        scenario = num_scenarios + 1,
+        block = max_num_blocks,
+        segment = max_num_segments,
+    )
+    @test_throws EOFError Quiver.goto!(
+        reader;
+        stage = num_stages,
+        scenario = num_scenarios,
+        block = max_num_blocks + 1,
+        segment = max_num_segments,
+    )
+    @test_throws EOFError Quiver.goto!(
+        reader;
+        stage = num_stages,
+        scenario = num_scenarios,
+        block = max_num_blocks,
+        segment = max_num_segments + 1,
+    )
 
     Quiver.close!(reader)
 
@@ -803,10 +827,34 @@ function read_outside_bounds_2(impl)
         end
     end
 
-    @test_throws EOFError Quiver.goto!(reader; stage = num_stages+1, scenario = num_scenarios, block = max_num_blocks, segment = max_num_segments)
-    @test_throws EOFError Quiver.goto!(reader; stage = num_stages, scenario = num_scenarios+1, block = max_num_blocks, segment = max_num_segments)
-    @test_throws EOFError Quiver.goto!(reader; stage = num_stages, scenario = num_scenarios, block = max_num_blocks+1, segment = max_num_segments)
-    @test_throws EOFError Quiver.goto!(reader; stage = num_stages, scenario = num_scenarios, block = max_num_blocks, segment = max_num_segments+1)
+    @test_throws EOFError Quiver.goto!(
+        reader;
+        stage = num_stages + 1,
+        scenario = num_scenarios,
+        block = max_num_blocks,
+        segment = max_num_segments,
+    )
+    @test_throws EOFError Quiver.goto!(
+        reader;
+        stage = num_stages,
+        scenario = num_scenarios + 1,
+        block = max_num_blocks,
+        segment = max_num_segments,
+    )
+    @test_throws EOFError Quiver.goto!(
+        reader;
+        stage = num_stages,
+        scenario = num_scenarios,
+        block = max_num_blocks + 1,
+        segment = max_num_segments,
+    )
+    @test_throws EOFError Quiver.goto!(
+        reader;
+        stage = num_stages,
+        scenario = num_scenarios,
+        block = max_num_blocks,
+        segment = max_num_segments + 1,
+    )
 
     Quiver.close!(reader)
 
@@ -873,10 +921,34 @@ function read_outside_bounds_3(impl)
         end
     end
 
-    @test_throws EOFError Quiver.goto!(reader; stage = num_stages+1, scenario = max_num_scenarios, block = num_blocks, segment = max_num_segments)
-    @test_throws EOFError Quiver.goto!(reader; stage = num_stages, scenario = max_num_scenarios+1, block = num_blocks, segment = max_num_segments)
-    @test_throws EOFError Quiver.goto!(reader; stage = num_stages, scenario = max_num_scenarios, block = num_blocks+1, segment = max_num_segments)
-    @test_throws EOFError Quiver.goto!(reader; stage = num_stages, scenario = max_num_scenarios, block = num_blocks, segment = max_num_segments+1)
+    @test_throws EOFError Quiver.goto!(
+        reader;
+        stage = num_stages + 1,
+        scenario = max_num_scenarios,
+        block = num_blocks,
+        segment = max_num_segments,
+    )
+    @test_throws EOFError Quiver.goto!(
+        reader;
+        stage = num_stages,
+        scenario = max_num_scenarios + 1,
+        block = num_blocks,
+        segment = max_num_segments,
+    )
+    @test_throws EOFError Quiver.goto!(
+        reader;
+        stage = num_stages,
+        scenario = max_num_scenarios,
+        block = num_blocks + 1,
+        segment = max_num_segments,
+    )
+    @test_throws EOFError Quiver.goto!(
+        reader;
+        stage = num_stages,
+        scenario = max_num_scenarios,
+        block = num_blocks,
+        segment = max_num_segments + 1,
+    )
 
     Quiver.close!(reader)
 
