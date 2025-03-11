@@ -21,5 +21,6 @@ include("csv.jl")
 include("binary.jl")
 
 include("merge.jl")
+include("operations.jl")
 
 end
