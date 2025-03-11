@@ -73,6 +73,3 @@ function apply_expression(
     close!(writer)
     return nothing
 end
-
-
-
