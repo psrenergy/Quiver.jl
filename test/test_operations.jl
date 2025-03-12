@@ -70,9 +70,69 @@ function sum_multiple_files(impl)
     return nothing
 end
 
+function sum_block_dimension(impl)
+    filename = joinpath(@__DIR__, "test_sum")
+
+    initial_date = DateTime(2024, 1, 1)
+    num_stages = 3
+    num_scenarios = 2
+    num_blocks = 4
+
+    dimensions = ["stage", "scenario", "block"]
+    time_dimension = "stage"
+    dimension_size = [num_stages, num_scenarios, num_blocks]
+    labels = ["agent_1"]
+
+    writer = Quiver.Writer{impl}(
+        filename;
+        dimensions,
+        labels = labels,
+        time_dimension,
+        dimension_size,
+        initial_date = initial_date,
+    )
+
+    for stage in 1:num_stages
+        for scenario in 1:num_scenarios
+            for block in 1:num_blocks
+                data = (stage + scenario) * block
+                Quiver.write!(writer, [data]; stage, scenario, block)
+            end
+        end
+    end
+    Quiver.close!(writer)
+
+    output_filename = joinpath(@__DIR__, "test_summed_dimension")
+    Quiver.apply_expression_over_dimension(
+        output_filename,
+        filename,
+        +,
+        :block,
+        impl,
+    )
+
+    reader = Quiver.Reader{impl}(output_filename)
+    for stage in 1:num_stages
+        for scenario in 1:num_scenarios
+            Quiver.goto!(reader; stage, scenario)
+            @test reader.data == [(stage + scenario) * num_blocks * (num_blocks + 1) / 2]
+        end
+    end
+
+    Quiver.close!(reader)
+
+    rm("$filename.$(Quiver.file_extension(impl))")
+    rm("$filename.toml")
+    rm("$output_filename.$(Quiver.file_extension(impl))")
+    rm("$output_filename.toml")
+
+    return nothing
+end
+
 function test_operations()
     for impl in Quiver.implementations()
         sum_multiple_files(impl)
+        sum_block_dimension(impl)
     end
 end
 

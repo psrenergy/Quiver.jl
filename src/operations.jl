@@ -73,3 +73,82 @@ function apply_expression(
     close!(writer)
     return nothing
 end
+
+function apply_expression_over_dimension(
+    output_filename::String,
+    filename::String,
+    operation::Function,
+    dim_to_operate::Symbol,
+    impl::Type{<:Implementation};
+    digits::Union{Int, Nothing} = nothing,
+)
+    reader = Quiver.Reader{impl}(filename)
+    metadata = reader.metadata
+
+    labels = metadata.labels
+    dimensions = metadata.dimensions
+    dimension_size = metadata.dimension_size
+    reverse_dimensions = (reverse(dimensions))
+    n_agents = length(labels)
+
+    if dim_to_operate == metadata.time_dimension
+        throw(ArgumentError("Dimension $dim_to_operate is the time dimension. This is not allowed."))
+    end
+    dim_to_operate_idx = findfirst(x -> x == dim_to_operate, dimensions)
+    if dim_to_operate_idx !== nothing
+        dim_to_operate_idx = dim_to_operate_idx
+        if dim_to_operate_idx != length(dimensions)
+            @warn "Dimension $dim_to_operate is not the last dimension. This not the most efficient way to operate over dimensions."
+        end
+    else
+        throw(ArgumentError("Dimension $dim_to_operate not found in file $filename"))
+    end
+
+    # Get the sizes of the dimensions
+    dimension_size = metadata.dimension_size
+
+    # Define a function to get the indices for all dimensions except the one being operated on
+    other_dimension_sizes = [dimension_size[i] for i in eachindex(dimension_size) if i != dim_to_operate_idx]
+    other_dimensions = [dimensions[i] for i in eachindex(dimensions) if i != dim_to_operate_idx]
+    reverse_dimensions = reverse(dimensions)
+    reverse_other_dimensions = reverse(other_dimensions)
+
+    writer = Quiver.Writer{impl}(
+        output_filename;
+        labels = labels,
+        dimensions = string.(other_dimensions),
+        time_dimension = string(metadata.time_dimension),
+        dimension_size = other_dimension_sizes,
+        initial_date = metadata.initial_date,
+        unit = metadata.unit,
+    )
+
+    # Iterate over all combinations of the other dimensions using column-major order
+    for dims in Iterators.product([1:size for size in reverse(other_dimension_sizes)]...)
+        dim_kwargs = OrderedDict(reverse_other_dimensions .=> dims)
+        dim_kwargs_operate = copy(dim_kwargs)
+
+        data = [zeros(n_agents) for _ in 1:dimension_size[dim_to_operate_idx]]
+
+        # Apply the operation across the specified Dimension
+        # TODO: This doesn't respect column major order, but it's not clear how to do that
+        for i in 1:dimension_size[dim_to_operate_idx]
+            # Set the index for the dimension we are operating on
+            dim_kwargs_operate[dimensions[dim_to_operate_idx]] = i
+            Quiver.goto!(reader; dim_kwargs_operate...)
+
+            # Store the data at this position
+            data[i] = Float64.(reader.data)
+        end
+
+        # Apply the operation (e.g., sum) across the dimension
+        result = operation.(data...)
+
+        # Write the result to the output file
+        Quiver.write!(writer, Quiver.round_digits(result, digits); dim_kwargs...)
+    end
+
+    close!(reader)
+    close!(writer)
+    return nothing
+end
