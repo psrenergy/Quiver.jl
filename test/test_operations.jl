@@ -106,7 +106,7 @@ function sum_block_dimension(impl)
     Quiver.apply_expression_over_dimension(
         output_filename,
         filename,
-        +,
+        sum,
         :block,
         impl,
     )

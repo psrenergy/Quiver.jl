@@ -147,7 +147,8 @@ function apply_expression_over_dimension(
         end
 
         # Apply the operation (e.g., sum) across the dimension
-        result = operation.(data...)
+        data = hcat(data...)
+        result = operation(data, dims = 2)[:,1]
 
         # Write the result to the output file
         Quiver.write!(writer, Quiver.round_digits(result, digits); dim_kwargs...)
