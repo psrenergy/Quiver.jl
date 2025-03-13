@@ -1,9 +1,9 @@
 file_extension(::Type{csv}) = "csv"
 
 mutable struct QuiverCSVRowReader
-    io
-    iterator
-    next
+    io::Any
+    iterator::Any
+    next::Any
 end
 
 function Writer{csv}(
