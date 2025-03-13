@@ -35,7 +35,10 @@ function apply_expression(
     end
 
     if !isempty(msg)
-        throw(ArgumentError("Apply expression $(func) has $iterator errors.\n\n$msg"))
+        for reader in readers
+            Quiver.close!(reader)
+        end
+        throw(ArgumentError("Apply expression $(operation) has $iterator errors.\n\n$msg"))
     end
 
     labels = union([reader.metadata.labels for reader in readers]...)
@@ -92,6 +95,7 @@ function apply_expression_over_dimension(
     n_agents = length(labels)
 
     if dim_to_operate == metadata.time_dimension
+        Quiver.close!(reader)
         throw(ArgumentError("Dimension $dim_to_operate is the time dimension. This is not allowed."))
     end
     dim_to_operate_idx = findfirst(x -> x == dim_to_operate, dimensions)
@@ -101,6 +105,7 @@ function apply_expression_over_dimension(
             @warn "Dimension $dim_to_operate is not the last dimension. This not the most efficient way to operate over dimensions."
         end
     else
+        Quiver.close!(reader)
         throw(ArgumentError("Dimension $dim_to_operate not found in file $filename"))
     end
 
