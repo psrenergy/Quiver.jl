@@ -148,10 +148,60 @@ function apply_expression_over_dimension(
 
         # Apply the operation (e.g., sum) across the dimension
         data = hcat(data...)
-        result = operation(data, dims = 2)[:,1]
+        result = operation(data, dims = 2)[:, 1]
 
         # Write the result to the output file
         Quiver.write!(writer, Quiver.round_digits(result, digits); dim_kwargs...)
+    end
+
+    close!(reader)
+    close!(writer)
+    return nothing
+end
+
+function apply_expression_over_agents(
+    output_filename::String,
+    filename::String,
+    operation::Function,
+    new_labels::Vector{String},
+    impl::Type{<:Implementation};
+    digits::Union{Int, Nothing} = nothing,
+)
+    reader = Quiver.Reader{impl}(filename)
+    metadata = reader.metadata
+
+    labels = metadata.labels
+    dimensions = metadata.dimensions
+    dimension_size = metadata.dimension_size
+    reverse_dimensions = (reverse(dimensions))
+    n_agents = length(labels)
+    n_new_agents = length(new_labels)
+
+    data_test = ones(n_agents)
+    result_test = vcat(operation(data_test))
+    if length(result_test) != n_new_agents
+        Quiver.close!(reader)
+        throw(ArgumentError("The number of agents in the result of the operation is different from the number of agents in the output file."))
+    end
+
+    writer = Quiver.Writer{impl}(
+        output_filename;
+        labels = new_labels,
+        dimensions = string.(dimensions),
+        time_dimension = string(metadata.time_dimension),
+        dimension_size = dimension_size,
+        initial_date = metadata.initial_date,
+        unit = metadata.unit,
+    )
+
+    data = zeros(n_new_agents)
+    # Iterate over all combinations of the other dimensions using column-major order
+    for dims in Iterators.product([1:size for size in reverse(dimension_size)]...)
+        dim_kwargs = OrderedDict(reverse_dimensions .=> dims)
+        Quiver.goto!(reader; dim_kwargs...)
+        data = vcat(operation(reader.data))
+        # Write the result to the output file
+        Quiver.write!(writer, Quiver.round_digits(data, digits); dim_kwargs...)
     end
 
     close!(reader)
