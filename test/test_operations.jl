@@ -106,7 +106,7 @@ function sum_block_dimension(impl)
     Quiver.apply_expression_over_dimension(
         output_filename,
         filename,
-        +,
+        sum,
         :block,
         impl,
     )
@@ -125,6 +125,124 @@ function sum_block_dimension(impl)
     rm("$filename.toml")
     rm("$output_filename.$(Quiver.file_extension(impl))")
     rm("$output_filename.toml")
+
+    return nothing
+end
+
+function sum_agents_in_file(impl)
+    filename = joinpath(@__DIR__, "test_sum_agents")
+
+    initial_date = DateTime(2024, 1, 1)
+    num_stages = 3
+    num_scenarios = 2
+    num_blocks = 4
+
+    dimensions = ["stage", "scenario", "block"]
+    time_dimension = "stage"
+    dimension_size = [num_stages, num_scenarios, num_blocks]
+    labels = ["agent_1", "agent_2", "agent_3"]
+
+    writer = Quiver.Writer{impl}(
+        filename;
+        dimensions,
+        labels = labels,
+        time_dimension,
+        dimension_size,
+        initial_date = initial_date,
+    )
+
+    for stage in 1:num_stages
+        for scenario in 1:num_scenarios
+            for block in 1:num_blocks
+                data = [stage, scenario, block]
+                Quiver.write!(writer, data; stage, scenario, block)
+            end
+        end
+    end
+    Quiver.close!(writer)
+
+    output_filename = joinpath(@__DIR__, "test_summed_agents")
+    Quiver.apply_expression_over_agents(
+        output_filename,
+        filename,
+        sum,
+        ["agent_sum"],
+        impl,
+    )
+
+    reader = Quiver.Reader{impl}(output_filename)
+    for stage in 1:num_stages
+        for scenario in 1:num_scenarios
+            for block in 1:num_blocks
+                Quiver.goto!(reader; stage, scenario, block)
+                @test reader.data == [stage + scenario + block]
+            end
+        end
+    end
+
+    Quiver.close!(reader)
+
+    rm("$filename.$(Quiver.file_extension(impl))")
+    rm("$filename.toml")
+    rm("$output_filename.$(Quiver.file_extension(impl))")
+    rm("$output_filename.toml")
+
+    return nothing
+end
+
+function sum_agents_error_in_file(impl)
+    filename = joinpath(@__DIR__, "test_sum_agents")
+
+    initial_date = DateTime(2024, 1, 1)
+    num_stages = 3
+    num_scenarios = 2
+    num_blocks = 4
+
+    dimensions = ["stage", "scenario", "block"]
+    time_dimension = "stage"
+    dimension_size = [num_stages, num_scenarios, num_blocks]
+    labels = ["agent_1", "agent_2", "agent_3"]
+
+    writer = Quiver.Writer{impl}(
+        filename;
+        dimensions,
+        labels = labels,
+        time_dimension,
+        dimension_size,
+        initial_date = initial_date,
+    )
+
+    for stage in 1:num_stages
+        for scenario in 1:num_scenarios
+            for block in 1:num_blocks
+                data = [stage, scenario, block]
+                Quiver.write!(writer, data; stage, scenario, block)
+            end
+        end
+    end
+    Quiver.close!(writer)
+
+    output_filename = joinpath(@__DIR__, "test_summed_agents")
+    # Error because the number of labels is 2 and the operation returns 1
+    @test_throws ArgumentError Quiver.apply_expression_over_agents(
+        output_filename,
+        filename,
+        sum,
+        ["agent_sum1", "agent_sum2"],
+        impl,
+    )
+
+    # Error because the number of labels is 1 and the operation returns 2
+    @test_throws ArgumentError Quiver.apply_expression_over_agents(
+        output_filename,
+        filename,
+        x -> [x[1] + x[2], x[3]],
+        ["agent_sum"],
+        impl,
+    )
+
+    rm("$filename.$(Quiver.file_extension(impl))")
+    rm("$filename.toml")
 
     return nothing
 end
@@ -390,6 +508,8 @@ function test_operations()
     for impl in Quiver.implementations()
         sum_multiple_files(impl)
         sum_block_dimension(impl)
+        sum_agents_in_file(impl)
+        sum_agents_error_in_file(impl)
         sum_dimension_size_error(impl)
         sum_time_dimension_error(impl)
         sum_initial_date_error(impl)
