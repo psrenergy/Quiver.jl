@@ -1282,6 +1282,81 @@ function read_file_to_df(impl)
     return nothing
 end
 
+function read_write_df_to_file(impl)
+    filename = joinpath(@__DIR__, "test_read_write_df_to_file")
+
+    initial_date = DateTime(2006, 1, 1)
+    num_stages = 4
+    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
+    num_scenarios = 3
+    num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
+    num_time_series = 3
+
+    dimensions = ["stage", "scenario", "block"]
+    labels = ["agent_$i" for i in 1:num_time_series]
+    time_dimension = "stage"
+    dimension_size = [num_stages, num_scenarios, maximum(num_blocks_per_stage)]
+
+    stages = Int[]
+    scenarios = Int[]
+    blocks = Int[]
+    data = [Int[] for i in 1:num_time_series]
+
+    for stage in 1:num_stages
+        for scenario in 1:num_scenarios
+            for block in 1:num_blocks_per_stage[stage]
+                push!(stages, stage)
+                push!(scenarios, scenario)
+                push!(blocks, block)
+                for i in 1:num_time_series
+                    push!(data[i], stage + scenario + block + i)
+                end
+            end
+        end
+    end
+
+    df = DataFrame(
+        stage = stages,
+        scenario = scenarios,
+        block = blocks,
+        agent_1 = data[1],
+        agent_2 = data[2],
+        agent_3 = data[3],
+    )
+
+    Quiver.df_to_file(
+        filename,
+        df,
+        impl;
+        dimensions,
+        labels,
+        time_dimension,
+        dimension_size,
+        initial_date,
+        unit = " - ",
+    )
+
+    reader = Quiver.Reader{impl}(filename)
+
+    for row in eachrow(df)
+        data_from_df = [getproperty(row, label) for label in labels]
+        if impl == Quiver.csv
+            Quiver.next_dimension!(reader)
+        else
+            Quiver.goto!(reader; stage = row.stage, scenario = row.scenario, block = row.block)
+        end
+        data_from_reader = reader.data
+        @test data_from_df == data_from_reader
+    end
+
+    Quiver.close!(reader)
+
+    rm("$filename.$(Quiver.file_extension(impl))"; force = true)
+    rm("$filename.toml"; force = true)
+
+    return nothing
+end
+
 function test_read_write_implementations()
     for impl in Quiver.implementations()
         @testset "Read and Write $(impl)" begin
@@ -1299,6 +1374,7 @@ function test_read_write_implementations()
             read_write_out_of_order_kwargs(impl)
             read_file_to_array(impl)
             read_file_to_df(impl)
+            read_write_df_to_file(impl)
             if impl == Quiver.csv
                 read_write_goto_csv_1()
                 read_write_goto_csv_2()

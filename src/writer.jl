@@ -229,6 +229,67 @@ function array_to_file(
     return nothing
 end
 
+function df_to_file(
+    filename::String,
+    df::DataFrame,
+    implementation::Type{I};
+    dimensions::Vector{String},
+    labels::Vector{String},
+    time_dimension::String,
+    dimension_size::Vector{Int},
+    initial_date::Union{String, DateTime} = "",
+    unit::String = "",
+    digits::Union{Int, Nothing} = nothing,
+) where {I <: Implementation}
+    kwargs_dict = Dict{Symbol, Any}()
+    if initial_date !== ""
+        if isa(initial_date, String)
+            initial_date = DateTime(initial_date, "yyyy-mm-ddTHH:MM:SS")
+        end
+        kwargs_dict[:initial_date] = initial_date
+    end
+    if unit != ""
+        kwargs_dict[:unit] = unit
+    else
+        @warn("No unit was provided for the time series file \"$filename\".")
+    end
+
+    df_header = names(df)
+    for dim in dimensions
+        if !(dim in df_header)
+            error("The dimension \"$dim\" is not present in the DataFrame.")
+        end
+    end
+    for label in labels
+        if !(label in df_header)
+            error("The label \"$label\" is not present in the DataFrame.")
+        end
+    end
+    if !(time_dimension in df_header)
+        error("The time dimension \"$time_dimension\" is not present in the DataFrame.")
+    end
+
+    writer = Quiver.Writer{implementation}(
+        filename;
+        dimensions,
+        labels,
+        time_dimension,
+        dimension_size,
+        kwargs_dict...,
+    )
+
+    for row in eachrow(df)
+        current_dim = [getproperty(row, dim) for dim in dimensions]
+        args = OrderedDict(Symbol.(dimensions) .=> current_dim)
+        data = [getproperty(row, label) for label in labels]
+        Quiver.write!(writer, round_digits(data, digits); args...)
+    end
+
+    Quiver.close!(writer)
+
+    return nothing
+end
+
 function round_digits(vec::Vector{T}, ::Nothing) where {T}
     return vec
 end
