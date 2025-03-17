@@ -1357,6 +1357,88 @@ function read_write_df_to_file(impl)
     return nothing
 end
 
+function throws_write_df_to_file(impl)
+    filename = joinpath(@__DIR__, "test_read_write_df_to_file")
+
+    initial_date = DateTime(2006, 1, 1)
+    num_stages = 4
+    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
+    num_scenarios = 3
+    num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
+    num_time_series = 3
+
+    dimensions = ["stage", "scenario", "block"]
+    labels = ["agent_$i" for i in 1:num_time_series]
+    time_dimension = "stage"
+    dimension_size = [num_stages, num_scenarios, maximum(num_blocks_per_stage)]
+
+    stages = Int[]
+    scenarios = Int[]
+    blocks = Int[]
+    data = [Int[] for i in 1:num_time_series]
+
+    for stage in 1:num_stages
+        for scenario in 1:num_scenarios
+            for block in 1:num_blocks_per_stage[stage]
+                push!(stages, stage)
+                push!(scenarios, scenario)
+                push!(blocks, block)
+                for i in 1:num_time_series
+                    push!(data[i], stage + scenario + block + i)
+                end
+            end
+        end
+    end
+
+    df = DataFrame(
+        stage = stages,
+        scenario = scenarios,
+        block = blocks,
+        agent_1 = data[1],
+        agent_2 = data[2],
+        agent_3 = data[3],
+    )
+
+    # label not in df
+    @test_throws ErrorException Quiver.df_to_file(
+        filename,
+        df,
+        impl;
+        dimensions,
+        labels = ["agent_1", "agent_2", "agent_4"],
+        time_dimension,
+        dimension_size,
+        initial_date = string(initial_date),
+        unit = "",
+    )
+
+    # dimension not in df
+    @test_throws ErrorException Quiver.df_to_file(
+        filename,
+        df,
+        impl;
+        dimensions = ["stage", "scenario", "block", "segment"],
+        labels,
+        time_dimension,
+        dimension_size,
+        initial_date = string(initial_date),
+        unit = "",
+    )
+
+    # time dimension not in df
+    @test_throws ErrorException Quiver.df_to_file(
+        filename,
+        df,
+        impl;
+        dimensions,
+        labels,
+        time_dimension = "segment",
+        dimension_size,
+        initial_date = string(initial_date),
+        unit = "",
+    )
+end
+
 function test_read_write_implementations()
     for impl in Quiver.implementations()
         @testset "Read and Write $(impl)" begin
@@ -1375,6 +1457,7 @@ function test_read_write_implementations()
             read_file_to_array(impl)
             read_file_to_df(impl)
             read_write_df_to_file(impl)
+            throws_write_df_to_file(impl)
             if impl == Quiver.csv
                 read_write_goto_csv_1()
                 read_write_goto_csv_2()
