@@ -56,6 +56,7 @@ function apply_expression(
         dimension_size = metadata.dimension_size,
         initial_date = metadata.initial_date,
         unit = metadata.unit,
+        frequency = metadata.frequency,
     )
 
     index_of_labels_all_readers = [findall(x -> x in reader.metadata.labels, labels) for reader in readers]
@@ -129,6 +130,7 @@ function apply_expression_over_dimension(
         dimension_size = other_dimension_sizes,
         initial_date = metadata.initial_date,
         unit = metadata.unit,
+        frequency = metadata.frequency,
     )
 
     # Iterate over all combinations of the other dimensions using column-major order
@@ -195,6 +197,7 @@ function apply_expression_over_agents(
         dimension_size = dimension_size,
         initial_date = metadata.initial_date,
         unit = metadata.unit,
+        frequency = metadata.frequency,
     )
 
     data = zeros(n_new_agents)
