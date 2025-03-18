@@ -102,6 +102,9 @@ function apply_expression_over_dimension(
     if dim_to_operate_idx !== nothing
         dim_to_operate_idx = dim_to_operate_idx
         if dim_to_operate_idx != length(dimensions)
+            if impl == Quiver.CSV
+                throw(ArgumentError("Dimension $dim_to_operate is not the last dimension. This is not allowed for CSV files."))
+            end
             @warn "Dimension $dim_to_operate is not the last dimension. This not the most efficient way to operate over dimensions."
         end
     else
