@@ -193,6 +193,7 @@ function array_to_file(
     dimension_size::Vector{Int},
     initial_date::Union{String, DateTime} = "",
     unit::String = "",
+    frequency::String = "",
     digits::Union{Int, Nothing} = nothing,
 ) where {I <: Implementation, T, N}
     kwargs_dict = Dict{Symbol, Any}()
@@ -206,6 +207,11 @@ function array_to_file(
         kwargs_dict[:unit] = unit
     else
         @warn("No unit was provided for the time series file \"$filename\".")
+    end
+    if frequency != ""
+        kwargs_dict[:frequency] = frequency
+    else
+        @warn("No frequency was provided for the time series file \"$filename\".")
     end
 
     writer = Quiver.Writer{implementation}(

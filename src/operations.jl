@@ -56,6 +56,7 @@ function apply_expression(
         dimension_size = metadata.dimension_size,
         initial_date = metadata.initial_date,
         unit = metadata.unit,
+        frequency = metadata.frequency,
     )
 
     index_of_labels_all_readers = [findall(x -> x in reader.metadata.labels, labels) for reader in readers]
@@ -102,6 +103,9 @@ function apply_expression_over_dimension(
     if dim_to_operate_idx !== nothing
         dim_to_operate_idx = dim_to_operate_idx
         if dim_to_operate_idx != length(dimensions)
+            if impl == Quiver.CSV
+                throw(ArgumentError("Dimension $dim_to_operate is not the last dimension. This is not allowed for CSV files."))
+            end
             @warn "Dimension $dim_to_operate is not the last dimension. This not the most efficient way to operate over dimensions."
         end
     else
@@ -126,6 +130,7 @@ function apply_expression_over_dimension(
         dimension_size = other_dimension_sizes,
         initial_date = metadata.initial_date,
         unit = metadata.unit,
+        frequency = metadata.frequency,
     )
 
     # Iterate over all combinations of the other dimensions using column-major order
@@ -192,6 +197,7 @@ function apply_expression_over_agents(
         dimension_size = dimension_size,
         initial_date = metadata.initial_date,
         unit = metadata.unit,
+        frequency = metadata.frequency,
     )
 
     data = zeros(n_new_agents)
