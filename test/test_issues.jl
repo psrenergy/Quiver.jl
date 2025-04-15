@@ -45,7 +45,7 @@ function test_issue_43()
     end
     Quiver.close!(reader)
 
-    rm("$filename.$(Quiver.file_extension(impl))")
+    rm("$filename.$(Quiver.file_extension(Quiver.binary))")
     rm("$filename.toml")
 
     return nothing

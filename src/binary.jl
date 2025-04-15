@@ -66,6 +66,7 @@ end
 function _quiver_write!(writer::Quiver.Writer{binary}, data::Vector{T}) where {T <: Real}
     # The last dimension added is calculated in the abstract implementation
     next_pos = _calculate_position_in_file(writer.metadata, writer.last_dimension_added...)
+    last_pos = _calculate_position_in_file(writer.metadata, writer.last_dimension...)
     # Check if we need to seek a new position or write directly in the io
     # This is absolutely necessary for performance in the binary operation
     current_pos = position(writer.writer)
