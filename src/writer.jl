@@ -135,11 +135,23 @@ mutable struct Writer{I <: Implementation, W}
     end
 end
 
+function _update_last_dimension!(writer::Writer)
+    for i in 1:writer.metadata.number_of_dimensions
+        if writer.last_dimension_added[i] > writer.last_dimension[i]
+            writer.last_dimension = copy(writer.last_dimension_added)
+            return nothing
+        elseif writer.last_dimension[i] > writer.last_dimension_added[i]
+            return nothing
+        end
+    end
+    return nothing
+end
+
 function _build_last_dimension_added!(writer::Writer; dims...)
     for (i, dim) in enumerate(writer.metadata.dimensions)
         writer.last_dimension_added[i] = dims[dim]
     end
-    writer.last_dimension = max(writer.last_dimension, writer.last_dimension_added)
+    _update_last_dimension!(writer)
     return nothing
 end
 

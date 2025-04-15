@@ -64,23 +64,20 @@ function _calculate_position_in_file(metadata::Quiver.Metadata, dims...)
 end
 
 function _quiver_write!(writer::Quiver.Writer{binary}, data::Vector{T}) where {T <: Real}
-    # The last dimension added is calculated in the abstract implementation
     next_pos = _calculate_position_in_file(writer.metadata, writer.last_dimension_added...)
     last_pos = _calculate_position_in_file(writer.metadata, writer.last_dimension...)
-    # Check if we need to seek a new position or write directly in the io
-    # This is absolutely necessary for performance in the binary operation
-    current_pos = position(writer.writer)
-    if current_pos > next_pos
-        seek(writer.writer, next_pos)
-    elseif current_pos < next_pos
+
+    if last_pos < next_pos
         space_of_a_row = _space_of_a_row_in_binary(writer.metadata)
-        number_of_empty_rows = (next_pos - current_pos) / space_of_a_row
+        number_of_empty_rows = (next_pos - last_pos) / space_of_a_row
         for _ in 1:number_of_empty_rows
             @inbounds for i in eachindex(data)
                 write(writer.writer, NaN32)
             end
         end
     end
+
+    seek(writer.writer, next_pos)
     @inbounds for i in eachindex(data)
         write(writer.writer, Float32(data[i]))
     end
