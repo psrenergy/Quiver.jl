@@ -121,13 +121,15 @@ mutable struct Writer{I <: Implementation, W}
     filename::String
     metadata::Metadata
     last_dimension_added::Vector{Int}
+    last_dimension::Vector{Int}
+
     function Writer{I}(
         writer::W,
         filename::String,
         metadata::Metadata,
         last_dimension_added::Vector{Int},
     ) where {I, W}
-        writer = new{I, W}(writer, filename, metadata, last_dimension_added)
+        writer = new{I, W}(writer, filename, metadata, last_dimension_added, zeroes(length(metadata.dimensions)))
         finalizer(Quiver.close!, writer)
         return writer
     end
@@ -137,6 +139,7 @@ function _build_last_dimension_added!(writer::Writer; dims...)
     for (i, dim) in enumerate(writer.metadata.dimensions)
         writer.last_dimension_added[i] = dims[dim]
     end
+    write.last_dimension = max(writer.last_dimension, writer.last_dimension_added)
     return nothing
 end
 
