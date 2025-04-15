@@ -139,9 +139,7 @@ function _build_last_dimension_added!(writer::Writer; dims...)
     for (i, dim) in enumerate(writer.metadata.dimensions)
         writer.last_dimension_added[i] = dims[dim]
     end
-    @show writer.last_dimension
-    writer.last_dimension = max(writer.last_dimension, writer.last_dimension_added)
-    @show writer.last_dimension
+    # writer.last_dimension = max(writer.last_dimension, writer.last_dimension_added)
     return nothing
 end
 
