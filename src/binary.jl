@@ -73,7 +73,7 @@ function _quiver_write!(writer::Quiver.Writer{binary}, data::Vector{T}) where {T
         seek(writer.writer, next_pos)
     elseif current_pos < next_pos
         space_of_a_row = _space_of_a_row_in_binary(writer.metadata)
-        number_of_empty_rows = (next_pos - current_pos) / space_of_a_row    
+        number_of_empty_rows = (next_pos - current_pos) / space_of_a_row
         for _ in 1:number_of_empty_rows
             @inbounds for i in eachindex(data)
                 write(writer.writer, NaN32)

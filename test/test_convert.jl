@@ -10,13 +10,15 @@ function binary_to_csv()
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
     dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
-    num_scenarios = 12
+    num_scenarios = 2
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
+    num_time_series = 3
 
     dimensions = ["stage", "scenario", "block"]
-    labels = ["agent_$i" for i in 1:length(dimensions)]
+    labels = ["agent_$i" for i in 1:num_time_series]
     time_dimension = "stage"
     dimension_size = [num_stages, num_scenarios, maximum(num_blocks_per_stage)]
+    
 
     writer = Quiver.Writer{Quiver.binary}(
         filename;
