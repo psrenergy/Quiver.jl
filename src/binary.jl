@@ -7,6 +7,7 @@ function Writer{binary}(
     time_dimension::String,
     dimension_size::Vector{Int},
     remove_if_exists::Bool = true,
+    fill_with_nan::Bool = true,
     kwargs...,
 )
     filename_with_extensions = add_extension_to_file(filename, file_extension(binary))
@@ -32,6 +33,12 @@ function Writer{binary}(
     )
 
     to_toml(metadata, "$filename.toml")
+
+    last_pos = _calculate_position_in_file(writer.metadata, dimension_size...)
+    seek(writer.writer, last_pos)
+    for _ in eachindex(labels)
+        write(writer.writer, NaN32)
+    end
 
     return writer
 end
