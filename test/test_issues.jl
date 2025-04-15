@@ -23,7 +23,6 @@ function test_issue_43()
         dimension_size = [stages, scenarios, blocks],
         labels = ["stage", "scenario", "block"],
         time_dimension = "stage",
-        unit = "MWh",
     )
 
     for stage in random_stages
