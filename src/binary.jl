@@ -22,7 +22,7 @@ function Writer{binary}(
     )
 
     # Open the file and write the header
-    io = open(filename_with_extensions, "w+")
+    io = open(filename_with_extensions, "w")
     last_dimension_added = zeros(Int, metadata.number_of_dimensions)
 
     writer = Quiver.Writer{binary}(
