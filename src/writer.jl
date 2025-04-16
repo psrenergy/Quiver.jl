@@ -143,6 +143,7 @@ end
 
 function write!(writer::Writer, data::Vector{T}; dims...) where {T <: Real}
     validate_dimensions(writer.metadata, dims...)
+    validate_data_length(writer.metadata, data)
     _build_last_dimension_added!(writer; dims...)
     return _quiver_write!(writer, data)
 end

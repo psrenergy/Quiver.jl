@@ -5,6 +5,13 @@ function validate_dimensions(metadata::Metadata, dims...)
     return nothing
 end
 
+function validate_data_length(metadata::Metadata, data::Vector{T}) where {T <: Real}
+    if length(data) != length(metadata.labels)
+        throw(ArgumentError("The length of the data is incorrect"))
+    end
+    return nothing
+end
+
 function rm_if_exists(filename::AbstractString, remove_if_exists::Bool)
     if isfile(filename)
         if remove_if_exists
