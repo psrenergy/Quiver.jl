@@ -63,24 +63,53 @@ function _calculate_position_in_file(metadata::Quiver.Metadata, dims...)
     return position
 end
 
+function _dump_file(writer::Quiver.Writer{binary})
+    curr_pos = position(writer.writer)
+    seek(writer.writer, 0)
+    while eof(writer.writer) == false
+        bytes = read(writer.writer, Float32)
+        print("$bytes, ")
+    end
+    println("")
+    seek(writer.writer, curr_pos)
+    return nothing
+end
+
+function _update_last_dimension!(writer::Quiver.Writer{binary})
+    @inbounds for i in 1:writer.metadata.number_of_dimensions
+        if writer.last_dimension_added[i] > writer.last_dimension[i]
+            writer.last_dimension .= writer.last_dimension_added
+            return nothing
+        elseif writer.last_dimension[i] > writer.last_dimension_added[i]
+            return nothing
+        end
+    end
+    return nothing
+end
+
 function _quiver_write!(writer::Quiver.Writer{binary}, data::Vector{T}) where {T <: Real}
     next_pos = _calculate_position_in_file(writer.metadata, writer.last_dimension_added...)
     last_pos = _calculate_position_in_file(writer.metadata, writer.last_dimension...)
 
     if last_pos < next_pos
         space_of_a_row = _space_of_a_row_in_binary(writer.metadata)
-        number_of_empty_rows = (next_pos - last_pos) / space_of_a_row
+        number_of_empty_rows = (next_pos - last_pos) ÷ space_of_a_row
+
+        seekend(writer.writer)
         for _ in 1:number_of_empty_rows
-            @inbounds for i in eachindex(data)
+            @inbounds for _ in eachindex(data)
                 write(writer.writer, NaN32)
             end
         end
     end
 
     seek(writer.writer, next_pos)
-    @inbounds for i in eachindex(data)
+    for i in eachindex(data)
         write(writer.writer, Float32(data[i]))
     end
+
+    _update_last_dimension!(writer)
+
     return nothing
 end
 

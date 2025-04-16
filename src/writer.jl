@@ -129,29 +129,16 @@ mutable struct Writer{I <: Implementation, W}
         metadata::Metadata,
         last_dimension_added::Vector{Int},
     ) where {I, W}
-        writer = new{I, W}(writer, filename, metadata, last_dimension_added, zeros(length(metadata.dimensions)))
+        writer = new{I, W}(writer, filename, metadata, last_dimension_added, ones(length(metadata.dimensions)))
         finalizer(Quiver.close!, writer)
         return writer
     end
-end
-
-function _update_last_dimension!(writer::Writer)
-    for i in 1:writer.metadata.number_of_dimensions
-        if writer.last_dimension_added[i] > writer.last_dimension[i]
-            writer.last_dimension = copy(writer.last_dimension_added)
-            return nothing
-        elseif writer.last_dimension[i] > writer.last_dimension_added[i]
-            return nothing
-        end
-    end
-    return nothing
 end
 
 function _build_last_dimension_added!(writer::Writer; dims...)
     for (i, dim) in enumerate(writer.metadata.dimensions)
         writer.last_dimension_added[i] = dims[dim]
     end
-    _update_last_dimension!(writer)
     return nothing
 end
 
