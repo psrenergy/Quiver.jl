@@ -121,7 +121,6 @@ mutable struct Writer{I <: Implementation, W}
     filename::String
     metadata::Metadata
     last_dimension_added::Vector{Int}
-    last_dimension::Vector{Int}
 
     function Writer{I}(
         writer::W,
@@ -129,7 +128,7 @@ mutable struct Writer{I <: Implementation, W}
         metadata::Metadata,
         last_dimension_added::Vector{Int},
     ) where {I, W}
-        writer = new{I, W}(writer, filename, metadata, last_dimension_added, ones(length(metadata.dimensions)))
+        writer = new{I, W}(writer, filename, metadata, last_dimension_added)
         finalizer(Quiver.close!, writer)
         return writer
     end

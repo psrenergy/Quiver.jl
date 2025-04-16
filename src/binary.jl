@@ -7,6 +7,7 @@ function Writer{binary}(
     time_dimension::String,
     dimension_size::Vector{Int},
     remove_if_exists::Bool = true,
+    fill_with_nan::Bool = true,
     kwargs...,
 )
     filename_with_extensions = add_extension_to_file(filename, file_extension(binary))
@@ -21,7 +22,7 @@ function Writer{binary}(
     )
 
     # Open the file and write the header
-    io = open(filename_with_extensions, "w")
+    io = open(filename_with_extensions, "w+")
     last_dimension_added = zeros(Int, metadata.number_of_dimensions)
 
     writer = Quiver.Writer{binary}(
@@ -32,6 +33,17 @@ function Writer{binary}(
     )
 
     to_toml(metadata, "$filename.toml")
+
+    if fill_with_nan
+        last_pos = _calculate_position_in_file(writer.metadata, dimension_size...)
+        space_of_a_row = _space_of_a_row_in_binary(writer.metadata)
+        number_of_empty_rows = last_pos ÷ space_of_a_row
+        @inbounds for _ in 1:number_of_empty_rows
+            @inbounds for _ in eachindex(labels)
+                write(writer.writer, NaN32)
+            end
+        end
+    end
 
     return writer
 end
@@ -63,40 +75,14 @@ function _calculate_position_in_file(metadata::Quiver.Metadata, dims...)
     return position
 end
 
-function _update_last_dimension!(writer::Quiver.Writer{binary})
-    @inbounds for i in 1:writer.metadata.number_of_dimensions
-        if writer.last_dimension_added[i] > writer.last_dimension[i]
-            writer.last_dimension .= writer.last_dimension_added
-            return nothing
-        elseif writer.last_dimension[i] > writer.last_dimension_added[i]
-            return nothing
-        end
-    end
-    return nothing
-end
-
 function _quiver_write!(writer::Quiver.Writer{binary}, data::Vector{T}) where {T <: Real}
+    # The last dimension added is calculated in the abstract implementation
     next_pos = _calculate_position_in_file(writer.metadata, writer.last_dimension_added...)
-    last_pos = _calculate_position_in_file(writer.metadata, writer.last_dimension...)
-
-    if last_pos < next_pos
-        space_of_a_row = _space_of_a_row_in_binary(writer.metadata)
-        number_of_empty_rows = (next_pos - last_pos) ÷ space_of_a_row
-
-        seekend(writer.writer)
-        for _ in 1:number_of_empty_rows
-            @inbounds for _ in eachindex(data)
-                write(writer.writer, NaN32)
-            end
-        end
-    end
 
     seek(writer.writer, next_pos)
     @inbounds for i in eachindex(data)
         write(writer.writer, Float32(data[i]))
     end
-
-    _update_last_dimension!(writer)
 
     return nothing
 end
