@@ -76,10 +76,13 @@ function _calculate_position_in_file(metadata::Quiver.Metadata, dims...)
 end
 
 function _quiver_write!(writer::Quiver.Writer{binary}, data::Vector{T}) where {T <: Real}
-    # The last dimension added is calculated in the abstract implementation
     next_pos = _calculate_position_in_file(writer.metadata, writer.last_dimension_added...)
+    current_pos = position(writer.writer)
 
-    seek(writer.writer, next_pos)
+    if current_pos != next_pos
+        seek(writer.writer, next_pos)
+    end
+
     @inbounds for i in eachindex(data)
         write(writer.writer, Float32(data[i]))
     end
