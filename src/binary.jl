@@ -66,11 +66,12 @@ end
 function _dump_file(writer::Quiver.Writer{binary})
     curr_pos = position(writer.writer)
     seek(writer.writer, 0)
+    print("[ ")
     while eof(writer.writer) == false
         bytes = read(writer.writer, Float32)
         print("$bytes, ")
     end
-    println("")
+    println("]")
     seek(writer.writer, curr_pos)
     return nothing
 end
@@ -104,7 +105,7 @@ function _quiver_write!(writer::Quiver.Writer{binary}, data::Vector{T}) where {T
     end
 
     seek(writer.writer, next_pos)
-    for i in eachindex(data)
+    @inbounds for i in eachindex(data)
         write(writer.writer, Float32(data[i]))
     end
 
