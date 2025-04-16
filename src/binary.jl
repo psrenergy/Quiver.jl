@@ -7,6 +7,7 @@ function Writer{binary}(
     time_dimension::String,
     dimension_size::Vector{Int},
     remove_if_exists::Bool = true,
+    fill_with_nan::Bool = true,
     kwargs...,
 )
     filename_with_extensions = add_extension_to_file(filename, file_extension(binary))
@@ -32,6 +33,17 @@ function Writer{binary}(
     )
 
     to_toml(metadata, "$filename.toml")
+
+    if fill_with_nan
+        last_pos = _calculate_position_in_file(writer.metadata, dimension_size...)
+        space_of_a_row = _space_of_a_row_in_binary(writer.metadata)
+        number_of_empty_rows = last_pos ÷ space_of_a_row
+        @inbounds for _ in 1:number_of_empty_rows
+            @inbounds for _ in eachindex(labels)
+                write(writer.writer, NaN32)
+            end
+        end
+    end
 
     return writer
 end
@@ -64,25 +76,17 @@ function _calculate_position_in_file(metadata::Quiver.Metadata, dims...)
 end
 
 function _quiver_write!(writer::Quiver.Writer{binary}, data::Vector{T}) where {T <: Real}
-    # The last dimension added is calculated in the abstract implementation
     next_pos = _calculate_position_in_file(writer.metadata, writer.last_dimension_added...)
-    # Check if we need to seek a new position or write directly in the io
-    # This is absolutely necessary for performance in the binary operation
     current_pos = position(writer.writer)
-    if current_pos > next_pos
+
+    if current_pos != next_pos
         seek(writer.writer, next_pos)
-    elseif current_pos < next_pos
-        space_of_a_row = _space_of_a_row_in_binary(writer.metadata)
-        number_of_empty_rows = (next_pos - current_pos) / space_of_a_row
-        for _ in 1:number_of_empty_rows
-            @inbounds for i in eachindex(data)
-                write(writer.writer, NaN32)
-            end
-        end
     end
+
     @inbounds for i in eachindex(data)
         write(writer.writer, Float32(data[i]))
     end
+
     return nothing
 end
 

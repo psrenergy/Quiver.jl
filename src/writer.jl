@@ -121,6 +121,7 @@ mutable struct Writer{I <: Implementation, W}
     filename::String
     metadata::Metadata
     last_dimension_added::Vector{Int}
+
     function Writer{I}(
         writer::W,
         filename::String,
