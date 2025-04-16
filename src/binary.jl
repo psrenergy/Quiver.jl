@@ -63,19 +63,6 @@ function _calculate_position_in_file(metadata::Quiver.Metadata, dims...)
     return position
 end
 
-function _dump_file(writer::Quiver.Writer{binary})
-    curr_pos = position(writer.writer)
-    seek(writer.writer, 0)
-    print("[ ")
-    while eof(writer.writer) == false
-        bytes = read(writer.writer, Float32)
-        print("$bytes, ")
-    end
-    println("]")
-    seek(writer.writer, curr_pos)
-    return nothing
-end
-
 function _update_last_dimension!(writer::Quiver.Writer{binary})
     @inbounds for i in 1:writer.metadata.number_of_dimensions
         if writer.last_dimension_added[i] > writer.last_dimension[i]
