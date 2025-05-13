@@ -19,15 +19,12 @@ function build_initial_date(initial_stage::Int, initial_year::Int, stage_type::P
 end
 
 function Quiver.convert(
-    filepath::String,
+    filepath::AbstractString,
     from::Type{PSRI.OpenBinary.Reader},
     to::Type{impl};
-    destination_directory::String = dirname(filepath),
+    destination_directory::AbstractString = dirname(filepath),
+    filename::AbstractString = basename(filepath),
 ) where {impl <: Quiver.Implementation}
-    filename = basename(filepath)
-    destination_path = joinpath(destination_directory, filename)
-
-    # Open graf file and read metadata
     graf_reader = PSRI.open(
         PSRI.OpenBinary.Reader,
         filepath;
@@ -45,6 +42,7 @@ function Quiver.convert(
 
     initial_date = build_initial_date(initial_stage, initial_year, stage_type)
 
+    destination_path = joinpath(destination_directory, filename)
     writer = Quiver.Writer{impl}(
         destination_path;
         dimensions = ["stage", "scenario", "block"],

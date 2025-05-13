@@ -155,14 +155,15 @@ function _quiver_close!(reader::Quiver.Reader{binary})
 end
 
 function convert(
-    filepath::String,
+    filepath::AbstractString,
     from::Type{binary},
     to::Type{impl};
-    destination_directory::String = dirname(filepath),
+    destination_directory::AbstractString = dirname(filepath),
+    filename::AbstractString = basename(filepath),
 ) where {impl <: Implementation}
     reader = Quiver.Reader{from}(filepath)
     metadata = reader.metadata
-    filename = basename(filepath)
+
     destination_path = joinpath(destination_directory, filename)
     writer = Quiver.Writer{to}(
         destination_path;
