@@ -10,7 +10,7 @@ function test_compare_files_with_different_metadata()
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
-    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):(initial_date+Dates.Month(num_stages-1)))
     num_scenarios = 12
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     num_time_series = 3
@@ -67,7 +67,7 @@ function test_compare_files_with_different_data()
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
-    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):(initial_date+Dates.Month(num_stages-1)))
     num_scenarios = 12
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     num_time_series = 3
@@ -124,7 +124,7 @@ function test_compare_equal_files()
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
-    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):(initial_date+Dates.Month(num_stages-1)))
     num_scenarios = 12
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     num_time_series = 3

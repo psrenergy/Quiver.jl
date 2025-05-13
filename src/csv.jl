@@ -122,7 +122,7 @@ end
 
 function _calculate_order_in_file(metadata::Quiver.Metadata, dims...)
     position = 0
-    for i in 1:metadata.number_of_dimensions-1
+    for i in 1:(metadata.number_of_dimensions-1)
         position += (dims[i] - 1) * performant_product_from_index_i_to_j(
             metadata.dimension_size,
             i + 1,
@@ -196,14 +196,15 @@ function _quiver_close!(reader::Quiver.Reader{csv})
 end
 
 function convert(
-    filepath::String,
+    filepath::AbstractString,
     from::Type{csv},
     to::Type{impl};
-    destination_directory::String = dirname(filepath),
+    destination_directory::AbstractString = dirname(filepath),
+    filename::AbstractString = basename(filepath),
 ) where {impl <: Implementation}
     reader = Quiver.Reader{from}(filepath)
     metadata = reader.metadata
-    filename = basename(filepath)
+
     destination_filepath = joinpath(destination_directory, filename)
     writer = Quiver.Writer{to}(
         destination_filepath;

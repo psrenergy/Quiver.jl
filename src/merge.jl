@@ -64,7 +64,7 @@ function merge(
             if i == 1
                 initial_idx = 1
             else
-                initial_idx = sum(num_labels[1:i-1]) + 1
+                initial_idx = sum(num_labels[1:(i-1)]) + 1
             end
             final_idx = sum(num_labels[1:i])
             data[initial_idx:final_idx] = reader.data
