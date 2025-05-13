@@ -63,7 +63,7 @@ end
 function _calculate_position_in_file(metadata::Quiver.Metadata, dims...)
     space_of_a_row = _space_of_a_row_in_binary(metadata)
     position = 0
-    for i in 1:metadata.number_of_dimensions-1
+    for i in 1:(metadata.number_of_dimensions-1)
         position += (dims[i] - 1) * performant_product_from_index_i_to_j(
             metadata.dimension_size,
             i + 1,

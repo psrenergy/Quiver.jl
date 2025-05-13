@@ -9,7 +9,7 @@ function binary_to_csv()
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
-    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):(initial_date+Dates.Month(num_stages-1)))
     num_scenarios = 12
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     num_time_series = 3
@@ -65,7 +65,7 @@ function csv_to_binary()
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
-    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):(initial_date+Dates.Month(num_stages-1)))
     num_scenarios = 12
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     num_time_series = 3

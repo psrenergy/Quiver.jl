@@ -10,7 +10,7 @@ function read_write_1(impl)
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
-    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):(initial_date+Dates.Month(num_stages-1)))
     num_scenarios = 12
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     num_time_series = 3
@@ -67,7 +67,7 @@ function read_write_2(impl)
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
-    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):(initial_date+Dates.Month(num_stages-1)))
     num_scenarios = 12
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     num_segments_per_scenario = [2 * s for s in 1:num_scenarios]
@@ -129,7 +129,7 @@ function read_write_3(impl)
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
-    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):(initial_date+Dates.Month(num_stages-1)))
     num_scenarios = 12
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     max_num_blocks = maximum(num_blocks_per_stage)
@@ -411,8 +411,8 @@ function read_write_goto_csv_2()
 
     reader = Quiver.Reader{Quiver.csv}(filename)
     for stage in 1:num_stages
-        for scenario in num_scenarios:-1:num_scenarios-1
-            for block in num_blocks:-1:num_blocks-1
+        for scenario in num_scenarios:-1:(num_scenarios-1)
+            for block in num_blocks:-1:(num_blocks-1)
                 for segment in 1:num_segments_per_block_scenario[block, scenario]
                     if block == num_blocks && scenario == num_scenarios
                         Quiver.goto!(reader; stage, scenario, block, segment)
@@ -619,7 +619,7 @@ function read_write_carrousel(impl)
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
-    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):(initial_date+Dates.Month(num_stages-1)))
     num_scenarios = 1
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     num_time_series = 3
@@ -683,7 +683,7 @@ function read_outside_bounds_1(impl)
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
-    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):(initial_date+Dates.Month(num_stages-1)))
     num_scenarios = 12
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     max_num_blocks = maximum(num_blocks_per_stage)
@@ -777,7 +777,7 @@ function read_outside_bounds_2(impl)
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
-    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):(initial_date+Dates.Month(num_stages-1)))
     num_scenarios = 12
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     max_num_blocks = maximum(num_blocks_per_stage)
@@ -1032,7 +1032,7 @@ function read_filtering_labels(impl)
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
-    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):(initial_date+Dates.Month(num_stages-1)))
     num_scenarios = 12
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     num_time_series = 3
@@ -1121,7 +1121,7 @@ function read_write_out_of_order_kwargs(impl)
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 10
-    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):(initial_date+Dates.Month(num_stages-1)))
     num_scenarios = 12
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     num_time_series = 3
@@ -1182,7 +1182,7 @@ function read_file_to_array(impl)
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 4
-    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):(initial_date+Dates.Month(num_stages-1)))
     num_scenarios = 3
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     num_time_series = 3
@@ -1233,7 +1233,7 @@ function read_file_to_df(impl)
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 4
-    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):(initial_date+Dates.Month(num_stages-1)))
     num_scenarios = 3
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     num_time_series = 3
@@ -1287,7 +1287,7 @@ function read_write_df_to_file(impl)
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 4
-    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):(initial_date+Dates.Month(num_stages-1)))
     num_scenarios = 3
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     num_time_series = 3
@@ -1362,7 +1362,7 @@ function throws_write_df_to_file(impl)
 
     initial_date = DateTime(2006, 1, 1)
     num_stages = 4
-    dates = collect(initial_date:Dates.Month(1):initial_date+Dates.Month(num_stages - 1))
+    dates = collect(initial_date:Dates.Month(1):(initial_date+Dates.Month(num_stages-1)))
     num_scenarios = 3
     num_blocks_per_stage = Int32.(Dates.daysinmonth.(dates) .* 24)
     num_time_series = 3
