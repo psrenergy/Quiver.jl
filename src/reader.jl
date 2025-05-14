@@ -312,38 +312,3 @@ function file_to_df(
 
     return df
 end
-
-function compare_files(
-    filename1::String,
-    filename2::String,
-    implementation::Type{I};
-    labels_to_read::Vector{String} = String[],
-    atol::Real = 1e-6,
-    rtol::Real = 1e-6,
-)::Bool where {I <: Implementation}
-    data1, metadata1 = file_to_array(filename1, implementation; labels_to_read)
-    data2, metadata2 = file_to_array(filename2, implementation; labels_to_read)
-
-    if metadata1 != metadata2
-        return false
-    end
-
-    if size(data1) != size(data2)
-        return false
-    end
-
-    for i in eachindex(data1)
-        if isnan(data1[i]) && isnan(data2[i])
-            continue
-        elseif isnan(data1[i]) && !isnan(data2[i])
-            return false
-        elseif !isnan(data1[i]) && isnan(data2[i])
-            return false
-        end
-        if !isapprox(data1[i], data2[i]; atol = atol, rtol = rtol)
-            return false
-        end
-    end
-
-    return true
-end

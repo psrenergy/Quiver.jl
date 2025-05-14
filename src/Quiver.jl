@@ -8,6 +8,8 @@ using Tables
 using TOML
 
 const QUIVER_FILE_VERSION = 1
+const DEFAULT_ATOL = 1e-6
+const DEFAULT_RTOL = 1e-6
 
 include("metadata.jl")
 include("utils.jl")
@@ -19,6 +21,7 @@ include("reader.jl")
 
 include("csv.jl")
 include("binary.jl")
+include("compare.jl")
 
 include("merge.jl")
 include("operations.jl")
