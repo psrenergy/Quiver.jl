@@ -335,7 +335,7 @@ function compare_files(
     return true
 end
 
-function assert_fields(
+function compare(
     filename::String,
     implementation::Type{I};
     atol::Real = 1e-6,
@@ -345,11 +345,11 @@ function assert_fields(
 )::Bool where {I <: Implementation}
     quiver_data, metadata = file_to_array(filename, implementation)
 
-    if assert_fields(metadata; kwargs...) == false
+    if compare(metadata; kwargs...) == false
         return false
     end
 
-    if compare_data(quiver_data, data; atol = atol, rtol = rtol) == false
+    if compare(quiver_data, data; atol = atol, rtol = rtol) == false
         return false
     end
 

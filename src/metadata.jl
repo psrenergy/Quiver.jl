@@ -136,7 +136,7 @@ function validate_metadata(metadata::Metadata)
     return nothing
 end
 
-function assert_fields(metadata::Metadata; kwargs...)::Bool
+function compare(metadata::Metadata; kwargs...)::Bool
     function check_field(field_value, value)
         if field_value isa Symbol
             return string(field_value) == value

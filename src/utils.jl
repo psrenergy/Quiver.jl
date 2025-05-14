@@ -36,7 +36,7 @@ function add_extension_to_file(filename::AbstractString, ext::AbstractString)
     return "$filename.$ext"
 end
 
-function compare_data(
+function compare(
     data1::Array,
     data2::Array;
     atol::Real = 1e-6,
