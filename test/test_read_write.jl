@@ -40,6 +40,19 @@ function read_write_1(impl)
 
     Quiver.close!(writer)
 
+    Quiver.Tester{impl}(
+        filename;
+        expected_frequency = "hourly",
+        expected_initial_date = initial_date,
+        expected_number_of_dimensions = length(dimensions),
+        expected_dimensions = dimensions,
+        expected_time_dimension = time_dimension,
+        expected_unit = "",
+        expected_dimension_size = dimension_size,
+        expected_number_of_time_series = num_time_series,
+        expected_labels = labels,
+    )
+
     reader = Quiver.Reader{impl}(filename)
     for stage in 1:num_stages
         for scenario in 1:num_scenarios
