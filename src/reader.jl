@@ -328,7 +328,7 @@ function compare_files(
         return false
     end
 
-    if compare(data1, data2; atol = atol, rtol = rtol) == false
+    if compare_data(data1, data2; atol = atol, rtol = rtol) == false
         return false
     end
 
@@ -345,11 +345,11 @@ function compare(
 )::Bool where {I <: Implementation}
     quiver_data, metadata = file_to_array(filename, implementation)
 
-    if compare(metadata; kwargs...) == false
+    if compare_metadata(metadata; kwargs...) == false
         return false
     end
 
-    if compare(quiver_data, data; atol = atol, rtol = rtol) == false
+    if compare_data(quiver_data, data; atol = atol, rtol = rtol) == false
         return false
     end
 
