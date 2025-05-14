@@ -328,7 +328,7 @@ function compare_files(
         return false
     end
 
-    if compare_data(data1, data2; atol = atol, rtol = rtol) == false
+    if compare(data1, data2; atol = atol, rtol = rtol) == false
         return false
     end
 
