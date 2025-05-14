@@ -21,6 +21,7 @@ include("reader.jl")
 
 include("csv.jl")
 include("binary.jl")
+include("compare.jl")
 
 include("merge.jl")
 include("operations.jl")
