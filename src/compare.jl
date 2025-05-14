@@ -87,8 +87,10 @@ function compare(
         return false
     end
 
-    if compare_data(quiver_data, data; atol = atol, rtol = rtol) == false
-        return false
+    if data !== nothing
+        if compare_data(quiver_data, data; atol = atol, rtol = rtol) == false
+            return false
+        end
     end
 
     return true
