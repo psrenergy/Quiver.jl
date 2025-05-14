@@ -1,18 +1,22 @@
+function compare_field(field_value::T1, value::T2)::Bool where {T1, T2}
+    if field_value isa Symbol
+        return string(field_value) == value
+    elseif field_value isa AbstractArray
+        if size(field_value) != size(value)
+            return false
+        end
 
-function compare_metadata(metadata::Metadata; kwargs...)::Bool
-    function check_field(field_value, value)
-        if field_value isa Symbol
-            return string(field_value) == value
-        elseif field_value isa Vector{Symbol}
+        if eltype(field_value) == Symbol
             return all(string.(field_value) .== value)
-        else
-            return field_value == value
         end
     end
+    return field_value == value
+end
 
+function compare_metadata(metadata::Metadata; kwargs...)::Bool
     for (key, value) in kwargs
         field_value = getfield(metadata, key)
-        if check_field(field_value, value) == false
+        if compare_field(field_value, value) == false
             @error("Field $key is $field_value, expected $value")
             return false
         end
