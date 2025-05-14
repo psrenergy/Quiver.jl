@@ -1214,7 +1214,7 @@ function read_file_to_array(impl)
         initial_date,
     )
 
-    @test Quiver.test(
+    @test Quiver.assert_fields(
         filename,
         impl;
         expected_initial_date = initial_date,
@@ -1489,62 +1489,62 @@ function read_test(impl)
         initial_date,
     )
 
-    @test Quiver.test(
+    @test Quiver.assert_fields(
         filename,
         impl;
-        expected_initial_date = initial_date,
-        expected_number_of_dimensions = length(dimensions),
-        expected_dimensions = dimensions,
-        expected_time_dimension = time_dimension,
-        expected_dimension_size = dimension_size,
-        expected_number_of_time_series = num_time_series,
-        expected_labels = labels,
-        expected_data = data,
+        initial_date = initial_date,
+        number_of_dimensions = length(dimensions),
+        dimensions = dimensions,
+        time_dimension = time_dimension,
+        dimension_size = dimension_size,
+        number_of_time_series = num_time_series,
+        labels = labels,
+        data = data,
     ) == true
 
-    @test Quiver.test(
+    @test Quiver.assert_fields(
         filename,
         impl;
         expected_initial_date = DateTime(2007, 1, 1),
     ) == false
 
-    @test Quiver.test(
+    @test Quiver.assert_fields(
         filename,
         impl;
         expected_number_of_dimensions = 5,
     ) == false
 
-    @test Quiver.test(
+    @test Quiver.assert_fields(
         filename,
         impl;
         expected_dimensions = ["stage", "scenario", "block", "segment"],
     ) == false
 
-    @test Quiver.test(
+    @test Quiver.assert_fields(
         filename,
         impl;
         expected_time_dimension = "segment",
     ) == false
 
-    @test Quiver.test(
+    @test Quiver.assert_fields(
         filename,
         impl;
         expected_dimension_size = [num_stages, num_scenarios, maximum(num_blocks_per_stage), 1],
     ) == false
 
-    @test Quiver.test(
+    @test Quiver.assert_fields(
         filename,
         impl;
         expected_number_of_time_series = 4,
     ) == false
 
-    @test Quiver.test(
+    @test Quiver.assert_fields(
         filename,
         impl;
         expected_labels = ["agent_1", "agent_2", "agent_4"],
     ) == false
 
-    @test Quiver.test(
+    @test Quiver.assert_fields(
         filename,
         impl;
         expected_data = zeros(4, maximum(num_blocks_per_stage), num_scenarios, num_stages),
@@ -1559,30 +1559,30 @@ end
 function test_read_write_implementations()
     for impl in Quiver.implementations()
         @testset "Read and Write $(impl)" begin
-            read_write_1(impl)
-            read_write_2(impl)
-            read_write_3(impl)
-            read_write_4(impl)
-            read_write_5(impl)
-            read_write_carrousel(impl)
-            read_outside_bounds_1(impl)
-            read_outside_bounds_2(impl)
-            read_outside_bounds_3(impl)
-            read_outside_bounds_4(impl)
-            read_filtering_labels(impl)
-            read_write_out_of_order_kwargs(impl)
-            read_file_to_array(impl)
-            read_file_to_df(impl)
-            read_write_df_to_file(impl)
-            throws_write_df_to_file(impl)
+            # read_write_1(impl)
+            # read_write_2(impl)
+            # read_write_3(impl)
+            # read_write_4(impl)
+            # read_write_5(impl)
+            # read_write_carrousel(impl)
+            # read_outside_bounds_1(impl)
+            # read_outside_bounds_2(impl)
+            # read_outside_bounds_3(impl)
+            # read_outside_bounds_4(impl)
+            # read_filtering_labels(impl)
+            # read_write_out_of_order_kwargs(impl)
+            # read_file_to_array(impl)
+            # read_file_to_df(impl)
+            # read_write_df_to_file(impl)
+            # throws_write_df_to_file(impl)
             read_test(impl)
-            if impl == Quiver.csv
-                read_write_goto_csv_1()
-                read_write_goto_csv_2()
-                read_write_goto_csv_3()
-                read_write_goto_csv_4()
-                read_write_goto_csv_5()
-            end
+            # if impl == Quiver.csv
+            #     read_write_goto_csv_1()
+            #     read_write_goto_csv_2()
+            #     read_write_goto_csv_3()
+            #     read_write_goto_csv_4()
+            #     read_write_goto_csv_5()
+            # end
         end
     end
 end

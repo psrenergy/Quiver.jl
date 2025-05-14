@@ -136,61 +136,28 @@ function validate_metadata(metadata::Metadata)
     return nothing
 end
 
-function test(
-    metadata::Metadata;
-    expected_frequency::Union{String, Nothing} = nothing,
-    expected_initial_date::Union{Dates.DateTime, Nothing} = nothing,
-    expected_number_of_dimensions::Union{Int, Nothing} = nothing,
-    expected_dimensions::Union{Vector{String}, Nothing} = nothing,
-    expected_time_dimension::Union{String, Nothing} = nothing,
-    expected_unit::Union{String, Nothing} = nothing,
-    expected_dimension_size::Union{Vector{Int}, Nothing} = nothing,
-    expected_number_of_time_series::Union{Int, Nothing} = nothing,
-    expected_labels::Union{Vector{String}, Nothing} = nothing,
-)::Bool
-    if !isnothing(expected_frequency) && expected_frequency != metadata.frequency
-        @error("Expected frequency $(expected_frequency), but got $(metadata.frequency).")
-        return false
+function assert_fields(metadata::Metadata; kwargs...)::Bool
+    function check_field(field_value, value)
+        if field_value isa Symbol
+            return string(field_value) == value
+        elseif field_value isa Vector{Symbol}
+            return all(string.(field_value) .== value)
+        else
+            return field_value == value
+        end
     end
 
-    if !isnothing(expected_initial_date) && expected_initial_date != metadata.initial_date
-        @error("Expected initial date $(expected_initial_date), but got $(metadata.initial_date).")
-        return false
-    end
-
-    if !isnothing(expected_number_of_dimensions) && expected_number_of_dimensions != metadata.number_of_dimensions
-        @error("Expected number of dimensions $(expected_number_of_dimensions), but got $(metadata.number_of_dimensions).")
-        return false
-    end
-
-    if !isnothing(expected_dimensions) && expected_dimensions != string.(metadata.dimensions)
-        @error("Expected dimensions $(expected_dimensions), but got $(string.(metadata.dimensions)).")
-        return false
-    end
-
-    if !isnothing(expected_time_dimension) && expected_time_dimension != string(metadata.time_dimension)
-        @error("Expected time dimension $(expected_time_dimension), but got $(string(metadata.time_dimension)).")
-        return false
-    end
-
-    if !isnothing(expected_unit) && expected_unit != metadata.unit
-        @error("Expected unit $(expected_unit), but got $(metadata.unit).")
-        return false
-    end
-
-    if !isnothing(expected_dimension_size) && expected_dimension_size != metadata.dimension_size
-        @error("Expected dimension size $(expected_dimension_size), but got $(metadata.dimension_size).")
-        return false
-    end
-
-    if !isnothing(expected_number_of_time_series) && expected_number_of_time_series != metadata.number_of_time_series
-        @error("Expected number of time series $(expected_number_of_time_series), but got $(metadata.number_of_time_series).")
-        return false
-    end
-
-    if !isnothing(expected_labels) && expected_labels != metadata.labels
-        @error("Expected labels $(expected_labels), but got $(metadata.labels).")
-        return false
+    for (key, value) in kwargs
+        if hasproperty(metadata, key)
+            field_value = getfield(metadata, key)
+            if check_field(field_value, value) == false
+                @error("Field $key is $field_value, expected $value")
+                return false
+            end
+        else
+            @error("Key $key is not a valid field in Metadata (available fields: $(fieldnames(Metadata)))")
+            return false
+        end
     end
 
     return true

@@ -328,76 +328,29 @@ function compare_files(
         return false
     end
 
-    if size(data1) != size(data2)
+    if compare_data(data1, data2; atol = atol, rtol = rtol) == false
         return false
-    end
-
-    for i in eachindex(data1)
-        if isnan(data1[i]) && isnan(data2[i])
-            continue
-        elseif isnan(data1[i]) && !isnan(data2[i])
-            return false
-        elseif !isnan(data1[i]) && isnan(data2[i])
-            return false
-        end
-        if !isapprox(data1[i], data2[i]; atol = atol, rtol = rtol)
-            return false
-        end
     end
 
     return true
 end
 
-function test(
+function assert_fields(
     filename::String,
     implementation::Type{I};
-    expected_frequency::Union{String, Nothing} = nothing,
-    expected_initial_date::Union{Dates.DateTime, Nothing} = nothing,
-    expected_number_of_dimensions::Union{Int, Nothing} = nothing,
-    expected_dimensions::Union{Vector{String}, Nothing} = nothing,
-    expected_time_dimension::Union{String, Nothing} = nothing,
-    expected_unit::Union{String, Nothing} = nothing,
-    expected_dimension_size::Union{Vector{Int}, Nothing} = nothing,
-    expected_number_of_time_series::Union{Int, Nothing} = nothing,
-    expected_labels::Union{Vector{String}, Nothing} = nothing,
-    expected_data::Union{Array, Nothing} = nothing,
     atol::Real = 1e-6,
     rtol::Real = 1e-6,
+    data::Union{Array, Nothing} = nothing,
+    kwargs...,
 )::Bool where {I <: Implementation}
-    data, metadata = file_to_array(filename, implementation)
+    quiver_data, metadata = file_to_array(filename, implementation)
 
-    if !test(
-        metadata;
-        expected_frequency,
-        expected_initial_date,
-        expected_number_of_dimensions,
-        expected_dimensions,
-        expected_time_dimension,
-        expected_unit,
-        expected_dimension_size,
-        expected_number_of_time_series,
-        expected_labels,
-    )
+    if assert_fields(metadata; kwargs...) == false
         return false
     end
 
-    if !isnothing(expected_data)
-        if size(data) != size(expected_data)
-            return false
-        end
-
-        for i in eachindex(data)
-            if isnan(data[i]) && isnan(expected_data[i])
-                continue
-            elseif isnan(data[i]) && !isnan(expected_data[i])
-                return false
-            elseif !isnan(data[i]) && isnan(expected_data[i])
-                return false
-            end
-            if !isapprox(data[i], expected_data[i]; atol = atol, rtol = rtol)
-                return false
-            end
-        end
+    if compare_data(quiver_data, data; atol = atol, rtol = rtol) == false
+        return false
     end
 
     return true
