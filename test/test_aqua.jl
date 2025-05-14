@@ -13,6 +13,6 @@ function runtests()
     end
 end
 
-TestWriter.runtests()
+TestAqua.runtests()
 
 end

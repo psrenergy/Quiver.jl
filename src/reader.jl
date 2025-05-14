@@ -318,8 +318,8 @@ function compare_files(
     filename2::String,
     implementation::Type{I};
     labels_to_read::Vector{String} = String[],
-    atol::Real = 1e-6,
-    rtol::Real = 1e-6,
+    atol::Real = DEFAULT_ATOL,
+    rtol::Real = DEFAULT_RTOL,
 )::Bool where {I <: Implementation}
     data1, metadata1 = file_to_array(filename1, implementation; labels_to_read)
     data2, metadata2 = file_to_array(filename2, implementation; labels_to_read)
@@ -338,8 +338,8 @@ end
 function compare(
     filename::String,
     implementation::Type{I};
-    atol::Real = 1e-6,
-    rtol::Real = 1e-6,
+    atol::Real = DEFAULT_ATOL,
+    rtol::Real = DEFAULT_RTOL,
     data::Union{Array, Nothing} = nothing,
     kwargs...,
 )::Bool where {I <: Implementation}

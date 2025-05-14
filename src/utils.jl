@@ -39,8 +39,8 @@ end
 function compare_data(
     data1::Array,
     data2::Array;
-    atol::Real = 1e-6,
-    rtol::Real = 1e-6,
+    atol::Real = DEFAULT_ATOL,
+    rtol::Real = DEFAULT_RTOL,
 )::Bool
     if size(data1) != size(data2)
         return false
