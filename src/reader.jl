@@ -348,10 +348,9 @@ function compare_files(
     return true
 end
 
-function validate(
+function test(
     filename::String,
     implementation::Type{I};
-    labels_to_read::Vector{String} = [],
     expected_frequency::Union{String, Nothing} = nothing,
     expected_initial_date::Union{Dates.DateTime, Nothing} = nothing,
     expected_number_of_dimensions::Union{Int, Nothing} = nothing,
@@ -361,75 +360,45 @@ function validate(
     expected_dimension_size::Union{Vector{Int}, Nothing} = nothing,
     expected_number_of_time_series::Union{Int, Nothing} = nothing,
     expected_labels::Union{Vector{String}, Nothing} = nothing,
-    expected_data::Union{Vector{Float32}, Nothing} = nothing,
+    expected_data::Union{Array, Nothing} = nothing,
     atol::Real = 1e-6,
     rtol::Real = 1e-6,
 )::Bool where {I <: Implementation}
-    @show data, metadata = file_to_array(filename, implementation; labels_to_read)
+    data, metadata = file_to_array(filename, implementation)
 
-    if !isnothing(expected_frequency) && expected_frequency != metadata.frequency
-        println("Error: Expected frequency $(expected_frequency), but got $(metadata.frequency).")
+    if !test(
+        metadata;
+        expected_frequency,
+        expected_initial_date,
+        expected_number_of_dimensions,
+        expected_dimensions,
+        expected_time_dimension,
+        expected_unit,
+        expected_dimension_size,
+        expected_number_of_time_series,
+        expected_labels,
+    )
         return false
     end
 
-    if !isnothing(expected_initial_date) && expected_initial_date != metadata.initial_date
-        println("Error: Expected initial date $(expected_initial_date), but got $(metadata.initial_date).")
-        return false
-    end
+    # if !isnothing(expected_data)
+    #     if size(data) != size(expected_data)
+    #         return false
+    #     end
 
-    if !isnothing(expected_number_of_dimensions) && expected_number_of_dimensions != metadata.number_of_dimensions
-        println("Error: Expected number of dimensions $(expected_number_of_dimensions), but got $(metadata.number_of_dimensions).")
-        return false
-    end
-
-    if !isnothing(expected_dimensions) && expected_dimensions != metadata.dimensions
-        println("Error: Expected dimensions $(expected_dimensions), but got $(metadata.dimensions).")
-        return false
-    end
-
-    if !isnothing(expected_time_dimension) && expected_time_dimension != metadata.time_dimension
-        println("Error: Expected time dimension $(expected_time_dimension), but got $(metadata.time_dimension).")
-        return false
-    end
-
-    if !isnothing(expected_unit) && expected_unit != metadata.unit
-        println("Error: Expected unit $(expected_unit), but got $(metadata.unit).")
-        return false
-    end
-
-    if !isnothing(expected_dimension_size) && expected_dimension_size != metadata.dimension_size
-        println("Error: Expected dimension size $(expected_dimension_size), but got $(metadata.dimension_size).")
-        return false
-    end
-
-    if !isnothing(expected_number_of_time_series) && expected_number_of_time_series != metadata.number_of_time_series
-        println("Error: Expected number of time series $(expected_number_of_time_series), but got $(metadata.number_of_time_series).")
-        return false
-    end
-
-    if !isnothing(expected_labels) && expected_labels != metadata.labels
-        println("Error: Expected labels $(expected_labels), but got $(metadata.labels).")
-        return false
-    end
-
-    if !isnothing(expected_data)
-        if size(data) != size(expected_data)
-            return false
-        end
-
-        for i in eachindex(data)
-            if isnan(data[i]) && isnan(expected_data[i])
-                continue
-            elseif isnan(data[i]) && !isnan(expected_data[i])
-                return false
-            elseif !isnan(data[i]) && isnan(expected_data[i])
-                return false
-            end
-            if !isapprox(data[i], expected_data[i]; atol = atol, rtol = rtol)
-                return false
-            end
-        end
-    end
+    #     for i in eachindex(data)
+    #         if isnan(data[i]) && isnan(expected_data[i])
+    #             continue
+    #         elseif isnan(data[i]) && !isnan(expected_data[i])
+    #             return false
+    #         elseif !isnan(data[i]) && isnan(expected_data[i])
+    #             return false
+    #         end
+    #         if !isapprox(data[i], expected_data[i]; atol = atol, rtol = rtol)
+    #             return false
+    #         end
+    #     end
+    # end
 
     return true
 end
