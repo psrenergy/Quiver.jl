@@ -58,49 +58,49 @@ function compare1(impl)
     @test Quiver.compare(
         filename,
         impl;
-        expected_initial_date = DateTime(2007, 1, 1),
+        initial_date = DateTime(2007, 1, 1),
     ) == false
 
     @test Quiver.compare(
         filename,
         impl;
-        expected_number_of_dimensions = 5,
+        number_of_dimensions = 5,
     ) == false
 
     @test Quiver.compare(
         filename,
         impl;
-        expected_dimensions = ["stage", "scenario", "block", "segment"],
+        dimensions = ["stage", "scenario", "block", "segment"],
     ) == false
 
     @test Quiver.compare(
         filename,
         impl;
-        expected_time_dimension = "segment",
+        time_dimension = "segment",
     ) == false
 
     @test Quiver.compare(
         filename,
         impl;
-        expected_dimension_size = [num_stages, num_scenarios, maximum(num_blocks_per_stage), 1],
+        dimension_size = [num_stages, num_scenarios, maximum(num_blocks_per_stage), 1],
     ) == false
 
     @test Quiver.compare(
         filename,
         impl;
-        expected_number_of_time_series = 4,
+        number_of_time_series = 4,
     ) == false
 
     @test Quiver.compare(
         filename,
         impl;
-        expected_labels = ["agent_1", "agent_2", "agent_4"],
+        labels = ["agent_1", "agent_2", "agent_4"],
     ) == false
 
     @test Quiver.compare(
         filename,
         impl;
-        expected_data = zeros(4, maximum(num_blocks_per_stage), num_scenarios, num_stages),
+        data = zeros(4, maximum(num_blocks_per_stage), num_scenarios, num_stages),
     ) == false
 
     rm("$filename.$(Quiver.file_extension(impl))")

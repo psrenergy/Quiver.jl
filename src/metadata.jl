@@ -136,29 +136,3 @@ function validate_metadata(metadata::Metadata)
     return nothing
 end
 
-function compare_metadata(metadata::Metadata; kwargs...)::Bool
-    function check_field(field_value, value)
-        if field_value isa Symbol
-            return string(field_value) == value
-        elseif field_value isa Vector{Symbol}
-            return all(string.(field_value) .== value)
-        else
-            return field_value == value
-        end
-    end
-
-    for (key, value) in kwargs
-        if hasproperty(metadata, key)
-            field_value = getfield(metadata, key)
-            if check_field(field_value, value) == false
-                @error("Field $key is $field_value, expected $value")
-                return false
-            end
-        else
-            @error("Key $key is not a valid field in Metadata (available fields: $(fieldnames(Metadata)))")
-            return false
-        end
-    end
-
-    return true
-end

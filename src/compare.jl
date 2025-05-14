@@ -1,3 +1,52 @@
+
+function compare_metadata(metadata::Metadata; kwargs...)::Bool
+    function check_field(field_value, value)
+        if field_value isa Symbol
+            return string(field_value) == value
+        elseif field_value isa Vector{Symbol}
+            return all(string.(field_value) .== value)
+        else
+            return field_value == value
+        end
+    end
+
+    for (key, value) in kwargs
+        field_value = getfield(metadata, key)
+        if check_field(field_value, value) == false
+            @error("Field $key is $field_value, expected $value")
+            return false
+        end
+    end
+
+    return true
+end
+
+function compare_data(
+    data1::Array,
+    data2::Array;
+    atol::Real = DEFAULT_ATOL,
+    rtol::Real = DEFAULT_RTOL,
+)::Bool
+    if size(data1) != size(data2)
+        return false
+    end
+
+    for i in eachindex(data1)
+        if isnan(data1[i]) && isnan(data2[i])
+            continue
+        elseif isnan(data1[i]) && !isnan(data2[i])
+            return false
+        elseif !isnan(data1[i]) && isnan(data2[i])
+            return false
+        end
+        if !isapprox(data1[i], data2[i]; atol = atol, rtol = rtol)
+            return false
+        end
+    end
+
+    return true
+end
+
 function compare_files(
     filename1::String,
     filename2::String,

@@ -35,29 +35,3 @@ function add_extension_to_file(filename::AbstractString, ext::AbstractString)
     end
     return "$filename.$ext"
 end
-
-function compare_data(
-    data1::Array,
-    data2::Array;
-    atol::Real = DEFAULT_ATOL,
-    rtol::Real = DEFAULT_RTOL,
-)::Bool
-    if size(data1) != size(data2)
-        return false
-    end
-
-    for i in eachindex(data1)
-        if isnan(data1[i]) && isnan(data2[i])
-            continue
-        elseif isnan(data1[i]) && !isnan(data2[i])
-            return false
-        elseif !isnan(data1[i]) && isnan(data2[i])
-            return false
-        end
-        if !isapprox(data1[i], data2[i]; atol = atol, rtol = rtol)
-            return false
-        end
-    end
-
-    return true
-end
