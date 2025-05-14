@@ -381,24 +381,24 @@ function test(
         return false
     end
 
-    # if !isnothing(expected_data)
-    #     if size(data) != size(expected_data)
-    #         return false
-    #     end
+    if !isnothing(expected_data)
+        if size(data) != size(expected_data)
+            return false
+        end
 
-    #     for i in eachindex(data)
-    #         if isnan(data[i]) && isnan(expected_data[i])
-    #             continue
-    #         elseif isnan(data[i]) && !isnan(expected_data[i])
-    #             return false
-    #         elseif !isnan(data[i]) && isnan(expected_data[i])
-    #             return false
-    #         end
-    #         if !isapprox(data[i], expected_data[i]; atol = atol, rtol = rtol)
-    #             return false
-    #         end
-    #     end
-    # end
+        for i in eachindex(data)
+            if isnan(data[i]) && isnan(expected_data[i])
+                continue
+            elseif isnan(data[i]) && !isnan(expected_data[i])
+                return false
+            elseif !isnan(data[i]) && isnan(expected_data[i])
+                return false
+            end
+            if !isapprox(data[i], expected_data[i]; atol = atol, rtol = rtol)
+                return false
+            end
+        end
+    end
 
     return true
 end

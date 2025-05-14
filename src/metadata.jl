@@ -149,47 +149,47 @@ function test(
     expected_labels::Union{Vector{String}, Nothing} = nothing,
 )::Bool
     if !isnothing(expected_frequency) && expected_frequency != metadata.frequency
-        println("Error: Expected frequency $(expected_frequency), but got $(metadata.frequency).")
+        @error("Expected frequency $(expected_frequency), but got $(metadata.frequency).")
         return false
     end
 
     if !isnothing(expected_initial_date) && expected_initial_date != metadata.initial_date
-        println("Error: Expected initial date $(expected_initial_date), but got $(metadata.initial_date).")
+        @error("Expected initial date $(expected_initial_date), but got $(metadata.initial_date).")
         return false
     end
 
     if !isnothing(expected_number_of_dimensions) && expected_number_of_dimensions != metadata.number_of_dimensions
-        println("Error: Expected number of dimensions $(expected_number_of_dimensions), but got $(metadata.number_of_dimensions).")
+        @error("Expected number of dimensions $(expected_number_of_dimensions), but got $(metadata.number_of_dimensions).")
         return false
     end
 
     if !isnothing(expected_dimensions) && expected_dimensions != string.(metadata.dimensions)
-        println("Error: Expected dimensions $(expected_dimensions), but got $(string.(metadata.dimensions)).")
+        @error("Expected dimensions $(expected_dimensions), but got $(string.(metadata.dimensions)).")
         return false
     end
 
     if !isnothing(expected_time_dimension) && expected_time_dimension != string(metadata.time_dimension)
-        println("Error: Expected time dimension $(expected_time_dimension), but got $(string(metadata.time_dimension)).")
+        @error("Expected time dimension $(expected_time_dimension), but got $(string(metadata.time_dimension)).")
         return false
     end
 
     if !isnothing(expected_unit) && expected_unit != metadata.unit
-        println("Error: Expected unit $(expected_unit), but got $(metadata.unit).")
+        @error("Expected unit $(expected_unit), but got $(metadata.unit).")
         return false
     end
 
     if !isnothing(expected_dimension_size) && expected_dimension_size != metadata.dimension_size
-        println("Error: Expected dimension size $(expected_dimension_size), but got $(metadata.dimension_size).")
+        @error("Expected dimension size $(expected_dimension_size), but got $(metadata.dimension_size).")
         return false
     end
 
     if !isnothing(expected_number_of_time_series) && expected_number_of_time_series != metadata.number_of_time_series
-        println("Error: Expected number of time series $(expected_number_of_time_series), but got $(metadata.number_of_time_series).")
+        @error("Expected number of time series $(expected_number_of_time_series), but got $(metadata.number_of_time_series).")
         return false
     end
 
     if !isnothing(expected_labels) && expected_labels != metadata.labels
-        println("Error: Expected labels $(expected_labels), but got $(metadata.labels).")
+        @error("Expected labels $(expected_labels), but got $(metadata.labels).")
         return false
     end
 
