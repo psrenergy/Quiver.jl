@@ -1,3 +1,5 @@
+using Test
+
 function test_modules(dir::AbstractString)
     result = String[]
     for (root, dirs, files) in walkdir(dir)
