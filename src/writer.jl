@@ -134,7 +134,7 @@ mutable struct Writer{I <: Implementation, W}
     end
 end
 
-function _build_last_dimension_added!(writer::Writer; dims...; kwdims...)
+function _build_last_dimension_added!(writer::Writer, dims...; kwdims...)
     if !isempty(kwdims) && !isempty(dims)
         error("You cannot provide both keyword dimensions and positional dimensions.")
     elseif !isempty(kwdims)
