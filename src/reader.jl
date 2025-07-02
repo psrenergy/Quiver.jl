@@ -89,6 +89,17 @@ function _build_dimension_to_read!(reader::Reader; dims...)
     return nothing
 end
 
+function _build_dimension_to_read!(reader::Reader, dims...)
+    for (i, _) in enumerate(reader.metadata.dimensions)
+        if reader.carrousel
+            reader.dimension_to_read[i] = mod1(dims[i], reader.metadata.dimension_size[i])
+        else
+            reader.dimension_to_read[i] = dims[i]
+        end
+    end
+    return nothing
+end
+
 function _build_dimension_in_cache!(reader::Reader)
     for i in 1:reader.metadata.number_of_dimensions
         reader.dimension_in_cache[i] = reader.dimension_to_read[i]
@@ -136,6 +147,14 @@ function goto!(reader::Reader; dims...)
     return reader.data
 end
 
+function goto!(reader::Reader, dims...)
+    validate_dimensions(reader.metadata, dims...)
+    _build_dimension_to_read!(reader, dims...)
+    _quiver_goto!(reader)
+    _build_dimension_in_cache!(reader)
+    _move_data_from_buffer_cache_to_data!(reader)
+    return reader.data
+end
 """
     next_dimension!(reader::Reader)
 
