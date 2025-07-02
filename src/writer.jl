@@ -134,35 +134,32 @@ mutable struct Writer{I <: Implementation, W}
     end
 end
 
-function _build_last_dimension_added!(writer::Writer, dims...; kwdims...)
-    if !isempty(kwdims) && !isempty(dims)
-        error("You cannot provide both keyword dimensions and positional dimensions.")
-    elseif !isempty(kwdims)
-        for (i, dim) in enumerate(writer.metadata.dimensions)
-            writer.last_dimension_added[i] = kwdims[dim]
-        end
-    elseif !isempty(dims)
-        for (i, _) in enumerate(writer.metadata.dimensions)
-            writer.last_dimension_added[i] = dims[i]
-        end
 
+function _build_last_dimension_added!(writer::Writer; dims...)
+    for (i, dim) in enumerate(writer.metadata.dimensions)
+        writer.last_dimension_added[i] = dims[dim]
     end
     return nothing
 end
 
-function write!(writer::Writer, data::Vector{T}, dims...; kwdims...) where {T <: Real}
-    validate_data_length(writer.metadata, data)
-    if !isempty(kwdims) && !isempty(dims)
-        error("You cannot provide both keyword dimensions and positional dimensions.")
-    elseif !isempty(kwdims)
-        validate_dimensions(writer.metadata, kwdims...)
-        _build_last_dimension_added!(writer; kwdims...)
-    elseif !isempty(dims)
-        validate_dimensions(writer.metadata, dims...)
-        _build_last_dimension_added!(writer, dims...)
-    else
-        validate_dimensions(writer.metadata)
+function _build_last_dimension_added!(writer::Writer, dims...)
+    for (i, _) in enumerate(writer.metadata.dimensions)
+        writer.last_dimension_added[i] = dims[i]
     end
+    return nothing
+end
+
+function write!(writer::Writer, data::Vector{T}; dims...) where {T <: Real}
+    validate_dimensions(writer.metadata, dims...)
+    validate_data_length(writer.metadata, data)
+    _build_last_dimension_added!(writer; dims...)
+    return _quiver_write!(writer, data)
+end
+
+function write!(writer::Writer, data::Vector{T}, dims...) where {T <: Real}
+    validate_dimensions(writer.metadata, dims...)
+    validate_data_length(writer.metadata, data)
+    _build_last_dimension_added!(writer, dims...)
     return _quiver_write!(writer, data)
 end
 
@@ -245,7 +242,7 @@ function array_to_file(
 
     reverse_dimensions = Symbol.(reverse(dimensions))
 
-    for dims in Iterators.product((1:size for size in reverse(dimension_size))...)
+    for dims in Iterators.product([1:size for size in reverse(dimension_size)]...)
         dim_kwargs = OrderedDict(reverse_dimensions .=> dims)
         Quiver.write!(writer, round_digits(data[:, dims...], digits); dim_kwargs...)
     end
