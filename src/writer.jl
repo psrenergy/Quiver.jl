@@ -304,9 +304,8 @@ function df_to_file(
 
     for row in eachrow(df)
         current_dim = [getproperty(row, dim) for dim in dimensions]
-        args = OrderedDict(Symbol.(dimensions) .=> current_dim)
         data = [getproperty(row, label) for label in labels]
-        Quiver.write!(writer, round_digits(data, digits); args...)
+        Quiver.write!(writer, round_digits(data, digits), current_dim...)
     end
 
     Quiver.close!(writer)
