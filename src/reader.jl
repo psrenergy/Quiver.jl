@@ -253,7 +253,6 @@ function file_to_array(
     )
 
     metadata = reader.metadata
-    dimension_names = reverse(metadata.dimensions)
     dimension_sizes = reverse(metadata.dimension_size)
     data = zeros(
         Float32,
@@ -261,10 +260,13 @@ function file_to_array(
         dimension_sizes...,
     )
 
-    for dims in Iterators.product([1:size for size in dimension_sizes]...)
-        dim_kwargs = OrderedDict(Symbol.(dimension_names) .=> dims)
-        Quiver.goto!(reader; dim_kwargs...)
-        data[:, dims...] = reader.data
+    ranges = [1:s for s in metadata.dimension_size]
+    rev_ranges = reverse(ranges)
+
+    for rev_tuple in Iterators.product(rev_ranges...)
+        dims = reverse(rev_tuple)
+        Quiver.goto!(reader, dims...)
+        data[:, rev_tuple...] = reader.data
     end
 
     Quiver.close!(reader)
@@ -298,10 +300,10 @@ function file_to_df(
     )
 
     metadata = reader.metadata
-    dimension_names = reverse(metadata.dimensions)
-    dimension_sizes = reverse(metadata.dimension_size)
 
     df = DataFrame()
+    ranges = [1:s for s in metadata.dimension_size]
+    rev_ranges = reverse(ranges)
 
     # Add all columns to the DataFrame
     for dim in metadata.dimensions
@@ -311,14 +313,14 @@ function file_to_df(
         DataFrames.insertcols!(df, label => Float32[])
     end
 
-    for dims in Iterators.product([1:size for size in dimension_sizes]...)
-        dim_kwargs = OrderedDict(Symbol.(dimension_names) .=> dims)
-        Quiver.goto!(reader; dim_kwargs...)
+    for rev_tuple in Iterators.product(rev_ranges...)
+        dims = reverse(rev_tuple)
+        Quiver.goto!(reader, dims...)
         if all(isnan.(reader.data))
             continue
         end
         # Construct the data frame row by row
-        push!(df, [reverse(dims)...; reader.data...])
+        push!(df, [dims...; reader.data...])
     end
 
     # Add metadata to DataFrame

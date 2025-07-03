@@ -240,11 +240,12 @@ function array_to_file(
         kwargs_dict...,
     )
 
-    reverse_dimensions = Symbol.(reverse(dimensions))
+    ranges = [1:s for s in dimension_size]
+    rev_ranges = reverse(ranges)
 
-    for dims in Iterators.product([1:size for size in reverse(dimension_size)]...)
-        dim_kwargs = OrderedDict(reverse_dimensions .=> dims)
-        Quiver.write!(writer, round_digits(data[:, dims...], digits); dim_kwargs...)
+    for rev_tuple in Iterators.product(rev_ranges...)
+        dims = reverse(rev_tuple)
+        Quiver.write!(writer, round_digits(data[:, rev_tuple...], digits), dims...)
     end
 
     Quiver.close!(writer)
