@@ -93,7 +93,6 @@ function apply_expression_over_dimension(
     labels = metadata.labels
     dimensions = metadata.dimensions
     dimension_size = metadata.dimension_size
-    n_agents = length(labels)
 
     if dim_to_operate == metadata.time_dimension
         Quiver.close!(reader)
@@ -113,18 +112,14 @@ function apply_expression_over_dimension(
         throw(ArgumentError("Dimension $dim_to_operate not found in file $filename"))
     end
 
-    # Get the sizes of the dimensions
-    dimension_size = metadata.dimension_size
-
-    # Define a function to get the indices for all dimensions except the one being operated on
-    other_dimension_sizes = [dimension_size[i] for i in eachindex(dimension_size) if i != dim_to_operate_idx]
-    other_dimensions = [dimensions[i] for i in eachindex(dimensions) if i != dim_to_operate_idx]
-    reverse_other_dimensions = reverse(other_dimensions)
+    all_idxs = 1:length(dimensions)
+    other_dims_idx = filter(i -> i != dim_to_operate_idx, all_idxs)
+    other_dimension_sizes = dimension_size[other_dims_idx]
 
     writer = Quiver.Writer{impl}(
         output_filename;
         labels = labels,
-        dimensions = string.(other_dimensions),
+        dimensions = string.(dimensions[other_dims_idx]),
         time_dimension = string(metadata.time_dimension),
         dimension_size = other_dimension_sizes,
         initial_date = metadata.initial_date,
@@ -132,33 +127,18 @@ function apply_expression_over_dimension(
         frequency = metadata.frequency,
     )
 
-    dims = Quiver.first_position!(other_dimension_sizes)
+    for dims in Iterators.product((1:s for s in other_dimension_sizes)...)
+        dims_operate = Vector{Int}(undef, length(dimensions))
+        dims_operate[other_dims_idx] .= Tuple(dims)
 
-    # Iterate over all combinations of the other dimensions using column-major order
-    for _ in 1:prod(other_dimension_sizes)
-        Quiver.next_dim!(dims, other_dimension_sizes)
-        dims_operate = copy(dims)
-
-        data = [zeros(n_agents) for _ in 1:dimension_size[dim_to_operate_idx]]
-
-        # Apply the operation across the specified Dimension
-        # TODO: This doesn't respect column major order, but it's not clear how to do that
+        data = zeros(length(labels), dimension_size[dim_to_operate_idx])
         for i in 1:dimension_size[dim_to_operate_idx]
-            if length(dims_operate) < dim_to_operate_idx
-                append!(dims_operate, i)
-            else
-                dims_operate[dim_to_operate_idx] = i
-            end
+            dims_operate[dim_to_operate_idx] = i
             Quiver.goto!(reader, dims_operate...)
-            # Store the data at this position
-            data[i] = Float64.(reader.data)
+            data[:, i] = Float64.(reader.data)
         end
 
-        # Apply the operation (e.g., sum) across the dimension
-        data = hcat(data...)
         result = operation(data, dims = 2)[:, 1]
-
-        # Write the result to the output file
         Quiver.write!(writer, Quiver.round_digits(result, digits), dims...)
     end
 
