@@ -175,13 +175,14 @@ function convert(
         unit = metadata.unit,
     )
 
-    for dims in Iterators.product([1:size for size in reverse(metadata.dimension_size)]...)
-        dim_kwargs = OrderedDict(Symbol.(metadata.dimensions) .=> reverse(dims))
-        Quiver.goto!(reader; dim_kwargs...)
+    dims = Quiver.first_position!(metadata.dimension_size)
+    for _ in 1:prod(metadata.dimension_size)
+        Quiver.next_dim!(dims, metadata.dimension_size)
+        Quiver.goto!(reader, dims...)
         if all(isnan.(reader.data))
             continue
         end
-        Quiver.write!(writer, reader.data; dim_kwargs...)
+        Quiver.write!(writer, reader.data, dims...)
     end
 
     Quiver.close!(reader)

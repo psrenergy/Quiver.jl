@@ -89,6 +89,17 @@ function _build_dimension_to_read!(reader::Reader; dims...)
     return nothing
 end
 
+function _build_dimension_to_read!(reader::Reader, dims...)
+    for (i, _) in enumerate(reader.metadata.dimensions)
+        if reader.carrousel
+            reader.dimension_to_read[i] = mod1(dims[i], reader.metadata.dimension_size[i])
+        else
+            reader.dimension_to_read[i] = dims[i]
+        end
+    end
+    return nothing
+end
+
 function _build_dimension_in_cache!(reader::Reader)
     for i in 1:reader.metadata.number_of_dimensions
         reader.dimension_in_cache[i] = reader.dimension_to_read[i]
@@ -136,6 +147,14 @@ function goto!(reader::Reader; dims...)
     return reader.data
 end
 
+function goto!(reader::Reader, dims...)
+    validate_dimensions(reader.metadata, dims...)
+    _build_dimension_to_read!(reader, dims...)
+    _quiver_goto!(reader)
+    _build_dimension_in_cache!(reader)
+    _move_data_from_buffer_cache_to_data!(reader)
+    return reader.data
+end
 """
     next_dimension!(reader::Reader)
 
@@ -234,7 +253,6 @@ function file_to_array(
     )
 
     metadata = reader.metadata
-    dimension_names = reverse(metadata.dimensions)
     dimension_sizes = reverse(metadata.dimension_size)
     data = zeros(
         Float32,
@@ -242,10 +260,12 @@ function file_to_array(
         dimension_sizes...,
     )
 
-    for dims in Iterators.product([1:size for size in dimension_sizes]...)
-        dim_kwargs = OrderedDict(Symbol.(dimension_names) .=> dims)
-        Quiver.goto!(reader; dim_kwargs...)
-        data[:, dims...] = reader.data
+    dims = Quiver.first_position!(metadata.dimension_size)
+
+    for _ in 1:prod(metadata.dimension_size)
+        Quiver.next_dim!(dims, metadata.dimension_size)
+        Quiver.goto!(reader, dims...)
+        data[:, reverse(dims)...] = reader.data
     end
 
     Quiver.close!(reader)
@@ -279,10 +299,9 @@ function file_to_df(
     )
 
     metadata = reader.metadata
-    dimension_names = reverse(metadata.dimensions)
-    dimension_sizes = reverse(metadata.dimension_size)
 
     df = DataFrame()
+    dims = Quiver.first_position!(metadata.dimension_size)
 
     # Add all columns to the DataFrame
     for dim in metadata.dimensions
@@ -292,14 +311,14 @@ function file_to_df(
         DataFrames.insertcols!(df, label => Float32[])
     end
 
-    for dims in Iterators.product([1:size for size in dimension_sizes]...)
-        dim_kwargs = OrderedDict(Symbol.(dimension_names) .=> dims)
-        Quiver.goto!(reader; dim_kwargs...)
+    for _ in 1:prod(metadata.dimension_size)
+        Quiver.next_dim!(dims, metadata.dimension_size)
+        Quiver.goto!(reader, dims...)
         if all(isnan.(reader.data))
             continue
         end
         # Construct the data frame row by row
-        push!(df, [reverse(dims)...; reader.data...])
+        push!(df, [dims...; reader.data...])
     end
 
     # Add metadata to DataFrame

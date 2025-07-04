@@ -218,8 +218,7 @@ function convert(
 
     while reader.reader.next !== nothing
         Quiver.next_dimension!(reader)
-        dim_kwargs = OrderedDict(Symbol.(metadata.dimensions) .=> reader.dimension_to_read)
-        Quiver.write!(writer, reader.data; dim_kwargs...)
+        Quiver.write!(writer, reader.data, reader.dimension_to_read...)
     end
 
     Quiver.close!(reader)

@@ -35,3 +35,27 @@ function add_extension_to_file(filename::AbstractString, ext::AbstractString)
     end
     return "$filename.$ext"
 end
+
+function next_dim!(
+    current_dimensions::Vector{Int},
+    max_size_dmensions::Vector{Int},
+)
+    for i in length(current_dimensions):-1:1
+        if current_dimensions[i] < max_size_dmensions[i]
+            current_dimensions[i] += 1
+            for j in i+1:length(current_dimensions)
+                current_dimensions[j] = 1
+            end
+            return
+        end
+    end
+    return
+end
+
+function first_position!(
+    max_size_dimensions::Vector{Int},
+)
+    dims = fill(1, length(max_size_dimensions))
+    dims[end] = 0
+    return dims
+end

@@ -55,12 +55,13 @@ function merge(
         unit = metadata.unit,
     )
 
+    dims = Quiver.first_position!(metadata.dimension_size)
     num_labels = [length(reader.metadata.labels) for reader in readers]
     data = zeros(sum(num_labels))
-    for dims in Iterators.product([1:size for size in reverse(metadata.dimension_size)]...)
-        dim_kwargs = OrderedDict(metadata.dimensions .=> reverse(dims))
+    for _ in 1:prod(metadata.dimension_size)
+        Quiver.next_dim!(dims, metadata.dimension_size)
         for (i, reader) in enumerate(readers)
-            Quiver.goto!(reader; dim_kwargs...)
+            Quiver.goto!(reader, dims...)
             if i == 1
                 initial_idx = 1
             else
@@ -72,7 +73,7 @@ function merge(
         if all(isnan.(data))
             continue
         end
-        Quiver.write!(writer, round_digits(data, digits); dim_kwargs...)
+        Quiver.write!(writer, round_digits(data, digits), dims...)
     end
 
     for reader in readers

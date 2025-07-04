@@ -46,7 +46,6 @@ function apply_expression(
 
     dimensions = metadata.dimensions
     dimension_size = metadata.dimension_size
-    reverse_dimensions = (reverse(dimensions))
 
     writer = Quiver.Writer{impl}(
         output_filename;
@@ -59,16 +58,18 @@ function apply_expression(
         frequency = metadata.frequency,
     )
 
+    dims = Quiver.first_position!(metadata.dimension_size)
+
     index_of_labels_all_readers = [findall(x -> x in reader.metadata.labels, labels) for reader in readers]
     data_all_readers = [zeros(num_labels) for _ in 1:n_readers]
-    for dims in Iterators.product([1:size for size in reverse(dimension_size)]...)
-        dim_kwargs = OrderedDict(reverse_dimensions .=> dims)
+    for _ in 1:prod(metadata.dimension_size)
+        Quiver.next_dim!(dims, metadata.dimension_size)
         for (i, reader) in enumerate(readers)
-            Quiver.goto!(reader; dim_kwargs...)
+            Quiver.goto!(reader, dims...)
             data_all_readers[i][index_of_labels_all_readers[i]] = Float64.(reader.data)
         end
         data = operation.(data_all_readers...)
-        Quiver.write!(writer, Quiver.round_digits(data, digits); dim_kwargs...)
+        Quiver.write!(writer, Quiver.round_digits(data, digits), dims...)
     end
 
     for reader in readers
@@ -92,7 +93,6 @@ function apply_expression_over_dimension(
     labels = metadata.labels
     dimensions = metadata.dimensions
     dimension_size = metadata.dimension_size
-    reverse_dimensions = (reverse(dimensions))
     n_agents = length(labels)
 
     if dim_to_operate == metadata.time_dimension
@@ -119,7 +119,6 @@ function apply_expression_over_dimension(
     # Define a function to get the indices for all dimensions except the one being operated on
     other_dimension_sizes = [dimension_size[i] for i in eachindex(dimension_size) if i != dim_to_operate_idx]
     other_dimensions = [dimensions[i] for i in eachindex(dimensions) if i != dim_to_operate_idx]
-    reverse_dimensions = reverse(dimensions)
     reverse_other_dimensions = reverse(other_dimensions)
 
     writer = Quiver.Writer{impl}(
@@ -133,20 +132,24 @@ function apply_expression_over_dimension(
         frequency = metadata.frequency,
     )
 
+    dims = Quiver.first_position!(other_dimension_sizes)
+
     # Iterate over all combinations of the other dimensions using column-major order
-    for dims in Iterators.product([1:size for size in reverse(other_dimension_sizes)]...)
-        dim_kwargs = OrderedDict(reverse_other_dimensions .=> dims)
-        dim_kwargs_operate = copy(dim_kwargs)
+    for _ in 1:prod(other_dimension_sizes)
+        Quiver.next_dim!(dims, other_dimension_sizes)
+        dims_operate = copy(dims)
 
         data = [zeros(n_agents) for _ in 1:dimension_size[dim_to_operate_idx]]
 
         # Apply the operation across the specified Dimension
         # TODO: This doesn't respect column major order, but it's not clear how to do that
         for i in 1:dimension_size[dim_to_operate_idx]
-            # Set the index for the dimension we are operating on
-            dim_kwargs_operate[dimensions[dim_to_operate_idx]] = i
-            Quiver.goto!(reader; dim_kwargs_operate...)
-
+            if length(dims_operate) < dim_to_operate_idx
+                append!(dims_operate, i)
+            else
+                dims_operate[dim_to_operate_idx] = i
+            end
+            Quiver.goto!(reader, dims_operate...)
             # Store the data at this position
             data[i] = Float64.(reader.data)
         end
@@ -156,7 +159,7 @@ function apply_expression_over_dimension(
         result = operation(data, dims = 2)[:, 1]
 
         # Write the result to the output file
-        Quiver.write!(writer, Quiver.round_digits(result, digits); dim_kwargs...)
+        Quiver.write!(writer, Quiver.round_digits(result, digits), dims...)
     end
 
     close!(reader)
@@ -178,7 +181,6 @@ function apply_expression_over_agents(
     labels = metadata.labels
     dimensions = metadata.dimensions
     dimension_size = metadata.dimension_size
-    reverse_dimensions = (reverse(dimensions))
     n_agents = length(labels)
     n_new_agents = length(new_labels)
 
@@ -200,14 +202,16 @@ function apply_expression_over_agents(
         frequency = metadata.frequency,
     )
 
+    dims = Quiver.first_position!(dimension_size)
+
     data = zeros(n_new_agents)
     # Iterate over all combinations of the other dimensions using column-major order
-    for dims in Iterators.product([1:size for size in reverse(dimension_size)]...)
-        dim_kwargs = OrderedDict(reverse_dimensions .=> dims)
-        Quiver.goto!(reader; dim_kwargs...)
+    for _ in 1:prod(dimension_size)
+        Quiver.next_dim!(dims, dimension_size)
+        Quiver.goto!(reader, dims...)
         data = vcat(operation(reader.data))
         # Write the result to the output file
-        Quiver.write!(writer, Quiver.round_digits(data, digits); dim_kwargs...)
+        Quiver.write!(writer, Quiver.round_digits(data, digits), dims...)
     end
 
     close!(reader)

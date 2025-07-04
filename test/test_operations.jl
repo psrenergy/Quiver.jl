@@ -326,12 +326,8 @@ function sum_time_dimension_error(impl)
             for scenario in 1:num_scenarios
                 for block in 1:num_blocks
                     data = [stage, scenario, block + scenario][file]
-                    dims = Quiver.OrderedDict(
-                        Symbol("stage" * "$file") => stage,
-                        Symbol("scenario" * "$file") => scenario,
-                        Symbol("block" * "$file") => block,
-                    )
-                    Quiver.write!(writer, [data]; dims...)
+                    dims = (stage, scenario, block)
+                    Quiver.write!(writer, [data], dims...)
                 end
             end
         end

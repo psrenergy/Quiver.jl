@@ -134,9 +134,17 @@ mutable struct Writer{I <: Implementation, W}
     end
 end
 
+
 function _build_last_dimension_added!(writer::Writer; dims...)
     for (i, dim) in enumerate(writer.metadata.dimensions)
         writer.last_dimension_added[i] = dims[dim]
+    end
+    return nothing
+end
+
+function _build_last_dimension_added!(writer::Writer, dims...)
+    for (i, _) in enumerate(writer.metadata.dimensions)
+        writer.last_dimension_added[i] = dims[i]
     end
     return nothing
 end
@@ -145,6 +153,13 @@ function write!(writer::Writer, data::Vector{T}; dims...) where {T <: Real}
     validate_dimensions(writer.metadata, dims...)
     validate_data_length(writer.metadata, data)
     _build_last_dimension_added!(writer; dims...)
+    return _quiver_write!(writer, data)
+end
+
+function write!(writer::Writer, data::Vector{T}, dims...) where {T <: Real}
+    validate_dimensions(writer.metadata, dims...)
+    validate_data_length(writer.metadata, data)
+    _build_last_dimension_added!(writer, dims...)
     return _quiver_write!(writer, data)
 end
 
@@ -225,11 +240,11 @@ function array_to_file(
         kwargs_dict...,
     )
 
-    reverse_dimensions = Symbol.(reverse(dimensions))
+    dims = Quiver.first_position!(dimension_size)
 
-    for dims in Iterators.product([1:size for size in reverse(dimension_size)]...)
-        dim_kwargs = OrderedDict(reverse_dimensions .=> dims)
-        Quiver.write!(writer, round_digits(data[:, dims...], digits); dim_kwargs...)
+    for _ in 1:prod(dimension_size)
+        Quiver.next_dim!(dims, dimension_size)
+        Quiver.write!(writer, round_digits(data[:, reverse(dims)...], digits), dims...)
     end
 
     Quiver.close!(writer)
@@ -288,9 +303,8 @@ function df_to_file(
 
     for row in eachrow(df)
         current_dim = [getproperty(row, dim) for dim in dimensions]
-        args = OrderedDict(Symbol.(dimensions) .=> current_dim)
         data = [getproperty(row, label) for label in labels]
-        Quiver.write!(writer, round_digits(data, digits); args...)
+        Quiver.write!(writer, round_digits(data, digits), current_dim...)
     end
 
     Quiver.close!(writer)
