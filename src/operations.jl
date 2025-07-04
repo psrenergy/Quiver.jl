@@ -58,13 +58,12 @@ function apply_expression(
         frequency = metadata.frequency,
     )
 
-    ranges = [1:s for s in metadata.dimension_size]
-    rev_ranges = reverse(ranges)
+    dims = Quiver.first_position!(metadata.dimension_size)
 
     index_of_labels_all_readers = [findall(x -> x in reader.metadata.labels, labels) for reader in readers]
     data_all_readers = [zeros(num_labels) for _ in 1:n_readers]
-    for rev_tuple in Iterators.product(rev_ranges...)
-        dims = reverse(rev_tuple)
+    for _ in 1:prod(metadata.dimension_size)
+        Quiver.next_dim!(dims, metadata.dimension_size)
         for (i, reader) in enumerate(readers)
             Quiver.goto!(reader, dims...)
             data_all_readers[i][index_of_labels_all_readers[i]] = Float64.(reader.data)
@@ -199,13 +198,12 @@ function apply_expression_over_agents(
         frequency = metadata.frequency,
     )
 
-    ranges = [1:s for s in dimension_size]
-    rev_ranges = reverse(ranges)
+    dims = Quiver.first_position!(dimension_size)
 
     data = zeros(n_new_agents)
     # Iterate over all combinations of the other dimensions using column-major order
-    for rev_tuple in Iterators.product(rev_ranges...)
-        dims = reverse(rev_tuple)
+    for _ in 1:prod(dimension_size)
+        Quiver.next_dim!(dims, dimension_size)
         Quiver.goto!(reader, dims...)
         data = vcat(operation(reader.data))
         # Write the result to the output file

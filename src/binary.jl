@@ -175,11 +175,9 @@ function convert(
         unit = metadata.unit,
     )
 
-    ranges = [1:s for s in metadata.dimension_size]
-    rev_ranges = reverse(ranges)
-
-    for rev_tuple in Iterators.product(rev_ranges...)
-        dims = reverse(rev_tuple)
+    dims = Quiver.first_position!(metadata.dimension_size)
+    for _ in 1:prod(metadata.dimension_size)
+        Quiver.next_dim!(dims, metadata.dimension_size)
         Quiver.goto!(reader, dims...)
         if all(isnan.(reader.data))
             continue

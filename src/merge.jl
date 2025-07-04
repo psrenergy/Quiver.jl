@@ -55,13 +55,11 @@ function merge(
         unit = metadata.unit,
     )
 
-    ranges = [1:s for s in metadata.dimension_size]
-    rev_ranges = reverse(ranges)
-
+    dims = Quiver.first_position!(metadata.dimension_size)
     num_labels = [length(reader.metadata.labels) for reader in readers]
     data = zeros(sum(num_labels))
-    for rev_tuple in Iterators.product(rev_ranges...)
-        dims = reverse(rev_tuple)
+    for _ in 1:prod(metadata.dimension_size)
+        Quiver.next_dim!(dims, metadata.dimension_size)
         for (i, reader) in enumerate(readers)
             Quiver.goto!(reader, dims...)
             if i == 1

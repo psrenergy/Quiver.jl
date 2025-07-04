@@ -260,13 +260,12 @@ function file_to_array(
         dimension_sizes...,
     )
 
-    ranges = [1:s for s in metadata.dimension_size]
-    rev_ranges = reverse(ranges)
+    dims = Quiver.first_position!(metadata.dimension_size)
 
-    for rev_tuple in Iterators.product(rev_ranges...)
-        dims = reverse(rev_tuple)
+    for _ in 1:prod(metadata.dimension_size)
+        Quiver.next_dim!(dims, metadata.dimension_size)
         Quiver.goto!(reader, dims...)
-        data[:, rev_tuple...] = reader.data
+        data[:, reverse(dims)...] = reader.data
     end
 
     Quiver.close!(reader)
@@ -302,8 +301,7 @@ function file_to_df(
     metadata = reader.metadata
 
     df = DataFrame()
-    ranges = [1:s for s in metadata.dimension_size]
-    rev_ranges = reverse(ranges)
+    dims = Quiver.first_position!(metadata.dimension_size)
 
     # Add all columns to the DataFrame
     for dim in metadata.dimensions
@@ -313,8 +311,8 @@ function file_to_df(
         DataFrames.insertcols!(df, label => Float32[])
     end
 
-    for rev_tuple in Iterators.product(rev_ranges...)
-        dims = reverse(rev_tuple)
+    for _ in 1:prod(metadata.dimension_size)
+        Quiver.next_dim!(dims, metadata.dimension_size)
         Quiver.goto!(reader, dims...)
         if all(isnan.(reader.data))
             continue
