@@ -132,20 +132,24 @@ function apply_expression_over_dimension(
         frequency = metadata.frequency,
     )
 
+    dims = Quiver.first_position!(other_dimension_sizes)
+
     # Iterate over all combinations of the other dimensions using column-major order
-    for dims in Iterators.product([1:size for size in reverse(other_dimension_sizes)]...)
-        dim_kwargs = OrderedDict(reverse_other_dimensions .=> dims)
-        dim_kwargs_operate = copy(dim_kwargs)
+    for _ in 1:prod(other_dimension_sizes)
+        Quiver.next_dim!(dims, other_dimension_sizes)
+        dims_operate = copy(dims)
 
         data = [zeros(n_agents) for _ in 1:dimension_size[dim_to_operate_idx]]
 
         # Apply the operation across the specified Dimension
         # TODO: This doesn't respect column major order, but it's not clear how to do that
         for i in 1:dimension_size[dim_to_operate_idx]
-            # Set the index for the dimension we are operating on
-            dim_kwargs_operate[dimensions[dim_to_operate_idx]] = i
-            Quiver.goto!(reader; dim_kwargs_operate...)
-
+            if length(dims_operate) < dim_to_operate_idx
+                append!(dims_operate, i)
+            else
+                dims_operate[dim_to_operate_idx] = i
+            end
+            Quiver.goto!(reader, dims_operate...)
             # Store the data at this position
             data[i] = Float64.(reader.data)
         end
@@ -155,7 +159,7 @@ function apply_expression_over_dimension(
         result = operation(data, dims = 2)[:, 1]
 
         # Write the result to the output file
-        Quiver.write!(writer, Quiver.round_digits(result, digits); dim_kwargs...)
+        Quiver.write!(writer, Quiver.round_digits(result, digits), dims...)
     end
 
     close!(reader)
