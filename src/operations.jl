@@ -127,13 +127,13 @@ function apply_expression_over_dimension(
         frequency = metadata.frequency,
     )
 
+    dims_operate = Vector{Int}(undef, length(dimensions))
+    data = zeros(length(labels), dimension_size[dim_to_operate_idx])
     dims = Quiver.first_position!(other_dimension_sizes)
     for _ in 1:prod(other_dimension_sizes)
         Quiver.next_dim!(dims, other_dimension_sizes)
-        dims_operate = Vector{Int}(undef, length(dimensions))
         dims_operate[other_dims_idx] .= Tuple(dims)
 
-        data = zeros(length(labels), dimension_size[dim_to_operate_idx])
         for i in 1:dimension_size[dim_to_operate_idx]
             dims_operate[dim_to_operate_idx] = i
             Quiver.goto!(reader, dims_operate...)
