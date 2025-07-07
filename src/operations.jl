@@ -132,7 +132,7 @@ function apply_expression_over_dimension(
     dims = Quiver.first_position!(other_dimension_sizes)
     for _ in 1:prod(other_dimension_sizes)
         Quiver.next_dim!(dims, other_dimension_sizes)
-        dims_operate[other_dims_idx] .= Tuple(dims)
+        dims_operate[other_dims_idx] .= dims
 
         for i in 1:dimension_size[dim_to_operate_idx]
             dims_operate[dim_to_operate_idx] = i
