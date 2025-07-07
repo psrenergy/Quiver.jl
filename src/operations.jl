@@ -127,7 +127,9 @@ function apply_expression_over_dimension(
         frequency = metadata.frequency,
     )
 
-    for dims in Iterators.product((1:s for s in other_dimension_sizes)...)
+    dims = Quiver.first_position!(other_dimension_sizes)
+    for _ in 1:prod(other_dimension_sizes)
+        Quiver.next_dim!(dims, other_dimension_sizes)
         dims_operate = Vector{Int}(undef, length(dimensions))
         dims_operate[other_dims_idx] .= Tuple(dims)
 
