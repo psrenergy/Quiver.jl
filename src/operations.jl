@@ -86,6 +86,7 @@ function apply_expression_over_dimension(
     dim_to_operate::Symbol,
     impl::Type{<:Implementation};
     digits::Union{Int, Nothing} = nothing,
+    suppress_dimension_order_warning::Bool = false,
 )
     reader = Quiver.Reader{impl}(filename)
     metadata = reader.metadata
@@ -105,7 +106,9 @@ function apply_expression_over_dimension(
             if impl == Quiver.CSV
                 throw(ArgumentError("Dimension $dim_to_operate is not the last dimension. This is not allowed for CSV files."))
             end
-            @warn "Dimension $dim_to_operate is not the last dimension. This is not the most efficient way to operate over dimensions."
+            if !suppress_dimension_order_warning
+                @warn "Dimension $dim_to_operate is not the last dimension. This is not the most efficient way to operate over dimensions."
+            end
         end
     else
         Quiver.close!(reader)
