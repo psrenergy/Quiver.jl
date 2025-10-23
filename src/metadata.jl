@@ -13,6 +13,8 @@ mutable struct Metadata
     unit::String
     # Maximum index for each dimension
     dimension_size::Vector{Int}
+    # Starting value for each dimension (e.g., [2025, 1, 1] for year starting at 2025)
+    dimension_offset::Vector{Int}
     # Number of time series in the same file
     number_of_time_series::Int
     # Names of the time series
@@ -37,6 +39,7 @@ function Metadata(;
     time_dimension::String,
     unit::String = "",
     dimension_size::Vector{Int},
+    dimension_offset::Vector{Int} = ones(Int, length(dimension_size)),
     labels::Vector{String},
 )
     metadata = Metadata(
@@ -47,6 +50,7 @@ function Metadata(;
         Symbol(time_dimension),
         unit,
         dimension_size,
+        dimension_offset,
         length(labels),
         labels,
         QUIVER_FILE_VERSION,
@@ -62,6 +66,7 @@ function to_ordered_dict(metadata::Metadata)
         "version" => metadata.version,
         "dimensions" => String.(metadata.dimensions),
         "dimension_size" => metadata.dimension_size,
+        "dimension_offset" => metadata.dimension_offset,
         "initial_date" => Dates.format(metadata.initial_date, "yyyy-mm-dd HH:MM:SS"),
         "time_dimension" => String(metadata.time_dimension),
         "frequency" => metadata.frequency,
@@ -81,6 +86,8 @@ end
 
 function from_toml(filename::String)
     dict_metadata = TOML.parsefile(filename)
+    # For backward compatibility, if dimension_offset is not present, default to ones
+    dimension_offset = get(dict_metadata, "dimension_offset", ones(Int, length(dict_metadata["dimension_size"])))
     metadata = Metadata(
         frequency = dict_metadata["frequency"],
         initial_date = Dates.DateTime(dict_metadata["initial_date"], "yyyy-mm-dd HH:MM:SS"),
@@ -88,6 +95,7 @@ function from_toml(filename::String)
         time_dimension = dict_metadata["time_dimension"],
         unit = dict_metadata["unit"],
         dimension_size = dict_metadata["dimension_size"],
+        dimension_offset = dimension_offset,
         labels = dict_metadata["labels"],
     )
     validate_metadata(metadata)
@@ -105,6 +113,13 @@ function validate_metadata(metadata::Metadata)
     if metadata.number_of_dimensions != length(metadata.dimension_size)
         @error(
             "The number_of_dimensions ($(metadata.number_of_dimensions)) must be equal to the length of dimension_size ($(metadata.dimension_size))."
+        )
+        num_errors += 1
+    end
+
+    if metadata.number_of_dimensions != length(metadata.dimension_offset)
+        @error(
+            "The number_of_dimensions ($(metadata.number_of_dimensions)) must be equal to the length of dimension_offset ($(metadata.dimension_offset))."
         )
         num_errors += 1
     end

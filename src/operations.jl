@@ -53,17 +53,18 @@ function apply_expression(
         dimensions = string.(dimensions),
         time_dimension = string(metadata.time_dimension),
         dimension_size = metadata.dimension_size,
+        dimension_offset = metadata.dimension_offset,
         initial_date = metadata.initial_date,
         unit = metadata.unit,
         frequency = metadata.frequency,
     )
 
-    dims = Quiver.first_position!(metadata.dimension_size)
+    dims = Quiver.first_position!(metadata.dimension_size, metadata.dimension_offset)
 
     index_of_labels_all_readers = [findall(x -> x in reader.metadata.labels, labels) for reader in readers]
     data_all_readers = [zeros(num_labels) for _ in 1:n_readers]
     for _ in 1:prod(metadata.dimension_size)
-        Quiver.next_dim!(dims, metadata.dimension_size)
+        Quiver.next_dim!(dims, metadata.dimension_size, metadata.dimension_offset)
         for (i, reader) in enumerate(readers)
             Quiver.goto!(reader, dims...)
             data_all_readers[i][index_of_labels_all_readers[i]] = Float64.(reader.data)
@@ -118,6 +119,7 @@ function apply_expression_over_dimension(
     all_idxs = 1:length(dimensions)
     other_dims_idx = filter(i -> i != dim_to_operate_idx, all_idxs)
     other_dimension_sizes = dimension_size[other_dims_idx]
+    other_dimension_offsets = metadata.dimension_offset[other_dims_idx]
 
     writer = Quiver.Writer{impl}(
         output_filename;
@@ -125,6 +127,7 @@ function apply_expression_over_dimension(
         dimensions = string.(dimensions[other_dims_idx]),
         time_dimension = string(metadata.time_dimension),
         dimension_size = other_dimension_sizes,
+        dimension_offset = other_dimension_offsets,
         initial_date = metadata.initial_date,
         unit = metadata.unit,
         frequency = metadata.frequency,
@@ -132,13 +135,14 @@ function apply_expression_over_dimension(
 
     dims_operate = Vector{Int}(undef, length(dimensions))
     data = zeros(length(labels), dimension_size[dim_to_operate_idx])
-    dims = Quiver.first_position!(other_dimension_sizes)
+    dims = Quiver.first_position!(other_dimension_sizes, other_dimension_offsets)
+    dim_operate_offset = metadata.dimension_offset[dim_to_operate_idx]
     for _ in 1:prod(other_dimension_sizes)
-        Quiver.next_dim!(dims, other_dimension_sizes)
+        Quiver.next_dim!(dims, other_dimension_sizes, other_dimension_offsets)
         dims_operate[other_dims_idx] .= dims
 
         for i in 1:dimension_size[dim_to_operate_idx]
-            dims_operate[dim_to_operate_idx] = i
+            dims_operate[dim_to_operate_idx] = dim_operate_offset + i - 1
             Quiver.goto!(reader, dims_operate...)
             data[:, i] = Float64.(reader.data)
         end
@@ -182,17 +186,18 @@ function apply_expression_over_agents(
         dimensions = string.(dimensions),
         time_dimension = string(metadata.time_dimension),
         dimension_size = dimension_size,
+        dimension_offset = metadata.dimension_offset,
         initial_date = metadata.initial_date,
         unit = metadata.unit,
         frequency = metadata.frequency,
     )
 
-    dims = Quiver.first_position!(dimension_size)
+    dims = Quiver.first_position!(dimension_size, metadata.dimension_offset)
 
     data = zeros(n_new_agents)
     # Iterate over all combinations of the other dimensions using column-major order
     for _ in 1:prod(dimension_size)
-        Quiver.next_dim!(dims, dimension_size)
+        Quiver.next_dim!(dims, dimension_size, metadata.dimension_offset)
         Quiver.goto!(reader, dims...)
         data = vcat(operation(reader.data))
         # Write the result to the output file

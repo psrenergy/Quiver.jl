@@ -260,12 +260,14 @@ function file_to_array(
         dimension_sizes...,
     )
 
-    dims = Quiver.first_position!(metadata.dimension_size)
+    dims = Quiver.first_position!(metadata.dimension_size, metadata.dimension_offset)
 
     for _ in 1:prod(metadata.dimension_size)
-        Quiver.next_dim!(dims, metadata.dimension_size)
+        Quiver.next_dim!(dims, metadata.dimension_size, metadata.dimension_offset)
         Quiver.goto!(reader, dims...)
-        data[:, reverse(dims)...] = reader.data
+        # Convert dims from actual values to 1-based indices for array indexing
+        indices = dims .- metadata.dimension_offset .+ 1
+        data[:, reverse(indices)...] = reader.data
     end
 
     Quiver.close!(reader)
@@ -301,7 +303,7 @@ function file_to_df(
     metadata = reader.metadata
 
     df = DataFrame()
-    dims = Quiver.first_position!(metadata.dimension_size)
+    dims = Quiver.first_position!(metadata.dimension_size, metadata.dimension_offset)
 
     # Add all columns to the DataFrame
     for dim in metadata.dimensions
@@ -312,7 +314,7 @@ function file_to_df(
     end
 
     for _ in 1:prod(metadata.dimension_size)
-        Quiver.next_dim!(dims, metadata.dimension_size)
+        Quiver.next_dim!(dims, metadata.dimension_size, metadata.dimension_offset)
         Quiver.goto!(reader, dims...)
         if all(isnan.(reader.data))
             continue

@@ -51,15 +51,16 @@ function merge(
         dimensions = string.(metadata.dimensions),
         time_dimension = string(metadata.time_dimension),
         dimension_size = metadata.dimension_size,
+        dimension_offset = metadata.dimension_offset,
         initial_date = metadata.initial_date,
         unit = metadata.unit,
     )
 
-    dims = Quiver.first_position!(metadata.dimension_size)
+    dims = Quiver.first_position!(metadata.dimension_size, metadata.dimension_offset)
     num_labels = [length(reader.metadata.labels) for reader in readers]
     data = zeros(sum(num_labels))
     for _ in 1:prod(metadata.dimension_size)
-        Quiver.next_dim!(dims, metadata.dimension_size)
+        Quiver.next_dim!(dims, metadata.dimension_size, metadata.dimension_offset)
         for (i, reader) in enumerate(readers)
             Quiver.goto!(reader, dims...)
             if i == 1

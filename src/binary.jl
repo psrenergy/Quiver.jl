@@ -6,6 +6,7 @@ function Writer{binary}(
     labels::Vector{String},
     time_dimension::String,
     dimension_size::Vector{Int},
+    dimension_offset::Vector{Int} = ones(Int, length(dimension_size)),
     remove_if_exists::Bool = true,
     fill_with_nan::Bool = true,
     kwargs...,
@@ -17,6 +18,7 @@ function Writer{binary}(
         dimensions = dimensions,
         time_dimension = time_dimension,
         dimension_size = dimension_size,
+        dimension_offset = dimension_offset,
         labels = labels,
         kwargs...,
     )
@@ -171,13 +173,14 @@ function convert(
         labels = metadata.labels,
         time_dimension = String(metadata.time_dimension),
         dimension_size = metadata.dimension_size,
+        dimension_offset = metadata.dimension_offset,
         initial_date = metadata.initial_date,
         unit = metadata.unit,
     )
 
-    dims = Quiver.first_position!(metadata.dimension_size)
+    dims = Quiver.first_position!(metadata.dimension_size, metadata.dimension_offset)
     for _ in 1:prod(metadata.dimension_size)
-        Quiver.next_dim!(dims, metadata.dimension_size)
+        Quiver.next_dim!(dims, metadata.dimension_size, metadata.dimension_offset)
         Quiver.goto!(reader, dims...)
         if all(isnan.(reader.data))
             continue

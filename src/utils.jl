@@ -38,13 +38,15 @@ end
 
 function next_dim!(
     current_dimensions::Vector{Int},
-    max_size_dmensions::Vector{Int},
+    max_size_dimensions::Vector{Int},
+    dimension_offset::Vector{Int},
 )
     for i in length(current_dimensions):-1:1
-        if current_dimensions[i] < max_size_dmensions[i]
+        max_value = dimension_offset[i] + max_size_dimensions[i] - 1
+        if current_dimensions[i] < max_value
             current_dimensions[i] += 1
             for j in i+1:length(current_dimensions)
-                current_dimensions[j] = 1
+                current_dimensions[j] = dimension_offset[j]
             end
             return
         end
@@ -52,10 +54,28 @@ function next_dim!(
     return
 end
 
+# Backward compatibility version
+function next_dim!(
+    current_dimensions::Vector{Int},
+    max_size_dimensions::Vector{Int},
+)
+    dimension_offset = ones(Int, length(max_size_dimensions))
+    return next_dim!(current_dimensions, max_size_dimensions, dimension_offset)
+end
+
+function first_position!(
+    max_size_dimensions::Vector{Int},
+    dimension_offset::Vector{Int},
+)
+    dims = copy(dimension_offset)
+    dims[end] = dimension_offset[end] - 1
+    return dims
+end
+
+# Backward compatibility version
 function first_position!(
     max_size_dimensions::Vector{Int},
 )
-    dims = fill(1, length(max_size_dimensions))
-    dims[end] = 0
-    return dims
+    dimension_offset = ones(Int, length(max_size_dimensions))
+    return first_position!(max_size_dimensions, dimension_offset)
 end

@@ -12,6 +12,7 @@ function Writer{csv}(
     labels::Vector{String},
     time_dimension::String,
     dimension_size::Vector{Int},
+    dimension_offset::Vector{Int} = ones(Int, length(dimension_size)),
     remove_if_exists::Bool = true,
     kwargs...,
 )
@@ -22,6 +23,7 @@ function Writer{csv}(
         dimensions = dimensions,
         time_dimension = time_dimension,
         dimension_size = dimension_size,
+        dimension_offset = dimension_offset,
         labels = labels,
         kwargs...,
     )
@@ -212,6 +214,7 @@ function convert(
         labels = metadata.labels,
         time_dimension = String(metadata.time_dimension),
         dimension_size = metadata.dimension_size,
+        dimension_offset = metadata.dimension_offset,
         initial_date = metadata.initial_date,
         unit = metadata.unit,
     )
