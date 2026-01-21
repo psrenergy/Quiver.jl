@@ -16,9 +16,6 @@ makedocs(;
     warnonly = true,
     pages = [
         "Home" => "index.md",
-        "Reading" => "reading.md",
-        "Writing" => "writing.md",
-        "Examples" => "examples.md",
     ],
 )
 

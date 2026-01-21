@@ -3,37 +3,5 @@ uuid = "cdbb3f72-2527-4dbd-9d0e-93533a5519ac"
 authors = ["raphasampaio", "guilhermebodin"]
 version = "0.1.14"
 
-[deps]
-CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
-DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
-Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
-OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
-TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
-Tables = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
-
-[weakdeps]
-PSRClassesInterface = "1eab49e5-27d8-4905-b9f6-327b6ea666c4"
-
-[extensions]
-PSRClassesInterfaceExt = "PSRClassesInterface"
-
 [compat]
-Aqua = "0.8"
-CSV = "0.10"
-DataFrames = "1"
-Dates = "1"
-OrderedCollections = "1"
-PSRClassesInterface = "0.17"
-Random = "1"
-TOML = "1"
-Tables = "1"
-Test = "1"
 julia = "1.9"
-
-[extras]
-Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
-Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-
-[targets]
-test = ["Aqua", "Random", "Test", "PSRClassesInterface"]
