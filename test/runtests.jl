@@ -1,4 +1,5 @@
 using Test
+using Quiver
 
 function test_modules(dir::AbstractString)
     result = String[]
