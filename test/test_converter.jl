@@ -16,7 +16,7 @@ writer = Quiver.open_file(
         dimension_sizes = [number_of_stages, number_of_scenarios, number_of_blocks],
         time_dimensions = ["stage", "block"],
         time_dimension_initial_values = [initial_stage, initial_block],
-        frequencies = ["yearly", "daily"],
+        frequencies = ["monthly", "daily"],
         unit = "MW",
         labels = ["ger1", "ger2"],
     )
@@ -61,8 +61,8 @@ end
 
 Quiver.close_file(reader)
 
-# rm("ts3.qvr")
-# rm("ts3.csv")
-# rm("ts3.toml")
+rm("ts3.qvr")
+rm("ts3.csv")
+rm("ts3.toml")
 
 @show data_arr

@@ -1,24 +1,20 @@
-@enumx Frequencies begin
-    HOURLY = 0
-    DAILY = 1
-    WEEKLY = 2
-    MONTHLY = 3
-    YEARLY = 4
-end
-
-mutable struct Metadata
-    version::Int
+struct Metadata
+    # Explicit metadata
     dimensions::Vector{Symbol}
     dimension_sizes::Vector{Int}
-    dimension_initial_values::Vector{Int}
-    number_of_dimensions::Int
     time_dimensions::Vector{Symbol}
     frequencies::Vector{Frequencies.T}
     time_dimension_initial_values::Vector{Int}
-    number_of_time_dimensions::Int
     unit::String
     labels::Vector{String}
+    version::Int
+    
+    # Derived metadata
+    number_of_dimensions::Int
+    number_of_time_dimensions::Int
     number_of_labels::Int
+    time_dimension_indexes::Vector{Int}
+    dimension_parent_indexes::Vector{Int}
 end
 
 function Metadata(;
@@ -31,26 +27,29 @@ function Metadata(;
     labels::Vector{String},
     version::Int = QUIVER_FILE_VERSION,
 )
-    dimension_initial_values = ones(Int, length(dimensions))
-    for (idx, dim) in enumerate(dimensions)
-        time_dim_idx = findfirst(x -> x == dim, time_dimensions)
-        if time_dim_idx !== nothing
-            dimension_initial_values[idx] = time_dimension_initial_values[time_dim_idx]
-        end
-    end
+    # Derived metadata
+    number_of_dimensions = length(dimensions)
+    number_of_time_dimensions = length(time_dimensions)
+    number_of_labels = length(labels)
+    time_dimension_indexes = findall(dim -> dim in time_dimensions, dimensions)
+    dimension_parent_indexes = build_dimension_parent_indexes(number_of_dimensions, time_dimension_indexes)
+
     metadata = Metadata(
-        version,
+        # Explicit metadata
         Symbol.(dimensions),
         dimension_sizes,
-        dimension_initial_values,
-        length(dimensions),
         Symbol.(time_dimensions),
         frequency_string_to_enum.(frequencies),
         time_dimension_initial_values,
-        length(time_dimensions),
         unit,
         labels,
-        length(labels),
+        version,
+        # Derived metadata
+        number_of_dimensions,
+        number_of_time_dimensions,
+        number_of_labels,
+        time_dimension_indexes,
+        dimension_parent_indexes,
     )
 
     validate_metadata(metadata)
@@ -97,39 +96,60 @@ function metadata_to_toml(metadata::Metadata, filepath::String)
 end
 
 function max_value_per_dimension(metadata::Metadata)
-    max_dims = metadata.dimension_initial_values .+ metadata.dimension_sizes .- 1
+    max_dims = zeros(Int, metadata.number_of_dimensions) + metadata.dimension_sizes
+
+    # For the largest time dimension, add the initial value offset
+    max_dims[metadata.time_dimension_indexes[1]] += metadata.time_dimension_initial_values[1] - 1
 
     return max_dims
 end
 
-function frequency_string_to_enum(freq_str::String)
-    freq = if freq_str == "hourly"
-        Frequencies.HOURLY
-    elseif freq_str == "daily"
-        Frequencies.DAILY
-    elseif freq_str == "weekly"
-        Frequencies.WEEKLY
-    elseif freq_str == "monthly"
-        Frequencies.MONTHLY
-    elseif freq_str == "yearly"
-        Frequencies.YEARLY
-    else
-        error("Unknown frequency: $freq_str")
-    end
-    return freq
+function min_value_per_dimension(metadata::Metadata)
+    min_dims = ones(Int, metadata.number_of_dimensions)
+
+    # For the largest time dimension, add the initial value offset
+    min_dims[metadata.time_dimension_indexes[1]] += metadata.time_dimension_initial_values[1] - 1
+
+    return min_dims
 end
 
-function frequency_enum_to_string(freq::Frequencies.T)
-    freq_str = if freq == Frequencies.HOURLY
-        "hourly"
-    elseif freq == Frequencies.DAILY
-        "daily"
-    elseif freq == Frequencies.WEEKLY
-        "weekly"
-    elseif freq == Frequencies.MONTHLY
-        "monthly"
-    elseif freq == Frequencies.YEARLY
-        "yearly"
+function time_dimension_sizes(metadata::Metadata)
+    time_dim_sizes = metadata.dimension_sizes[metadata.time_dimension_indexes]
+    return time_dim_sizes
+end
+
+function dimension_initial_values(metadata::Metadata)
+    dim_initial_values = ones(Int, metadata.number_of_dimensions)
+    for (idx, initial_value) in enumerate(metadata.time_dimension_initial_values)
+        time_dim_idx = metadata.time_dimension_indexes[idx]
+        dim_initial_values[time_dim_idx] = initial_value
     end
-    return freq_str
+    return dim_initial_values
+end
+
+function build_dimension_parent_indexes(number_of_dimensions::Int, time_dimension_indexes::Vector{Int})
+    dimension_parent_indexes = zeros(Int, number_of_dimensions)
+    for (i, time_dim_idx) in enumerate(time_dimension_indexes)
+        if i == 1
+            continue
+        end
+        dimension_parent_indexes[time_dim_idx] = time_dimension_indexes[i-1]
+    end
+
+    return dimension_parent_indexes
+end
+
+function maximum_number_of_lines(metadata::Metadata)
+    max_lines = prod(metadata.dimension_sizes)
+    # Remove lines before initial time dimension values
+    for (idx, time_dim_idx) in enumerate(metadata.time_dimension_indexes)
+        # Find all dimensions before the current time dimension that are not time dimensions
+        dimensions_with_missing_lines = setdiff(1:time_dim_idx, metadata.time_dimension_indexes)
+        if isempty(dimensions_with_missing_lines)
+            continue
+        end
+        missing_lines = (metadata.time_dimension_initial_values[idx] - 1) * prod(metadata.dimension_sizes[dimensions_with_missing_lines])
+        max_lines -= missing_lines
+    end
+    return max_lines
 end

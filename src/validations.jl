@@ -4,7 +4,7 @@ function validate_dims(metadata::Metadata; dims...)
         error("Expected $(metadata.number_of_dimensions) dimensions, got $(length(dims))")
     end
 
-    min_dim_values = metadata.dimension_initial_values
+    min_dim_values = min_value_per_dimension(metadata)
     max_dim_values = max_value_per_dimension(metadata)
 
     # Check all dimension names exist and values are in bounds
@@ -98,6 +98,8 @@ function validate_metadata(metadata::Metadata)
         end
     end
 
+    validate_time_dimension_metadata(metadata)
+
     return nothing
 end
 
@@ -154,6 +156,77 @@ function validate_csv_dimensions(row::CSV.Row2, current_dimensions::Vector{Int},
         if dim_value != expected_dimension_values[i]
             error("CSV dimension '$name' has value $dim_value, expected $(expected_dimension_values[i])")
         end
+    end
+
+    return nothing
+end
+
+function validate_time_dimension_metadata(metadata::Metadata)
+
+    if !allunique(metadata.frequencies)
+        error("Time dimension frequencies must be unique. Got: $(metadata.frequencies)")
+    end
+
+    if !issorted(metadata.frequencies)
+        error("Time dimension frequencies must be ordered from lowest to highest frequency. Got: $(metadata.frequencies)")
+    end
+
+    for (idx, (dim_name, dim_freq, dim_size)) in enumerate(Iterators.reverse(zip(metadata.time_dimensions, metadata.frequencies, time_dimension_sizes(metadata))))
+        if idx < metadata.number_of_time_dimensions
+            next_dim_freq = metadata.frequencies[metadata.number_of_time_dimensions - idx]
+            validate_time_dimension_size(dim_name, dim_freq, dim_size, next_dim_freq)
+        end
+    end
+
+    return nothing
+end
+
+function validate_time_dimension_size(dim_name::Symbol, dim_freq::Frequencies.T, dim_size::Int, next_dim_freq::Frequencies.T)
+    min_size = Inf
+    max_size = -Inf
+
+    if dim_freq == Frequencies.HOURLY
+        if next_dim_freq == Frequencies.DAILY
+            min_size = MIN_HOURS_IN_DAY
+            max_size = MAX_HOURS_IN_DAY
+        elseif next_dim_freq == Frequencies.WEEKLY
+            min_size = MIN_HOURS_IN_WEEK
+            max_size = MAX_HOURS_IN_WEEK
+        elseif next_dim_freq == Frequencies.MONTHLY
+            min_size = MIN_HOURS_IN_MONTH
+            max_size = MAX_HOURS_IN_MONTH
+        elseif next_dim_freq == Frequencies.YEARLY
+            min_size = MIN_HOURS_IN_YEAR
+            max_size = MAX_HOURS_IN_YEAR
+        end
+    elseif dim_freq == Frequencies.DAILY
+        if next_dim_freq == Frequencies.WEEKLY
+            min_size = MIN_DAYS_IN_WEEK
+            max_size = MAX_DAYS_IN_WEEK
+        elseif next_dim_freq == Frequencies.MONTHLY
+            min_size = MIN_DAYS_IN_MONTH
+            max_size = MAX_DAYS_IN_MONTH
+        elseif next_dim_freq == Frequencies.YEARLY
+            min_size = MIN_DAYS_IN_YEAR
+            max_size = MAX_DAYS_IN_YEAR
+        end
+    elseif dim_freq == Frequencies.WEEKLY
+        if next_dim_freq == Frequencies.MONTHLY
+            min_size = MIN_WEEKS_IN_MONTH
+            max_size = MAX_WEEKS_IN_MONTH
+        elseif next_dim_freq == Frequencies.YEARLY
+            min_size = MIN_WEEKS_IN_YEAR
+            max_size = MAX_WEEKS_IN_YEAR
+        end
+    elseif dim_freq == Frequencies.MONTHLY
+        if next_dim_freq == Frequencies.YEARLY
+            min_size = MIN_MONTHS_IN_YEAR
+            max_size = MAX_MONTHS_IN_YEAR
+        end
+    end
+
+    if dim_size < min_size || dim_size > max_size
+        error("Time dimension \"$dim_name\" with frequency \"$dim_freq\" has size $dim_size which is out of bounds [$min_size, $max_size] based on the next lower frequency: \"$next_dim_freq\".")
     end
 
     return nothing

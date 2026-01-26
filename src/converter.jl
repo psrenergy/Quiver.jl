@@ -3,15 +3,17 @@ function bin_to_csv(filepath::String; aggregate_time_dimensions::Bool = true)
     metadata = reader.metadata
     csv_writer = initialize_csv_writer(filepath, metadata; aggregate_time_dimensions)
 
+    min_dim_values = min_value_per_dimension(metadata)
     max_dim_values = max_value_per_dimension(metadata)
-    current_dimensions = copy(metadata.dimension_initial_values)
+    initial_dim_values = dimension_initial_values(metadata)
+    current_dimensions = copy(initial_dim_values)
 
-    for _ in 1:prod(metadata.dimension_sizes)
+    for _ in 1:maximum_number_of_lines(metadata)
         data = quiver_read!(reader; Tuple(zip(metadata.dimensions, current_dimensions))...)
         csv_line = build_csv_line(current_dimensions, data, metadata; aggregate_time_dimensions)
         print(csv_writer, csv_line)
 
-        next_dimensions!(current_dimensions, max_dim_values, metadata.dimension_initial_values)
+        next_dimensions!(current_dimensions, min_dim_values, max_dim_values, initial_dim_values, metadata.dimension_parent_indexes)
     end
 
     CSV.close(csv_writer)
@@ -26,10 +28,12 @@ function csv_to_bin(filepath::String)
     (row, state) = iterate(row_iterator)
     writer = Quiver.open_file(filepath, "w", metadata=metadata)
 
+    min_dim_values = min_value_per_dimension(metadata)
     max_dim_values = max_value_per_dimension(metadata)
-    current_dimensions = copy(metadata.dimension_initial_values)
+    initial_dim_values = dimension_initial_values(metadata)
+    current_dimensions = copy(initial_dim_values)
 
-    for _ in 1:prod(metadata.dimension_sizes)
+    for _ in 1:maximum_number_of_lines(metadata)
         validate_csv_dimensions(row, current_dimensions, metadata, aggregated_time_dimensions_flag)
 
         data = [Float64(row[Symbol(x)]) for x in metadata.labels]
@@ -39,7 +43,7 @@ function csv_to_bin(filepath::String)
             break
         end
         (row, state) = iterate(row_iterator, state)
-        next_dimensions!(current_dimensions, max_dim_values, metadata.dimension_initial_values)
+        next_dimensions!(current_dimensions, min_dim_values, max_dim_values, initial_dim_values, metadata.dimension_parent_indexes)
     end
 
     CSV.close(csv_reader)
@@ -48,12 +52,18 @@ function csv_to_bin(filepath::String)
     return nothing
 end
 
-function next_dimensions!(current_dimensions::Vector{Int}, max_dim_values::Vector{Int}, initial_dim_values::Vector{Int})
+function next_dimensions!(current_dimensions::Vector{Int}, min_dim_values::Vector{Int}, max_dim_values::Vector{Int}, initial_dim_values::Vector{Int}, dimension_parent_indexes::Vector{Int})
     for i in reverse(1:length(current_dimensions))
         if current_dimensions[i] < max_dim_values[i]
             current_dimensions[i] += 1
             break
         else
+            current_dimensions[i] = min_dim_values[i]
+        end
+    end
+
+    for i in 1:length(current_dimensions)
+        if current_dimensions[i] < initial_dim_values[i] && dimension_parent_indexes[i] != 0 && current_dimensions[dimension_parent_indexes[i]] == initial_dim_values[dimension_parent_indexes[i]]
             current_dimensions[i] = initial_dim_values[i]
         end
     end

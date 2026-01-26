@@ -29,7 +29,7 @@ function calculate_file_position(metadata::Metadata; dims...)
     position = 0
     for (i, dim) in enumerate(metadata.dimensions)
         # TODO: improve with @inbounds
-        position += (dims[dim] - metadata.dimension_initial_values[i]) * prod(metadata.dimension_sizes[i+1:end])
+        position += (dims[dim] - min_value_per_dimension(metadata)[i]) * prod(metadata.dimension_sizes[i+1:end])
     end
     position *= metadata.number_of_labels
     position *= sizeof(Float64)

@@ -1,6 +1,6 @@
-number_of_stages = 10
-number_of_scenarios = 5
-number_of_blocks = 3
+number_of_stages = 2
+number_of_scenarios = 2
+number_of_blocks = 365
 
 writer = Quiver.open_file(
     "ts1",
