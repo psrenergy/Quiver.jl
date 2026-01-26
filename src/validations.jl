@@ -17,6 +17,8 @@ function validate_dims(metadata::Metadata; dims...)
         end
     end
 
+    validate_time_dimension_values(metadata; dims...)
+
     return nothing
 end
 
@@ -137,7 +139,7 @@ function validate_csv_dimensions(row::CSV.Row2, current_dimensions::Vector{Int},
     expected_dimension_values = copy(current_dimensions)
 
     if aggregated_time_dimensions_flag
-        date_time = build_datetime_from_time_dimensions(current_dimensions, metadata)
+        date_time = build_datetime_string_from_time_dimensions(current_dimensions, metadata)
         indexes_for_other_dimensions = Int[]
         for (i, dim) in enumerate(metadata.dimensions)
             if dim in metadata.time_dimensions
@@ -172,6 +174,7 @@ function validate_time_dimension_metadata(metadata::Metadata)
         error("Time dimension frequencies must be ordered from lowest to highest frequency. Got: $(metadata.frequencies)")
     end
 
+    # TODO: remove the reverse here, it is not necessary and confuses the code
     for (idx, (dim_name, dim_freq, dim_size)) in enumerate(Iterators.reverse(zip(metadata.time_dimensions, metadata.frequencies, time_dimension_sizes(metadata))))
         if idx < metadata.number_of_time_dimensions
             next_dim_freq = metadata.frequencies[metadata.number_of_time_dimensions - idx]
@@ -212,10 +215,7 @@ function validate_time_dimension_size(dim_name::Symbol, dim_freq::Frequencies.T,
             max_size = MAX_DAYS_IN_YEAR
         end
     elseif dim_freq == Frequencies.WEEKLY
-        if next_dim_freq == Frequencies.MONTHLY
-            min_size = MIN_WEEKS_IN_MONTH
-            max_size = MAX_WEEKS_IN_MONTH
-        elseif next_dim_freq == Frequencies.YEARLY
+        if next_dim_freq == Frequencies.YEARLY
             min_size = MIN_WEEKS_IN_YEAR
             max_size = MAX_WEEKS_IN_YEAR
         end
@@ -228,6 +228,26 @@ function validate_time_dimension_size(dim_name::Symbol, dim_freq::Frequencies.T,
 
     if dim_size < min_size || dim_size > max_size
         error("Time dimension \"$dim_name\" with frequency \"$dim_freq\" has size $dim_size which is out of bounds [$min_size, $max_size] based on the next lower frequency: \"$next_dim_freq\".")
+    end
+
+    return nothing
+end
+
+function validate_time_dimension_values(metadata::Metadata; dims...)
+    dimension_values = collect(dims[metadata.dimensions])
+    date_at_dims = build_datetime_from_time_dimensions(dimension_values, metadata)
+
+    for (idx, time_dim_idx) in enumerate(metadata.time_dimension_indexes)
+        if idx == 1
+            continue
+        end
+        expected_value = dimension_values[time_dim_idx]
+        freq = metadata.frequencies[idx]
+        resulting_value = extract_time_dimension_value_from_datetime(date_at_dims, freq)
+
+        if expected_value != resulting_value
+            error("Invalid values for time dimensions. Values $(dimension_values[metadata.time_dimension_indexes]) for dimensions $(metadata.time_dimensions) would produce the date: $date_at_dims.")
+        end
     end
 
     return nothing

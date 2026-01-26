@@ -62,10 +62,8 @@ const MIN_DAYS_IN_YEAR = 365
 
 # Weeks
 
-const MAX_WEEKS_IN_MONTH = 5
 const MAX_WEEKS_IN_YEAR = 53
 
-const MIN_WEEKS_IN_MONTH = 4
 const MIN_WEEKS_IN_YEAR = 52
 
 # Months
@@ -73,3 +71,63 @@ const MIN_WEEKS_IN_YEAR = 52
 const MAX_MONTHS_IN_YEAR = 12
 
 const MIN_MONTHS_IN_YEAR = 12
+
+function time_dimension_value_to_datetime(value::Int, freq::Frequencies.T, initial_value::Int)
+    datetime_value = if freq == Frequencies.HOURLY
+        Dates.Hour(value - initial_value)
+    elseif freq == Frequencies.DAILY
+        Dates.Day(value - initial_value)
+    elseif freq == Frequencies.WEEKLY
+        Dates.Week(value - initial_value)
+    elseif freq == Frequencies.MONTHLY
+        Dates.Month(value - initial_value)
+    elseif freq == Frequencies.YEARLY
+        Dates.Year(value - initial_value)
+    else
+        error("Unsupported frequency enum: $freq")
+    end
+    return datetime_value
+end
+
+function build_datetime_from_time_dimensions(current_dimensions::Vector{Int}, metadata::AbstractMetadata)
+    datetime = metadata.initial_date
+
+    for i in 1:metadata.number_of_time_dimensions
+        datetime += time_dimension_value_to_datetime(
+            current_dimensions[metadata.time_dimension_indexes[i]],
+            metadata.frequencies[i],
+            metadata.time_dimension_initial_values[i],
+        )
+    end
+
+    return datetime
+end
+
+function build_datetime_string_from_time_dimensions(current_dimensions::Vector{Int}, metadata::AbstractMetadata)
+    datetime = build_datetime_from_time_dimensions(current_dimensions, metadata)
+
+    datetime_str = if any(isequal(Frequencies.HOURLY), metadata.frequencies)
+        Dates.format(datetime, "yyyy-mm-ddTHH:MM:SS")
+    else
+        Dates.format(datetime, "yyyy-mm-dd")
+    end
+    return datetime_str
+end
+
+function extract_time_dimension_value_from_datetime(datetime::Dates.DateTime, freq::Frequencies.T)
+    value = if freq == Frequencies.HOURLY
+        Dates.hour(datetime)
+    elseif freq == Frequencies.DAILY
+        Dates.day(datetime)
+    elseif freq == Frequencies.WEEKLY
+        Dates.week(datetime)
+    elseif freq == Frequencies.MONTHLY
+        Dates.month(datetime)
+    elseif freq == Frequencies.YEARLY
+        Dates.year(datetime)
+    else
+        error("Unsupported frequency enum: $freq")
+    end
+
+    return value
+end

@@ -9,6 +9,7 @@ using CSV
 using EnumX
 using Dates
 
+include("abstract_types.jl")
 include("time_dimensions.jl")
 include("metadata.jl")
 include("file_pointer.jl")

@@ -11,7 +11,11 @@ function bin_to_csv(filepath::String; aggregate_time_dimensions::Bool = true)
         csv_line = build_csv_line(current_dimensions, data, metadata; aggregate_time_dimensions)
         print(csv_writer, csv_line)
 
-        next_dimensions!(current_dimensions, metadata.dimension_sizes, initial_dim_values, metadata.dimension_parent_indexes)
+        current_sizes = dimension_sizes_at_value(metadata, current_dimensions)
+        next_dimensions!(current_dimensions, current_sizes, initial_dim_values, metadata.dimension_parent_indexes)
+        if current_dimensions == initial_dim_values
+            break
+        end
     end
 
     CSV.close(csv_writer)
@@ -34,12 +38,14 @@ function csv_to_bin(filepath::String)
 
         data = [Float64(row[Symbol(x)]) for x in metadata.labels]
         quiver_write!(writer, data; Tuple(zip(metadata.dimensions, current_dimensions))...)
+        
+        current_sizes = dimension_sizes_at_value(metadata, current_dimensions)
+        next_dimensions!(current_dimensions, current_sizes, initial_dim_values, metadata.dimension_parent_indexes)
 
-        if current_dimensions == metadata.dimension_sizes
+        if current_dimensions == initial_dim_values
             break
         end
         (row, state) = iterate(row_iterator, state)
-        next_dimensions!(current_dimensions, metadata.dimension_sizes, initial_dim_values, metadata.dimension_parent_indexes)
     end
 
     CSV.close(csv_reader)
@@ -58,6 +64,9 @@ function next_dimensions!(current_dimensions::Vector{Int}, dimension_sizes::Vect
         end
     end
 
+    # Correct time dimensions set to 1 incorrectly before the next time dimension is incremented
+    # Ex: [month, scenario, day] when initial date is 2025-01-02
+    # [1, 1, 31] -> [1, 2, 1] is incorrect, should be [1, 2, 2]
     for i in 1:length(current_dimensions)
         if current_dimensions[i] < initial_dim_values[i] && dimension_parent_indexes[i] != 0 && current_dimensions[dimension_parent_indexes[i]] == initial_dim_values[dimension_parent_indexes[i]]
             current_dimensions[i] = initial_dim_values[i]
@@ -115,7 +124,7 @@ end
 function build_csv_line(current_dimensions::Vector{Int}, data::Vector{Float64}, metadata::Metadata; aggregate_time_dimensions::Bool = true)
     line_elements = String[]
     if aggregate_time_dimensions
-        date_time = build_datetime_from_time_dimensions(current_dimensions, metadata)
+        date_time = build_datetime_string_from_time_dimensions(current_dimensions, metadata)
         push!(line_elements, date_time)
     end
     for (dim, dim_value) in zip(metadata.dimensions, current_dimensions)
@@ -129,38 +138,6 @@ function build_csv_line(current_dimensions::Vector{Int}, data::Vector{Float64}, 
     end
 
     return join(line_elements, ",") * "\n"
-end
-
-function build_datetime_from_time_dimensions(current_dimensions::Vector{Int}, metadata::Metadata)
-
-    datetime = metadata.initial_date
-
-    for (i, dim) in enumerate(metadata.dimensions)
-        time_dim_idx = findfirst(x -> x == dim, metadata.time_dimensions)
-        if time_dim_idx !== nothing
-            if metadata.frequencies[time_dim_idx] == Frequencies.HOURLY
-                datetime += Dates.Hour(current_dimensions[i] - metadata.time_dimension_initial_values[time_dim_idx])
-            elseif metadata.frequencies[time_dim_idx] == Frequencies.DAILY
-                datetime += Dates.Day(current_dimensions[i] - metadata.time_dimension_initial_values[time_dim_idx])
-            elseif metadata.frequencies[time_dim_idx] == Frequencies.WEEKLY
-                datetime += Dates.Week(current_dimensions[i] - metadata.time_dimension_initial_values[time_dim_idx])
-            elseif metadata.frequencies[time_dim_idx] == Frequencies.MONTHLY
-                datetime += Dates.Month(current_dimensions[i] - metadata.time_dimension_initial_values[time_dim_idx])
-            elseif metadata.frequencies[time_dim_idx] == Frequencies.YEARLY
-                datetime += Dates.Year(current_dimensions[i] - metadata.time_dimension_initial_values[time_dim_idx])
-            else
-                error("Unsupported frequency enum: $freq")
-            end
-        end
-    end
-
-    datetime_str = if any(isequal(Frequencies.HOURLY), metadata.frequencies)
-        Dates.format(datetime, "yyyy-mm-dd HH:MM:SS")
-    else
-        Dates.format(datetime, "yyyy-mm-dd")
-    end
-
-    return datetime_str
 end
 
 function time_dimensions_are_aggregated(io::IO, metadata::Metadata)
@@ -200,4 +177,45 @@ function expected_dimension_names(metadata::Metadata, aggregated_time_dimensions
         dimension_names = String.(metadata.dimensions)
     end
     return dimension_names
+end
+
+function dimension_sizes_at_value(metadata::Metadata, dimension_values::Vector{Int})
+    sizes_at_value = copy(metadata.dimension_sizes)
+    date_at_value = build_datetime_from_time_dimensions(dimension_values, metadata)
+
+    for (i, dim_freq) in enumerate(metadata.frequencies)
+        if i == 1
+            continue
+        end
+        next_dim_freq = metadata.frequencies[i-1]
+
+        if dim_freq == Frequencies.HOURLY
+            if next_dim_freq == Frequencies.DAILY
+                continue
+            elseif next_dim_freq == Frequencies.WEEKLY
+                # TODO: daysinweekinyear(date_at_value)
+                continue
+            elseif next_dim_freq == Frequencies.MONTHLY
+                sizes_at_value[metadata.time_dimension_indexes[i]] = Dates.daysinmonth(date_at_value) * MAX_HOURS_IN_DAY
+            elseif next_dim_freq == Frequencies.YEARLY
+                sizes_at_value[metadata.time_dimension_indexes[i]] = Dates.daysinyear(date_at_value) * MAX_HOURS_IN_DAY
+            end
+        elseif dim_freq == Frequencies.DAILY
+            if next_dim_freq == Frequencies.WEEKLY
+                # TODO: daysinweekinyear(date_at_value)
+                continue
+            elseif next_dim_freq == Frequencies.MONTHLY
+                sizes_at_value[metadata.time_dimension_indexes[i]] = Dates.daysinmonth(date_at_value)
+            elseif next_dim_freq == Frequencies.YEARLY
+                sizes_at_value[metadata.time_dimension_indexes[i]] = Dates.daysinyear(date_at_value)
+            end
+        elseif dim_freq == Frequencies.WEEKLY
+            # TODO: weeksinyear(date_at_value)
+            continue
+        elseif dim_freq == Frequencies.MONTHLY
+            continue
+        end
+    end
+
+    return sizes_at_value
 end

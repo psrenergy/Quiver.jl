@@ -1,4 +1,4 @@
-struct Metadata
+struct Metadata <: AbstractMetadata
     # Explicit metadata
     dimensions::Vector{Symbol}
     dimension_sizes::Vector{Int}
