@@ -4,7 +4,7 @@ struct Metadata
     dimension_sizes::Vector{Int}
     time_dimensions::Vector{Symbol}
     frequencies::Vector{Frequencies.T}
-    time_dimension_initial_values::Vector{Int}
+    initial_date::Dates.DateTime
     unit::String
     labels::Vector{String}
     version::Int
@@ -13,6 +13,7 @@ struct Metadata
     number_of_dimensions::Int
     number_of_time_dimensions::Int
     number_of_labels::Int
+    time_dimension_initial_values::Vector{Int}
     time_dimension_indexes::Vector{Int}
     dimension_parent_indexes::Vector{Int}
 end
@@ -22,25 +23,32 @@ function Metadata(;
     dimension_sizes::Vector{Int},
     time_dimensions::Vector{String},
     frequencies::Vector{String},
-    time_dimension_initial_values::Vector{Int} = ones(Int, length(time_dimensions)),
+    initial_date::String,
     unit::String,
     labels::Vector{String},
     version::Int = QUIVER_FILE_VERSION,
 )
+    # Transform inputs
+    dimensions = Symbol.(dimensions)
+    time_dimensions = Symbol.(time_dimensions)
+    frequencies = frequency_string_to_enum.(frequencies)
+    initial_date = Dates.DateTime(initial_date)
+
     # Derived metadata
     number_of_dimensions = length(dimensions)
     number_of_time_dimensions = length(time_dimensions)
     number_of_labels = length(labels)
+    time_dimension_initial_values = compute_time_dimension_initial_values(initial_date, frequencies)
     time_dimension_indexes = findall(dim -> dim in time_dimensions, dimensions)
     dimension_parent_indexes = build_dimension_parent_indexes(number_of_dimensions, time_dimension_indexes)
 
     metadata = Metadata(
         # Explicit metadata
-        Symbol.(dimensions),
+        dimensions,
         dimension_sizes,
-        Symbol.(time_dimensions),
-        frequency_string_to_enum.(frequencies),
-        time_dimension_initial_values,
+        time_dimensions,
+        frequencies,
+        initial_date,
         unit,
         labels,
         version,
@@ -48,6 +56,7 @@ function Metadata(;
         number_of_dimensions,
         number_of_time_dimensions,
         number_of_labels,
+        time_dimension_initial_values,
         time_dimension_indexes,
         dimension_parent_indexes,
     )
@@ -82,7 +91,7 @@ function metadata_to_toml(metadata::Metadata, filepath::String)
         "dimension_sizes" => metadata.dimension_sizes,
         "time_dimensions" => String.(metadata.time_dimensions),
         "frequencies" => frequency_enum_to_string.(metadata.frequencies),
-        "time_dimension_initial_values" => metadata.time_dimension_initial_values,
+        "initial_date" => Dates.format(metadata.initial_date, "yyyy-mm-ddTHH:MM:SS"),
         "unit" => metadata.unit,
         "labels" => metadata.labels,
     )
@@ -93,24 +102,6 @@ function metadata_to_toml(metadata::Metadata, filepath::String)
     end
 
     return nothing
-end
-
-function max_value_per_dimension(metadata::Metadata)
-    max_dims = zeros(Int, metadata.number_of_dimensions) + metadata.dimension_sizes
-
-    # For the largest time dimension, add the initial value offset
-    max_dims[metadata.time_dimension_indexes[1]] += metadata.time_dimension_initial_values[1] - 1
-
-    return max_dims
-end
-
-function min_value_per_dimension(metadata::Metadata)
-    min_dims = ones(Int, metadata.number_of_dimensions)
-
-    # For the largest time dimension, add the initial value offset
-    min_dims[metadata.time_dimension_indexes[1]] += metadata.time_dimension_initial_values[1] - 1
-
-    return min_dims
 end
 
 function time_dimension_sizes(metadata::Metadata)
@@ -152,4 +143,29 @@ function maximum_number_of_lines(metadata::Metadata)
         max_lines -= missing_lines
     end
     return max_lines
+end
+
+function compute_time_dimension_initial_values(initial_date::Dates.DateTime, frequencies::Vector{Frequencies.T})
+    initial_values = ones(Int, length(frequencies))
+
+    for (i, freq) in enumerate(frequencies)
+        if freq == Frequencies.YEARLY
+            initial_values[i] = Dates.year(initial_date)
+        elseif freq == Frequencies.MONTHLY
+            initial_values[i] = Dates.month(initial_date)
+        elseif freq == Frequencies.WEEKLY
+            initial_values[i] = Dates.week(initial_date)
+        elseif freq == Frequencies.DAILY
+            initial_values[i] = Dates.day(initial_date)
+        elseif freq == Frequencies.HOURLY
+            initial_values[i] = Dates.hour(initial_date)
+        else
+            error("Unsupported frequency: $freq")
+        end
+    end
+
+    # The largest time dimension always starts at 1
+    initial_values[1] = 1
+
+    return initial_values
 end

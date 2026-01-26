@@ -12,6 +12,7 @@ writer = Quiver.open_file(
         frequencies = ["yearly", "daily"],
         unit = "MW",
         labels = ["ger1", "ger2"],
+        initial_date = "2025-01-01",
     )
 )
 

@@ -3,8 +3,6 @@ function bin_to_csv(filepath::String; aggregate_time_dimensions::Bool = true)
     metadata = reader.metadata
     csv_writer = initialize_csv_writer(filepath, metadata; aggregate_time_dimensions)
 
-    min_dim_values = min_value_per_dimension(metadata)
-    max_dim_values = max_value_per_dimension(metadata)
     initial_dim_values = dimension_initial_values(metadata)
     current_dimensions = copy(initial_dim_values)
 
@@ -13,7 +11,7 @@ function bin_to_csv(filepath::String; aggregate_time_dimensions::Bool = true)
         csv_line = build_csv_line(current_dimensions, data, metadata; aggregate_time_dimensions)
         print(csv_writer, csv_line)
 
-        next_dimensions!(current_dimensions, min_dim_values, max_dim_values, initial_dim_values, metadata.dimension_parent_indexes)
+        next_dimensions!(current_dimensions, metadata.dimension_sizes, initial_dim_values, metadata.dimension_parent_indexes)
     end
 
     CSV.close(csv_writer)
@@ -28,8 +26,6 @@ function csv_to_bin(filepath::String)
     (row, state) = iterate(row_iterator)
     writer = Quiver.open_file(filepath, "w", metadata=metadata)
 
-    min_dim_values = min_value_per_dimension(metadata)
-    max_dim_values = max_value_per_dimension(metadata)
     initial_dim_values = dimension_initial_values(metadata)
     current_dimensions = copy(initial_dim_values)
 
@@ -39,11 +35,11 @@ function csv_to_bin(filepath::String)
         data = [Float64(row[Symbol(x)]) for x in metadata.labels]
         quiver_write!(writer, data; Tuple(zip(metadata.dimensions, current_dimensions))...)
 
-        if current_dimensions == max_dim_values
+        if current_dimensions == metadata.dimension_sizes
             break
         end
         (row, state) = iterate(row_iterator, state)
-        next_dimensions!(current_dimensions, min_dim_values, max_dim_values, initial_dim_values, metadata.dimension_parent_indexes)
+        next_dimensions!(current_dimensions, metadata.dimension_sizes, initial_dim_values, metadata.dimension_parent_indexes)
     end
 
     CSV.close(csv_reader)
@@ -52,13 +48,13 @@ function csv_to_bin(filepath::String)
     return nothing
 end
 
-function next_dimensions!(current_dimensions::Vector{Int}, min_dim_values::Vector{Int}, max_dim_values::Vector{Int}, initial_dim_values::Vector{Int}, dimension_parent_indexes::Vector{Int})
+function next_dimensions!(current_dimensions::Vector{Int}, dimension_sizes::Vector{Int}, initial_dim_values::Vector{Int}, dimension_parent_indexes::Vector{Int})
     for i in reverse(1:length(current_dimensions))
-        if current_dimensions[i] < max_dim_values[i]
+        if current_dimensions[i] < dimension_sizes[i]
             current_dimensions[i] += 1
             break
         else
-            current_dimensions[i] = min_dim_values[i]
+            current_dimensions[i] = 1
         end
     end
 
@@ -137,21 +133,21 @@ end
 
 function build_datetime_from_time_dimensions(current_dimensions::Vector{Int}, metadata::Metadata)
 
-    datetime = Dates.DateTime(1)
+    datetime = metadata.initial_date
 
     for (i, dim) in enumerate(metadata.dimensions)
         time_dim_idx = findfirst(x -> x == dim, metadata.time_dimensions)
         if time_dim_idx !== nothing
             if metadata.frequencies[time_dim_idx] == Frequencies.HOURLY
-                datetime += Dates.Hour(current_dimensions[i] - 1)
+                datetime += Dates.Hour(current_dimensions[i] - metadata.time_dimension_initial_values[time_dim_idx])
             elseif metadata.frequencies[time_dim_idx] == Frequencies.DAILY
-                datetime += Dates.Day(current_dimensions[i] - 1)
+                datetime += Dates.Day(current_dimensions[i] - metadata.time_dimension_initial_values[time_dim_idx])
             elseif metadata.frequencies[time_dim_idx] == Frequencies.WEEKLY
-                datetime += Dates.Week(current_dimensions[i] - 1)
+                datetime += Dates.Week(current_dimensions[i] - metadata.time_dimension_initial_values[time_dim_idx])
             elseif metadata.frequencies[time_dim_idx] == Frequencies.MONTHLY
-                datetime += Dates.Month(current_dimensions[i] - 1)
+                datetime += Dates.Month(current_dimensions[i] - metadata.time_dimension_initial_values[time_dim_idx])
             elseif metadata.frequencies[time_dim_idx] == Frequencies.YEARLY
-                datetime += Dates.Year(current_dimensions[i] - 1)
+                datetime += Dates.Year(current_dimensions[i] - metadata.time_dimension_initial_values[time_dim_idx])
             else
                 error("Unsupported frequency enum: $freq")
             end

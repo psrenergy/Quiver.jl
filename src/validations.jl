@@ -4,9 +4,6 @@ function validate_dims(metadata::Metadata; dims...)
         error("Expected $(metadata.number_of_dimensions) dimensions, got $(length(dims))")
     end
 
-    min_dim_values = min_value_per_dimension(metadata)
-    max_dim_values = max_value_per_dimension(metadata)
-
     # Check all dimension names exist and values are in bounds
     for (i, dim_name) in enumerate(metadata.dimensions)
         if !haskey(dims, dim_name)
@@ -15,8 +12,8 @@ function validate_dims(metadata::Metadata; dims...)
 
         dim_value = dims[dim_name]
 
-        if dim_value < min_dim_values[i] || dim_value > max_dim_values[i]
-            error("Dimension '$dim_name' value $dim_value is out of bounds [$(min_dim_values[i]), $(max_dim_values[i])]")
+        if dim_value < 1 || dim_value > metadata.dimension_sizes[i]
+            error("Dimension '$dim_name' value $dim_value is out of bounds [1, $(metadata.dimension_sizes[i])]")
         end
     end
 
@@ -165,6 +162,10 @@ function validate_time_dimension_metadata(metadata::Metadata)
 
     if !allunique(metadata.frequencies)
         error("Time dimension frequencies must be unique. Got: $(metadata.frequencies)")
+    end
+
+    if Frequencies.MONTHLY in metadata.frequencies && Frequencies.WEEKLY in metadata.frequencies
+        error("Time dimension frequencies cannot contain both MONTHLY and WEEKLY frequencies.")
     end
 
     if !issorted(metadata.frequencies)
