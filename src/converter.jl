@@ -189,11 +189,13 @@ function dimension_sizes_at_value(metadata::Metadata, dimension_values::Vector{I
         end
         next_dim_freq = metadata.frequencies[i-1]
 
+        # Yearly and weekly frequencies must always be at index 1, so they are not considered in this loop
         if dim_freq == Frequencies.HOURLY
             if next_dim_freq == Frequencies.DAILY
+                # Number of hours in a day is always the same
                 continue
             elseif next_dim_freq == Frequencies.WEEKLY
-                # TODO: daysinweekinyear(date_at_value)
+                # Number of hours in a week is always the same
                 continue
             elseif next_dim_freq == Frequencies.MONTHLY
                 sizes_at_value[metadata.time_dimension_indexes[i]] = Dates.daysinmonth(date_at_value) * MAX_HOURS_IN_DAY
@@ -202,17 +204,15 @@ function dimension_sizes_at_value(metadata::Metadata, dimension_values::Vector{I
             end
         elseif dim_freq == Frequencies.DAILY
             if next_dim_freq == Frequencies.WEEKLY
-                # TODO: daysinweekinyear(date_at_value)
+                # Number of days in a week is always the same
                 continue
             elseif next_dim_freq == Frequencies.MONTHLY
                 sizes_at_value[metadata.time_dimension_indexes[i]] = Dates.daysinmonth(date_at_value)
             elseif next_dim_freq == Frequencies.YEARLY
                 sizes_at_value[metadata.time_dimension_indexes[i]] = Dates.daysinyear(date_at_value)
             end
-        elseif dim_freq == Frequencies.WEEKLY
-            # TODO: weeksinyear(date_at_value)
-            continue
         elseif dim_freq == Frequencies.MONTHLY
+            # Number of months in a year is always the same
             continue
         end
     end

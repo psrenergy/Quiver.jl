@@ -120,14 +120,18 @@ function extract_time_dimension_value_from_datetime(datetime::Dates.DateTime, fr
     elseif freq == Frequencies.DAILY
         Dates.day(datetime)
     elseif freq == Frequencies.WEEKLY
-        Dates.week(datetime)
+        error("WEEKLY frequency extraction not implemented. This function should only be used for inner time dimensions.")
     elseif freq == Frequencies.MONTHLY
         Dates.month(datetime)
     elseif freq == Frequencies.YEARLY
-        Dates.year(datetime)
+        error("YEARLY frequency extraction not implemented. This function should only be used for inner time dimensions.")
     else
         error("Unsupported frequency enum: $freq")
     end
 
     return value
+end
+
+function day_of_week_from_datetime(datetime::Dates.DateTime)
+    return mod1(Dates.dayofyear(datetime), MAX_DAYS_IN_WEEK)
 end

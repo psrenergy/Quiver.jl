@@ -149,23 +149,38 @@ function compute_time_dimension_initial_values(initial_date::Dates.DateTime, fre
     initial_values = ones(Int, length(frequencies))
 
     for (i, freq) in enumerate(frequencies)
-        if freq == Frequencies.YEARLY
-            initial_values[i] = Dates.year(initial_date)
+        # The largest time dimension always starts at 1
+        if i == 1
+            continue
+        end
+        next_dim_freq = frequencies[i-1]
+
+        # Yearly and weekly frequencies must always be at index 1, so they are not considered in this loop
+        if freq == Frequencies.HOURLY
+            if next_dim_freq == Frequencies.DAILY
+                initial_values[i] = Dates.hour(initial_date)
+            elseif next_dim_freq == Frequencies.WEEKLY
+                initial_values[i] = Dates.hour(initial_date) + (day_of_week_from_datetime(initial_date) - 1) * MAX_HOURS_IN_DAY
+            elseif next_dim_freq == Frequencies.MONTHLY
+                initial_values[i] = Dates.hour(initial_date) + (Dates.day(initial_date) - 1) * MAX_HOURS_IN_DAY
+            elseif next_dim_freq == Frequencies.YEARLY
+                initial_values[i] = Dates.hour(initial_date) + (Dates.dayofyear(initial_date) - 1) * MAX_HOURS_IN_DAY
+            end
+            initial_values[i] += 1  # Convert from 0-based to 1-based
+        elseif freq == Frequencies.DAILY
+            if next_dim_freq == Frequencies.WEEKLY
+                initial_values[i] = day_of_week_from_datetime(initial_date)
+            elseif next_dim_freq == Frequencies.MONTHLY
+                initial_values[i] = Dates.day(initial_date)
+            elseif next_dim_freq == Frequencies.YEARLY
+                initial_values[i] = Dates.dayofyear(initial_date)
+            end
         elseif freq == Frequencies.MONTHLY
             initial_values[i] = Dates.month(initial_date)
-        elseif freq == Frequencies.WEEKLY
-            initial_values[i] = Dates.week(initial_date)
-        elseif freq == Frequencies.DAILY
-            initial_values[i] = Dates.day(initial_date)
-        elseif freq == Frequencies.HOURLY
-            initial_values[i] = Dates.hour(initial_date)
         else
             error("Unsupported frequency: $freq")
         end
     end
-
-    # The largest time dimension always starts at 1
-    initial_values[1] = 1
 
     return initial_values
 end

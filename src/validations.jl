@@ -52,6 +52,10 @@ function validate_metadata(metadata::Metadata)
         error("Dimension sizes count mismatch: dimension_sizes has $(length(metadata.dimension_sizes)) elements, but number_of_dimensions is $(metadata.number_of_dimensions)")
     end
 
+    if metadata.number_of_dimensions <= 0
+        error("Number of dimensions must be positive, got $(metadata.number_of_dimensions)")
+    end
+
     # Label consistency
     if length(metadata.labels) != metadata.number_of_labels
         error("Label count mismatch: labels has $(length(metadata.labels)) elements, but number_of_labels is $(metadata.number_of_labels)")
@@ -72,6 +76,10 @@ function validate_metadata(metadata::Metadata)
 
     if length(metadata.time_dimension_initial_values) != metadata.number_of_time_dimensions
         error("Initial date values count mismatch: expected $(metadata.number_of_time_dimensions) values, got $(length(metadata.time_dimension_initial_values))")
+    end
+
+    if metadata.number_of_time_dimensions < 0 || metadata.number_of_time_dimensions > metadata.number_of_dimensions
+        error("Number of time dimensions must be non-negative and less than or equal to number of dimensions. Got number_of_time_dimensions=$(metadata.number_of_time_dimensions), number_of_dimensions=$(metadata.number_of_dimensions)")
     end
 
     # Value constraints
@@ -95,6 +103,12 @@ function validate_metadata(metadata::Metadata)
         if !(time_dim in metadata.dimensions)
             error("Time dimension '$time_dim' is not in dimensions list: $(metadata.dimensions)")
         end
+    end
+
+    # Order check: time_dimensions must be in the same order as in dimensions
+    time_dim_positions = [findfirst(==(td), metadata.dimensions) for td in metadata.time_dimensions]
+    if !issorted(time_dim_positions)
+        error("Time dimensions must appear in the same order as in dimensions list. Time dimensions: $(metadata.time_dimensions), Dimensions: $(metadata.dimensions)")
     end
 
     validate_time_dimension_metadata(metadata)
@@ -166,12 +180,12 @@ function validate_time_dimension_metadata(metadata::Metadata)
         error("Time dimension frequencies must be unique. Got: $(metadata.frequencies)")
     end
 
-    if Frequencies.MONTHLY in metadata.frequencies && Frequencies.WEEKLY in metadata.frequencies
-        error("Time dimension frequencies cannot contain both MONTHLY and WEEKLY frequencies.")
-    end
-
     if !issorted(metadata.frequencies)
         error("Time dimension frequencies must be ordered from lowest to highest frequency. Got: $(metadata.frequencies)")
+    end
+
+    if Frequencies.WEEKLY in metadata.frequencies && metadata.frequencies[1] != Frequencies.WEEKLY
+        error("If WEEKLY frequency is present, it must be the lowest frequency.")
     end
 
     # TODO: remove the reverse here, it is not necessary and confuses the code
