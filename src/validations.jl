@@ -188,12 +188,12 @@ function validate_time_dimension_metadata(metadata::Metadata)
         error("If WEEKLY frequency is present, it must be the lowest frequency.")
     end
 
-    # TODO: remove the reverse here, it is not necessary and confuses the code
-    for (idx, (dim_name, dim_freq, dim_size)) in enumerate(Iterators.reverse(zip(metadata.time_dimensions, metadata.frequencies, time_dimension_sizes(metadata))))
-        if idx < metadata.number_of_time_dimensions
-            next_dim_freq = metadata.frequencies[metadata.number_of_time_dimensions - idx]
-            validate_time_dimension_size(dim_name, dim_freq, dim_size, next_dim_freq)
+    for (idx, (dim_name, dim_freq, dim_size)) in enumerate(zip(metadata.time_dimensions, metadata.frequencies, time_dimension_sizes(metadata)))
+        if idx == 1
+            continue
         end
+        next_dim_freq = metadata.frequencies[idx - 1]
+        validate_time_dimension_size(dim_name, dim_freq, dim_size, next_dim_freq)
     end
 
     return nothing
