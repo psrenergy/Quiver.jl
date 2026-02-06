@@ -1,5 +1,5 @@
 @echo off
 
-SET BASEPATH=%~dp0
+SET BASE_PATH=%~dp0
 
-CALL "%JULIA_1112%" --project=%BASEPATH%\.. -e "import Pkg; Pkg.test()"
+CALL julia +1.12.3 --project=%BASE_PATH%\.. -e "import Pkg; Pkg.test(test_args=ARGS)" -- %*
