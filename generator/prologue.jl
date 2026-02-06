@@ -1,0 +1,24 @@
+#! format: off
+
+using CEnum
+
+function library_name()
+    if Sys.iswindows()
+        return "libquiver_c.dll"
+    elseif Sys.isapple()
+        return "libquiver_c.dylib"
+    else
+        return "libquiver_c.so"
+    end
+end
+
+# On Windows, DLLs go to bin/; on Linux/macOS, shared libs go to lib/
+function library_dir()
+    if Sys.iswindows()
+        return "bin"
+    else
+        return "lib"
+    end
+end
+
+const libquiver_c = joinpath(Quiver_jll.artifact_dir, library_dir(), library_name())

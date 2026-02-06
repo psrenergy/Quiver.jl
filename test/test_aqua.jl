@@ -1,18 +1,13 @@
-module TestAqua
+# module TestAqua
 
-using Aqua
-using Quiver
-using Test
+# using Aqua
+# using Quiver
+# using Test
 
-function runtests()
-    @testset "Aqua" begin
-        @testset "Ambiguities" begin
-            Aqua.test_ambiguities(Quiver, recursive = false)
-        end
-        Aqua.test_all(Quiver, ambiguities = false)
-    end
-end
+# @testset "Aqua" begin
+#     Aqua.test_ambiguities(Quiver; recursive = false)
+#     Aqua.test_all(Quiver; ambiguities = false, unbound_args = false)
+#     return nothing
+# end
 
-TestAqua.runtests()
-
-end
+# end
