@@ -10,7 +10,7 @@ Quiver_jll = "846f1d71-3648-54c4-93dd-5fb4e13f0ad8"
 [compat]
 CEnum = "0.5"
 Dates = "1"
-Quiver_jll = "=0.2.0"
+Quiver_jll = "=0.5.0"
 Test = "1"
 julia = "1.11"
 

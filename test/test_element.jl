@@ -11,7 +11,7 @@ include("fixture.jl")
         el = Quiver.Element()
         el["value"] = 42
         el["label"] = "Test"
-        Quiver.destroy!(el)
+
         @test true
     end
 
@@ -19,7 +19,7 @@ include("fixture.jl")
         el = Quiver.Element()
         el["value"] = 3.14
         el["label"] = "Test"
-        Quiver.destroy!(el)
+
         @test true
     end
 
@@ -27,7 +27,7 @@ include("fixture.jl")
         el = Quiver.Element()
         el["value"] = "hello world"
         el["label"] = "Test"
-        Quiver.destroy!(el)
+
         @test true
     end
 
@@ -35,7 +35,7 @@ include("fixture.jl")
         el = Quiver.Element()
         el["value"] = DateTime(2024, 1, 15, 10, 30, 0)
         el["label"] = "Test"
-        Quiver.destroy!(el)
+
         @test true
     end
 
@@ -43,7 +43,7 @@ include("fixture.jl")
         el = Quiver.Element()
         el["values"] = [1, 2, 3, 4, 5]
         el["label"] = "Test"
-        Quiver.destroy!(el)
+
         @test true
     end
 
@@ -51,7 +51,7 @@ include("fixture.jl")
         el = Quiver.Element()
         el["values"] = [1.1, 2.2, 3.3]
         el["label"] = "Test"
-        Quiver.destroy!(el)
+
         @test true
     end
 
@@ -59,14 +59,24 @@ include("fixture.jl")
         el = Quiver.Element()
         el["values"] = ["alpha", "beta", "gamma"]
         el["label"] = "Test"
-        Quiver.destroy!(el)
+
         @test true
     end
 
     @testset "Empty Array Rejected" begin
         el = Quiver.Element()
-        @test_throws Quiver.DatabaseException el["values"] = Any[]
-        Quiver.destroy!(el)
+        @test_throws ArgumentError el["values"] = Any[]
+    end
+
+    @testset "Clear Element" begin
+        el = Quiver.Element()
+        el["label"] = "Test"
+        el["value"] = 42
+        Quiver.clear!(el)
+        # After clear, element can be reused with new values
+        el["label"] = "Reused"
+
+        @test true
     end
 
     @testset "Create Element with Builder" begin
@@ -80,7 +90,6 @@ include("fixture.jl")
         el["string_attribute"] = "hello"
 
         id = Quiver.create_element!(db, "Configuration", el)
-        Quiver.destroy!(el)
 
         @test id > 0
 
@@ -105,7 +114,6 @@ include("fixture.jl")
         el["value_float"] = [1.5, 2.5, 3.5]
 
         id = Quiver.create_element!(db, "Collection", el)
-        Quiver.destroy!(el)
 
         @test id > 0
 
@@ -127,7 +135,6 @@ include("fixture.jl")
         el["tag"] = ["alpha", "beta", "gamma"]
 
         id = Quiver.create_element!(db, "Collection", el)
-        Quiver.destroy!(el)
 
         @test id > 0
 
@@ -148,8 +155,6 @@ include("fixture.jl")
         show(io, el)
         str = String(take!(io))
         @test length(str) > 0
-
-        Quiver.destroy!(el)
     end
 end
 

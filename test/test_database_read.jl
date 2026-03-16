@@ -233,13 +233,13 @@ include("fixture.jl")
         @test dates[2] == "2024-06-20T14:45:30"
 
         # Read DateTime by ID
-        date = Quiver.read_scalar_string_by_id(db, "Configuration", "date_attribute", Int64(1))
+        date = Quiver.read_scalar_string_by_id(db, "Configuration", "date_attribute", 1)
         @test date == "2024-01-15T10:30:00"
 
         Quiver.close!(db)
     end
 
-    @testset "DateTime Native Objects via read_all_scalars_by_id" begin
+    @testset "DateTime Native Objects via read_scalars_by_id" begin
         path_schema = joinpath(tests_path(), "schemas", "valid", "basic.sql")
         db = Quiver.from_schema(":memory:", path_schema)
 
@@ -249,7 +249,7 @@ include("fixture.jl")
         )
 
         # Read all scalars for an element - date_attribute should be converted to DateTime
-        scalars = Quiver.read_all_scalars_by_id(db, "Configuration", Int64(1))
+        scalars = Quiver.read_scalars_by_id(db, "Configuration", 1)
 
         @test haskey(scalars, "date_attribute")
         @test scalars["date_attribute"] isa DateTime
@@ -311,9 +311,9 @@ include("fixture.jl")
         Quiver.close!(db)
     end
 
-    # Read element IDs tests
+    # Read element Ids tests
 
-    @testset "Element IDs" begin
+    @testset "Element Ids" begin
         path_schema = joinpath(tests_path(), "schemas", "valid", "basic.sql")
         db = Quiver.from_schema(":memory:", path_schema)
 
@@ -330,7 +330,7 @@ include("fixture.jl")
         Quiver.close!(db)
     end
 
-    @testset "Element IDs Empty" begin
+    @testset "Element Ids Empty" begin
         path_schema = joinpath(tests_path(), "schemas", "valid", "collections.sql")
         db = Quiver.from_schema(":memory:", path_schema)
 
@@ -440,11 +440,140 @@ include("fixture.jl")
         Quiver.close!(db)
     end
 
-    @testset "Element IDs Invalid Collection" begin
+    @testset "Element Ids Invalid Collection" begin
         path_schema = joinpath(tests_path(), "schemas", "valid", "basic.sql")
         db = Quiver.from_schema(":memory:", path_schema)
 
         @test_throws Quiver.DatabaseException Quiver.read_element_ids(db, "NonexistentCollection")
+
+        Quiver.close!(db)
+    end
+
+    @testset "Read Vector Strings Bulk" begin
+        path_schema = joinpath(tests_path(), "schemas", "valid", "all_types.sql")
+        db = Quiver.from_schema(":memory:", path_schema)
+
+        Quiver.create_element!(db, "AllTypes"; label = "Item 1")
+        Quiver.create_element!(db, "AllTypes"; label = "Item 2")
+
+        Quiver.update_element!(db, "AllTypes", 1; label_value = ["alpha", "beta"])
+        Quiver.update_element!(db, "AllTypes", 2; label_value = ["gamma"])
+
+        result = Quiver.read_vector_strings(db, "AllTypes", "label_value")
+        @test length(result) == 2
+        @test result[1] == ["alpha", "beta"]
+        @test result[2] == ["gamma"]
+
+        Quiver.close!(db)
+    end
+
+    @testset "Read Vector Strings By ID" begin
+        path_schema = joinpath(tests_path(), "schemas", "valid", "all_types.sql")
+        db = Quiver.from_schema(":memory:", path_schema)
+
+        Quiver.create_element!(db, "AllTypes"; label = "Item 1")
+        Quiver.update_element!(db, "AllTypes", 1; label_value = ["alpha", "beta", "gamma"])
+
+        result = Quiver.read_vector_strings_by_id(db, "AllTypes", "label_value", 1)
+        @test result == ["alpha", "beta", "gamma"]
+
+        Quiver.close!(db)
+    end
+
+    @testset "Read Set Integers Bulk" begin
+        path_schema = joinpath(tests_path(), "schemas", "valid", "all_types.sql")
+        db = Quiver.from_schema(":memory:", path_schema)
+
+        Quiver.create_element!(db, "AllTypes"; label = "Item 1")
+        Quiver.create_element!(db, "AllTypes"; label = "Item 2")
+
+        Quiver.update_element!(db, "AllTypes", 1; code = [10, 20, 30])
+        Quiver.update_element!(db, "AllTypes", 2; code = [40, 50])
+
+        result = Quiver.read_set_integers(db, "AllTypes", "code")
+        @test length(result) == 2
+        @test sort(result[1]) == [10, 20, 30]
+        @test sort(result[2]) == [40, 50]
+
+        Quiver.close!(db)
+    end
+
+    @testset "Read Set Integers By ID" begin
+        path_schema = joinpath(tests_path(), "schemas", "valid", "all_types.sql")
+        db = Quiver.from_schema(":memory:", path_schema)
+
+        Quiver.create_element!(db, "AllTypes"; label = "Item 1")
+        Quiver.update_element!(db, "AllTypes", 1; code = [10, 20, 30])
+
+        result = Quiver.read_set_integers_by_id(db, "AllTypes", "code", 1)
+        @test sort(result) == [10, 20, 30]
+
+        Quiver.close!(db)
+    end
+
+    @testset "Read Set Floats Bulk" begin
+        path_schema = joinpath(tests_path(), "schemas", "valid", "all_types.sql")
+        db = Quiver.from_schema(":memory:", path_schema)
+
+        Quiver.create_element!(db, "AllTypes"; label = "Item 1")
+        Quiver.create_element!(db, "AllTypes"; label = "Item 2")
+
+        Quiver.update_element!(db, "AllTypes", 1; weight = [1.1, 2.2])
+        Quiver.update_element!(db, "AllTypes", 2; weight = [3.3, 4.4, 5.5])
+
+        result = Quiver.read_set_floats(db, "AllTypes", "weight")
+        @test length(result) == 2
+        @test sort(result[1]) == [1.1, 2.2]
+        @test sort(result[2]) == [3.3, 4.4, 5.5]
+
+        Quiver.close!(db)
+    end
+
+    @testset "Read Set Floats By ID" begin
+        path_schema = joinpath(tests_path(), "schemas", "valid", "all_types.sql")
+        db = Quiver.from_schema(":memory:", path_schema)
+
+        Quiver.create_element!(db, "AllTypes"; label = "Item 1")
+        Quiver.update_element!(db, "AllTypes", 1; weight = [1.1, 2.2])
+
+        result = Quiver.read_set_floats_by_id(db, "AllTypes", "weight", 1)
+        @test sort(result) == [1.1, 2.2]
+
+        Quiver.close!(db)
+    end
+
+    @testset "Read Vector Strings By ID Empty" begin
+        path_schema = joinpath(tests_path(), "schemas", "valid", "all_types.sql")
+        db = Quiver.from_schema(":memory:", path_schema)
+
+        Quiver.create_element!(db, "AllTypes"; label = "Item 1")
+
+        result = Quiver.read_vector_strings_by_id(db, "AllTypes", "label_value", 1)
+        @test isempty(result)
+
+        Quiver.close!(db)
+    end
+
+    @testset "Read Set Integers By ID Empty" begin
+        path_schema = joinpath(tests_path(), "schemas", "valid", "all_types.sql")
+        db = Quiver.from_schema(":memory:", path_schema)
+
+        Quiver.create_element!(db, "AllTypes"; label = "Item 1")
+
+        result = Quiver.read_set_integers_by_id(db, "AllTypes", "code", 1)
+        @test isempty(result)
+
+        Quiver.close!(db)
+    end
+
+    @testset "Read Set Floats By ID Empty" begin
+        path_schema = joinpath(tests_path(), "schemas", "valid", "all_types.sql")
+        db = Quiver.from_schema(":memory:", path_schema)
+
+        Quiver.create_element!(db, "AllTypes"; label = "Item 1")
+
+        result = Quiver.read_set_floats_by_id(db, "AllTypes", "weight", 1)
+        @test isempty(result)
 
         Quiver.close!(db)
     end
@@ -478,6 +607,89 @@ include("fixture.jl")
 
         rows = Quiver.read_vector_group_by_id(db, "Collection", "values", 999)
         @test isempty(rows)
+
+        Quiver.close!(db)
+    end
+
+    @testset "read_vectors_by_id" begin
+        path_schema = joinpath(tests_path(), "schemas", "valid", "composite_helpers.sql")
+        db = Quiver.from_schema(":memory:", path_schema)
+
+        id = Quiver.create_element!(db, "Items";
+            label = "Item 1",
+            amount = [10, 20, 30],
+            score = [1.1, 2.2],
+            note = ["hello", "world"],
+        )
+
+        result = Quiver.read_vectors_by_id(db, "Items", id)
+
+        @test length(result) == 3
+        @test haskey(result, "amount")
+        @test haskey(result, "score")
+        @test haskey(result, "note")
+        @test result["amount"] == [10, 20, 30]
+        @test result["score"] == [1.1, 2.2]
+        @test result["note"] == ["hello", "world"]
+
+        # Verify element types (Dict values are Vector{Any}, check individual elements)
+        @test all(v -> v isa Int64, result["amount"])
+        @test all(v -> v isa Float64, result["score"])
+        @test all(v -> v isa String, result["note"])
+
+        Quiver.close!(db)
+    end
+
+    @testset "read_sets_by_id" begin
+        path_schema = joinpath(tests_path(), "schemas", "valid", "composite_helpers.sql")
+        db = Quiver.from_schema(":memory:", path_schema)
+
+        id = Quiver.create_element!(db, "Items";
+            label = "Item 1",
+            code = [10, 20, 30],
+            weight = [1.1, 2.2],
+            tag = ["alpha", "beta"],
+        )
+
+        result = Quiver.read_sets_by_id(db, "Items", id)
+
+        @test length(result) == 3
+        @test haskey(result, "code")
+        @test haskey(result, "weight")
+        @test haskey(result, "tag")
+        @test sort(result["code"]) == [10, 20, 30]
+        @test sort(result["weight"]) == [1.1, 2.2]
+        @test sort(result["tag"]) == ["alpha", "beta"]
+
+        # Verify element types (Dict values are Vector{Any}, check individual elements)
+        @test all(v -> v isa Int64, result["code"])
+        @test all(v -> v isa Float64, result["weight"])
+        @test all(v -> v isa String, result["tag"])
+
+        Quiver.close!(db)
+    end
+
+    @testset "read_element_by_id" begin
+        path_schema = joinpath(tests_path(), "schemas", "valid", "collections.sql")
+        db = Quiver.from_schema(":memory:", path_schema)
+
+        Quiver.create_element!(db, "Configuration"; label = "Test Config")
+
+        Quiver.create_element!(db, "Collection";
+            label = "Item 1",
+            some_integer = 10,
+            some_float = 1.5,
+            value_int = [1, 2, 3],
+            value_float = [0.1, 0.2, 0.3],
+        )
+
+        element = Quiver.read_element_by_id(db, "Collection", 1)
+
+        @test element["label"] == "Item 1"
+        @test element["some_integer"] == 10
+        @test element["some_float"] == 1.5
+        @test element["value_int"] == [1, 2, 3]
+        @test element["value_float"] == [0.1, 0.2, 0.3]
 
         Quiver.close!(db)
     end

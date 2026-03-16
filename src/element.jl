@@ -4,15 +4,14 @@ mutable struct Element
     function Element()
         out_element = Ref{Ptr{C.quiver_element}}(C_NULL)
         check(C.quiver_element_create(out_element))
-        return new(out_element[])
+        el = new(out_element[])
+        finalizer(x -> x.ptr != C_NULL && C.quiver_element_destroy(x.ptr), el)
+        return el
     end
 end
 
-function destroy!(el::Element)
-    if el.ptr != C_NULL
-        C.quiver_element_destroy(el.ptr)
-        el.ptr = C_NULL
-    end
+function clear!(el::Element)
+    check(C.quiver_element_clear(el.ptr))
     return nothing
 end
 
@@ -40,6 +39,18 @@ function Base.setindex!(el::Element, value::DateTime, name::String)
     return nothing
 end
 
+function Base.setindex!(el::Element, value::Vector{DateTime}, name::String)
+    el[name] = [date_time_to_string(dt) for dt in value]
+    return nothing
+end
+
+function Base.setindex!(el::Element, value::Dict{String, <:Any}, name::String)
+    for (k, v) in value
+        el[k] = v
+    end
+    return nothing
+end
+
 function Base.setindex!(el::Element, value::Vector{<:Integer}, name::String)
     cname = Base.cconvert(Cstring, name)
     integer_values = Int64[Int64(v) for v in value]
@@ -62,12 +73,10 @@ function Base.setindex!(el::Element, value::Vector{<:AbstractString}, name::Stri
     end
 end
 
-# Handle empty arrays (Vector{Any}) - throw a DatabaseException
 function Base.setindex!(el::Element, value::Vector{Any}, name::String)
     if isempty(value)
-        throw(DatabaseException("Empty array not allowed for '$name'"))
+        throw(ArgumentError("Cannot determine array element type for '$name': array is empty"))
     end
-    # For non-empty Vector{Any}, try to determine the element type
     first_val = first(value)
     if first_val isa Integer
         el[name] = Int64[Int64(v) for v in value]
@@ -76,7 +85,7 @@ function Base.setindex!(el::Element, value::Vector{Any}, name::String)
     elseif first_val isa AbstractString
         el[name] = String[String(v) for v in value]
     else
-        error("Unsupported array element type for '$name': $(typeof(first_val))")
+        throw(ArgumentError("Unsupported array element type for '$name': $(typeof(first_val))"))
     end
 end
 
@@ -88,7 +97,7 @@ function Base.show(io::IO, e::Element)
         return nothing
     end
     str = unsafe_string(out_string[])
-    C.quiver_string_free(out_string[])
+    C.quiver_database_free_string(out_string[])
     print(io, str)
     return nothing
 end

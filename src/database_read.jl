@@ -1,28 +1,3 @@
-function read_scalar_relation(db::Database, collection::String, attribute::String)
-    out_values = Ref{Ptr{Ptr{Cchar}}}(C_NULL)
-    out_count = Ref{Csize_t}(0)
-
-    check(C.quiver_database_read_scalar_relation(db.ptr, collection, attribute, out_values, out_count))
-
-    count = out_count[]
-    if count == 0 || out_values[] == C_NULL
-        return Union{String, Nothing}[]
-    end
-
-    ptrs = unsafe_wrap(Array, out_values[], count)
-    result = Union{String, Nothing}[]
-    for ptr in ptrs
-        if ptr == C_NULL
-            push!(result, nothing)
-        else
-            s = unsafe_string(ptr)
-            push!(result, isempty(s) ? nothing : s)
-        end
-    end
-    C.quiver_free_string_array(out_values[], count)
-    return result
-end
-
 function read_scalar_integers(db::Database, collection::String, attribute::String)
     out_values = Ref{Ptr{Int64}}(C_NULL)
     out_count = Ref{Csize_t}(0)
@@ -35,7 +10,7 @@ function read_scalar_integers(db::Database, collection::String, attribute::Strin
     end
 
     result = unsafe_wrap(Array, out_values[], count) |> copy
-    C.quiver_free_integer_array(out_values[])
+    C.quiver_database_free_integer_array(out_values[])
     return result
 end
 
@@ -51,7 +26,7 @@ function read_scalar_floats(db::Database, collection::String, attribute::String)
     end
 
     result = unsafe_wrap(Array, out_values[], count) |> copy
-    C.quiver_free_float_array(out_values[])
+    C.quiver_database_free_float_array(out_values[])
     return result
 end
 
@@ -68,7 +43,7 @@ function read_scalar_strings(db::Database, collection::String, attribute::String
 
     ptrs = unsafe_wrap(Array, out_values[], count)
     result = [unsafe_string(ptr) for ptr in ptrs]
-    C.quiver_free_string_array(out_values[], count)
+    C.quiver_database_free_string_array(out_values[], count)
     return result
 end
 
@@ -94,7 +69,7 @@ function read_vector_integers(db::Database, collection::String, attribute::Strin
             push!(result, copy(unsafe_wrap(Array, vectors_ptr[i], sizes_ptr[i])))
         end
     end
-    C.quiver_free_integer_vectors(out_vectors[], out_sizes[], count)
+    C.quiver_database_free_integer_vectors(out_vectors[], out_sizes[], count)
     return result
 end
 
@@ -120,7 +95,7 @@ function read_vector_floats(db::Database, collection::String, attribute::String)
             push!(result, copy(unsafe_wrap(Array, vectors_ptr[i], sizes_ptr[i])))
         end
     end
-    C.quiver_free_float_vectors(out_vectors[], out_sizes[], count)
+    C.quiver_database_free_float_vectors(out_vectors[], out_sizes[], count)
     return result
 end
 
@@ -147,7 +122,7 @@ function read_vector_strings(db::Database, collection::String, attribute::String
             push!(result, [unsafe_string(ptr) for ptr in str_ptrs])
         end
     end
-    C.quiver_free_string_vectors(out_vectors[], out_sizes[], count)
+    C.quiver_database_free_string_vectors(out_vectors[], out_sizes[], count)
     return result
 end
 
@@ -173,7 +148,7 @@ function read_set_integers(db::Database, collection::String, attribute::String)
             push!(result, copy(unsafe_wrap(Array, sets_ptr[i], sizes_ptr[i])))
         end
     end
-    C.quiver_free_integer_vectors(out_sets[], out_sizes[], count)
+    C.quiver_database_free_integer_vectors(out_sets[], out_sizes[], count)
     return result
 end
 
@@ -199,7 +174,7 @@ function read_set_floats(db::Database, collection::String, attribute::String)
             push!(result, copy(unsafe_wrap(Array, sets_ptr[i], sizes_ptr[i])))
         end
     end
-    C.quiver_free_float_vectors(out_sets[], out_sizes[], count)
+    C.quiver_database_free_float_vectors(out_sets[], out_sizes[], count)
     return result
 end
 
@@ -226,7 +201,7 @@ function read_set_strings(db::Database, collection::String, attribute::String)
             push!(result, [unsafe_string(ptr) for ptr in str_ptrs])
         end
     end
-    C.quiver_free_string_vectors(out_sets[], out_sizes[], count)
+    C.quiver_database_free_string_vectors(out_sets[], out_sizes[], count)
     return result
 end
 
@@ -264,7 +239,7 @@ function read_scalar_string_by_id(db::Database, collection::String, attribute::S
         return nothing
     end
     result = unsafe_string(out_value[])
-    C.quiver_string_free(out_value[])
+    C.quiver_database_free_string(out_value[])
     return result
 end
 
@@ -284,7 +259,7 @@ function read_vector_integers_by_id(db::Database, collection::String, attribute:
     end
 
     result = unsafe_wrap(Array, out_values[], count) |> copy
-    C.quiver_free_integer_array(out_values[])
+    C.quiver_database_free_integer_array(out_values[])
     return result
 end
 
@@ -300,7 +275,7 @@ function read_vector_floats_by_id(db::Database, collection::String, attribute::S
     end
 
     result = unsafe_wrap(Array, out_values[], count) |> copy
-    C.quiver_free_float_array(out_values[])
+    C.quiver_database_free_float_array(out_values[])
     return result
 end
 
@@ -317,7 +292,7 @@ function read_vector_strings_by_id(db::Database, collection::String, attribute::
 
     ptrs = unsafe_wrap(Array, out_values[], count)
     result = [unsafe_string(ptr) for ptr in ptrs]
-    C.quiver_free_string_array(out_values[], count)
+    C.quiver_database_free_string_array(out_values[], count)
     return result
 end
 
@@ -337,7 +312,7 @@ function read_set_integers_by_id(db::Database, collection::String, attribute::St
     end
 
     result = unsafe_wrap(Array, out_values[], count) |> copy
-    C.quiver_free_integer_array(out_values[])
+    C.quiver_database_free_integer_array(out_values[])
     return result
 end
 
@@ -353,7 +328,7 @@ function read_set_floats_by_id(db::Database, collection::String, attribute::Stri
     end
 
     result = unsafe_wrap(Array, out_values[], count) |> copy
-    C.quiver_free_float_array(out_values[])
+    C.quiver_database_free_float_array(out_values[])
     return result
 end
 
@@ -370,7 +345,7 @@ function read_set_strings_by_id(db::Database, collection::String, attribute::Str
 
     ptrs = unsafe_wrap(Array, out_values[], count)
     result = [unsafe_string(ptr) for ptr in ptrs]
-    C.quiver_free_string_array(out_values[], count)
+    C.quiver_database_free_string_array(out_values[], count)
     return result
 end
 
@@ -390,18 +365,11 @@ function read_element_ids(db::Database, collection::String)
     end
 
     result = unsafe_wrap(Array, out_ids[], count) |> copy
-    C.quiver_free_integer_array(out_ids[])
+    C.quiver_database_free_integer_array(out_ids[])
     return result
 end
 
-function _get_value_data_type(value_columns::Vector{ScalarMetadata})
-    if !isempty(value_columns)
-        return value_columns[1].data_type
-    end
-    return C.QUIVER_DATA_TYPE_STRING
-end
-
-function read_all_scalars_by_id(db::Database, collection::String, id::Int64)
+function read_scalars_by_id(db::Database, collection::String, id::Int64)
     result = Dict{String, Any}()
     for attribute in list_scalar_attributes(db, collection)
         name = attribute.name
@@ -414,65 +382,56 @@ function read_all_scalars_by_id(db::Database, collection::String, id::Int64)
         elseif attribute.data_type == C.QUIVER_DATA_TYPE_DATE_TIME
             result[name] = read_scalar_date_time_by_id(db, collection, name, id)
         else
-            throw(DatabaseException("Unsupported scalar data type for '$collection.$name'"))
+            throw(ArgumentError("Unsupported scalar data type $(attribute.data_type) for '$collection.$name'"))
         end
     end
     return result
 end
 
-function read_all_vectors_by_id(db::Database, collection::String, id::Int64)
-    result = Dict{String, Vector{Any}}()
+function read_vectors_by_id(db::Database, collection::String, id::Int64)
+    result = Dict{String, Any}()
     for group in list_vector_groups(db, collection)
-        name = group.group_name
-        data_type = _get_value_data_type(group.value_columns)
-        if data_type == C.QUIVER_DATA_TYPE_INTEGER
-            result[name] = read_vector_integers_by_id(db, collection, name, id)
-        elseif data_type == C.QUIVER_DATA_TYPE_FLOAT
-            result[name] = read_vector_floats_by_id(db, collection, name, id)
-        elseif data_type == C.QUIVER_DATA_TYPE_STRING
-            result[name] = read_vector_strings_by_id(db, collection, name, id)
-        elseif data_type == C.QUIVER_DATA_TYPE_DATE_TIME
-            result[name] = read_vector_date_time_by_id(db, collection, name, id)
-        else
-            throw(DatabaseException("Unsupported vector data type for '$collection.$name'"))
+        for col in group.value_columns
+            name = col.name
+            if col.data_type == C.QUIVER_DATA_TYPE_INTEGER
+                result[name] = read_vector_integers_by_id(db, collection, name, id)
+            elseif col.data_type == C.QUIVER_DATA_TYPE_FLOAT
+                result[name] = read_vector_floats_by_id(db, collection, name, id)
+            elseif col.data_type == C.QUIVER_DATA_TYPE_STRING
+                result[name] = read_vector_strings_by_id(db, collection, name, id)
+            elseif col.data_type == C.QUIVER_DATA_TYPE_DATE_TIME
+                result[name] = read_vector_date_time_by_id(db, collection, name, id)
+            else
+                throw(ArgumentError("Unsupported vector data type $(col.data_type) for '$collection.$name'"))
+            end
         end
     end
     return result
 end
 
-function read_all_sets_by_id(db::Database, collection::String, id::Int64)
-    result = Dict{String, Vector{Any}}()
+function read_sets_by_id(db::Database, collection::String, id::Int64)
+    result = Dict{String, Any}()
     for group in list_set_groups(db, collection)
-        name = group.group_name
-        data_type = _get_value_data_type(group.value_columns)
-        if data_type == C.QUIVER_DATA_TYPE_INTEGER
-            result[name] = read_set_integers_by_id(db, collection, name, id)
-        elseif data_type == C.QUIVER_DATA_TYPE_FLOAT
-            result[name] = read_set_floats_by_id(db, collection, name, id)
-        elseif data_type == C.QUIVER_DATA_TYPE_STRING
-            result[name] = read_set_strings_by_id(db, collection, name, id)
-        elseif data_type == C.QUIVER_DATA_TYPE_DATE_TIME
-            result[name] = read_set_date_time_by_id(db, collection, name, id)
-        else
-            throw(DatabaseException("Unsupported set data type for '$collection.$name'"))
+        for col in group.value_columns
+            name = col.name
+            if col.data_type == C.QUIVER_DATA_TYPE_INTEGER
+                result[name] = read_set_integers_by_id(db, collection, name, id)
+            elseif col.data_type == C.QUIVER_DATA_TYPE_FLOAT
+                result[name] = read_set_floats_by_id(db, collection, name, id)
+            elseif col.data_type == C.QUIVER_DATA_TYPE_STRING
+                result[name] = read_set_strings_by_id(db, collection, name, id)
+            elseif col.data_type == C.QUIVER_DATA_TYPE_DATE_TIME
+                result[name] = read_set_date_time_by_id(db, collection, name, id)
+            else
+                throw(ArgumentError("Unsupported set data type $(col.data_type) for '$collection.$name'"))
+            end
         end
     end
     return result
 end
 
 function read_vector_group_by_id(db::Database, collection::String, group::String, id::Int64)
-    # Find the matching group from the list of vector groups
-    all_groups = list_vector_groups(db, collection)
-    metadata = nothing
-    for g in all_groups
-        if g.group_name == group
-            metadata = g
-            break
-        end
-    end
-    if metadata === nothing
-        throw(DatabaseException("Vector group '$group' not found in collection '$collection'"))
-    end
+    metadata = get_vector_metadata(db, collection, group)
     columns = metadata.value_columns
 
     if isempty(columns)
@@ -494,7 +453,7 @@ function read_vector_group_by_id(db::Database, collection::String, group::String
         elseif col.data_type == C.QUIVER_DATA_TYPE_DATE_TIME
             read_vector_date_time_by_id(db, collection, name, id)
         else
-            throw(DatabaseException("Unknown data type: $(col.data_type)"))
+            throw(ArgumentError("Unsupported data type $(col.data_type) for column '$(col.name)'"))
         end
 
         column_data[name] = values
@@ -515,18 +474,7 @@ function read_vector_group_by_id(db::Database, collection::String, group::String
 end
 
 function read_set_group_by_id(db::Database, collection::String, group::String, id::Int64)
-    # Find the matching group from the list of set groups
-    all_groups = list_set_groups(db, collection)
-    metadata = nothing
-    for g in all_groups
-        if g.group_name == group
-            metadata = g
-            break
-        end
-    end
-    if metadata === nothing
-        throw(DatabaseException("Set group '$group' not found in collection '$collection'"))
-    end
+    metadata = get_set_metadata(db, collection, group)
     columns = metadata.value_columns
 
     if isempty(columns)
@@ -548,7 +496,7 @@ function read_set_group_by_id(db::Database, collection::String, group::String, i
         elseif col.data_type == C.QUIVER_DATA_TYPE_DATE_TIME
             read_set_date_time_by_id(db, collection, name, id)
         else
-            throw(DatabaseException("Unknown data type: $(col.data_type)"))
+            throw(ArgumentError("Unsupported data type $(col.data_type) for column '$(col.name)'"))
         end
 
         column_data[name] = values
@@ -568,36 +516,67 @@ function read_set_group_by_id(db::Database, collection::String, group::String, i
     return rows
 end
 
-function read_time_series_group_by_id(db::Database, collection::String, group::String, id::Int64)
-    out_date_times = Ref{Ptr{Ptr{Cchar}}}(C_NULL)
-    out_values = Ref{Ptr{Cdouble}}(C_NULL)
+function read_time_series_group(db::Database, collection::String, group::String, id::Int64)
+    out_col_names = Ref{Ptr{Ptr{Cchar}}}(C_NULL)
+    out_col_types = Ref{Ptr{Cint}}(C_NULL)
+    out_col_data = Ref{Ptr{Ptr{Cvoid}}}(C_NULL)
+    out_col_count = Ref{Csize_t}(0)
     out_row_count = Ref{Csize_t}(0)
 
     check(
-        C.quiver_database_read_time_series_group_by_id(
+        C.quiver_database_read_time_series_group(
             db.ptr, collection, group, id,
-            out_date_times, out_values, out_row_count,
+            out_col_names, out_col_types, out_col_data, out_col_count, out_row_count,
         ),
     )
 
+    col_count = out_col_count[]
     row_count = out_row_count[]
-    if row_count == 0 || out_date_times[] == C_NULL
-        return Vector{Dict{String, Any}}()
+
+    if col_count == 0 || row_count == 0
+        return Dict{String, Vector}()
     end
 
-    date_time_ptrs = unsafe_wrap(Array, out_date_times[], row_count)
-    values = unsafe_wrap(Array, out_values[], row_count) |> copy
+    # Get dimension column name for DateTime parsing
+    metadata = get_time_series_metadata(db, collection, group)
+    dim_col = metadata.dimension_column
 
-    rows = Vector{Dict{String, Any}}()
-    for i in 1:row_count
-        push!(rows, Dict{String, Any}(
-            "date_time" => unsafe_string(date_time_ptrs[i]),
-            "value" => values[i],
-        ))
+    # Unmarshal column names, types, data
+    name_ptrs = unsafe_wrap(Array, out_col_names[], col_count)
+    type_vals = unsafe_wrap(Array, out_col_types[], col_count)
+    data_ptrs = unsafe_wrap(Array, out_col_data[], col_count)
+
+    result = Dict{String, Vector}()
+    for i in 1:col_count
+        col_name = unsafe_string(name_ptrs[i])
+        col_type = type_vals[i]
+
+        if col_type == Cint(C.QUIVER_DATA_TYPE_INTEGER)
+            int_ptr = reinterpret(Ptr{Int64}, data_ptrs[i])
+            result[col_name] = copy(unsafe_wrap(Array, int_ptr, row_count))
+        elseif col_type == Cint(C.QUIVER_DATA_TYPE_FLOAT)
+            float_ptr = reinterpret(Ptr{Float64}, data_ptrs[i])
+            result[col_name] = copy(unsafe_wrap(Array, float_ptr, row_count))
+        elseif col_type == Cint(C.QUIVER_DATA_TYPE_STRING) || col_type == Cint(C.QUIVER_DATA_TYPE_DATE_TIME)
+            str_ptr_ptr = reinterpret(Ptr{Ptr{Cchar}}, data_ptrs[i])
+            str_ptrs = unsafe_wrap(Array, str_ptr_ptr, row_count)
+            if col_name == dim_col
+                result[col_name] = DateTime[string_to_date_time(unsafe_string(p)) for p in str_ptrs]
+            else
+                result[col_name] = String[unsafe_string(p) for p in str_ptrs]
+            end
+        else
+            throw(ArgumentError("Unsupported data type $(col_type) for column '$col_name'"))
+        end
     end
 
-    C.quiver_free_time_series_data(out_date_times[], out_values[], row_count)
-    return rows
+    # Free C-allocated memory
+    C.quiver_database_free_time_series_data(
+        out_col_names[], out_col_types[], out_col_data[],
+        Csize_t(col_count), Csize_t(row_count),
+    )
+
+    return result
 end
 
 function read_time_series_files(db::Database, collection::String)
@@ -625,6 +604,13 @@ function read_time_series_files(db::Database, collection::String)
         end
     end
 
-    C.quiver_free_time_series_files(out_columns[], out_paths[], count)
+    C.quiver_database_free_time_series_files(out_columns[], out_paths[], count)
     return result
+end
+
+function read_element_by_id(db::Database, collection::String, id::Int64)
+    scalars = read_scalars_by_id(db, collection, id)
+    vectors = read_vectors_by_id(db, collection, id)
+    sets = read_sets_by_id(db, collection, id)
+    return merge(scalars, vectors, sets)
 end

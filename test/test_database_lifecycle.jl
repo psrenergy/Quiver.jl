@@ -28,6 +28,17 @@ include("fixture.jl")
     end
 end
 
+@testset "Describe" begin
+    path_schema = joinpath(tests_path(), "schemas", "valid", "basic.sql")
+    db = Quiver.from_schema(":memory:", path_schema)
+
+    # Just verify describe runs without error
+    Quiver.describe(db)
+    @test true
+
+    Quiver.close!(db)
+end
+
 @testset "Current Version" begin
     @testset "Schema returns 0" begin
         path_schema = joinpath(tests_path(), "schemas", "valid", "basic.sql")
@@ -41,6 +52,26 @@ end
         db = Quiver.from_migrations(":memory:", path_migrations)
         @test Quiver.current_version(db) == 3
         Quiver.close!(db)
+    end
+end
+
+@testset "is_healthy" begin
+    path_schema = joinpath(tests_path(), "schemas", "valid", "basic.sql")
+    db = Quiver.from_schema(":memory:", path_schema)
+    @test Quiver.is_healthy(db) == true
+    Quiver.close!(db)
+end
+
+@testset "path" begin
+    path_schema = joinpath(tests_path(), "schemas", "valid", "basic.sql")
+    mktempdir() do dir
+        db_path = joinpath(dir, "test.db")
+        db = Quiver.from_schema(db_path, path_schema)
+        result = Quiver.path(db)
+        @test result isa String
+        @test occursin("test.db", result)
+        Quiver.close!(db)
+        return nothing
     end
 end
 

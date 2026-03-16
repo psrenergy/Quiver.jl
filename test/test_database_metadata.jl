@@ -105,19 +105,19 @@ include("fixture.jl")
         path_schema = joinpath(tests_path(), "schemas", "valid", "collections.sql")
         db = Quiver.from_schema(":memory:", path_schema)
 
-        attrs = Quiver.list_scalar_attributes(db, "Collection")
-        attr_names = [attribute.name for attribute in attrs]
+        attributes = Quiver.list_scalar_attributes(db, "Collection")
+        attr_names = [attribute.name for attribute in attributes]
         @test "id" in attr_names
         @test "label" in attr_names
         @test "some_integer" in attr_names
         @test "some_float" in attr_names
 
         # Verify metadata is included
-        label_attr = first(filter(a -> a.name == "label", attrs))
+        label_attr = first(filter(a -> a.name == "label", attributes))
         @test label_attr.data_type == Quiver.QUIVER_DATA_TYPE_STRING
         @test label_attr.not_null == true
 
-        some_int_attr = first(filter(a -> a.name == "some_integer", attrs))
+        some_int_attr = first(filter(a -> a.name == "some_integer", attributes))
         @test some_int_attr.data_type == Quiver.QUIVER_DATA_TYPE_INTEGER
         @test some_int_attr.not_null == false
 
@@ -147,12 +147,12 @@ include("fixture.jl")
         @test metadata.references_column === nothing
 
         # list_scalar_attributes should also include FK info
-        attrs = Quiver.list_scalar_attributes(db, "Child")
-        parent_attr = first(filter(a -> a.name == "parent_id", attrs))
+        attributes = Quiver.list_scalar_attributes(db, "Child")
+        parent_attr = first(filter(a -> a.name == "parent_id", attributes))
         @test parent_attr.is_foreign_key == true
         @test parent_attr.references_collection == "Parent"
 
-        label_attr = first(filter(a -> a.name == "label", attrs))
+        label_attr = first(filter(a -> a.name == "label", attributes))
         @test label_attr.is_foreign_key == false
         @test label_attr.references_collection === nothing
 
@@ -195,4 +195,20 @@ include("fixture.jl")
     end
 end
 
+@testset "Read Set Group By ID" begin
+    path_schema = joinpath(tests_path(), "schemas", "valid", "all_types.sql")
+    db = Quiver.from_schema(":memory:", path_schema)
+
+    Quiver.create_element!(db, "AllTypes"; label = "Item 1")
+    Quiver.update_element!(db, "AllTypes", 1; code = [10, 20, 30])
+    Quiver.update_element!(db, "AllTypes", 1; weight = [1.1, 2.2])
+
+    result = Quiver.read_set_group_by_id(db, "AllTypes", "codes", 1)
+    @test !isempty(result)
+    # Verify it returns rows with data
+    codes = [row["code"] for row in result]
+    @test sort(codes) == [10, 20, 30]
+
+    Quiver.close!(db)
+end
 end # module
