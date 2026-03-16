@@ -5,14 +5,16 @@ version = "0.2.0"
 [deps]
 CEnum = "fa961155-64e5-5f13-b03f-caf6b980ea82"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
 Quiver_jll = "846f1d71-3648-54c4-93dd-5fb4e13f0ad8"
 
 [compat]
 CEnum = "0.5"
 Dates = "1"
+Libdl = "1.11.0"
 Quiver_jll = "=0.5.0"
 Test = "1"
-julia = "1.11"
+julia = "1.12"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

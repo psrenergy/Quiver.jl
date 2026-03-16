@@ -1,5 +1,8 @@
 module C
 
+using Quiver_jll
+export Quiver_jll
+
 #! format: off
 
 using CEnum
