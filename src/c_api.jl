@@ -1,8 +1,5 @@
 module C
 
-using Quiver_jll
-export Quiver_jll
-
 #! format: off
 
 using CEnum
@@ -27,7 +24,13 @@ function library_dir()
     end
 end
 
-const libquiver_c = joinpath(Quiver_jll.artifact_dir, library_dir(), library_name())
+const libquiver_c = if haskey(ENV, "QUIVER_JLL")
+    using Quiver_jll
+    export Quiver_jll
+    joinpath(Quiver_jll.artifact_dir, library_dir(), library_name())
+else
+    joinpath(@__DIR__, "..", "..", "..", "build", library_dir(), library_name())
+end
 
 
 @cenum quiver_error_t::UInt32 begin
