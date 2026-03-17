@@ -1,29 +1,38 @@
 module Quiver
 
-using CSV
-using DataFrames
+# Flag used to load correct paths when using Quiver_jll
+ENV["QUIVER_JLL"] = "1"
+
 using Dates
-using OrderedCollections
-using Tables
-using TOML
 
-const QUIVER_FILE_VERSION = 1
-const DEFAULT_ATOL = 1e-6
-const DEFAULT_RTOL = 1e-6
+include("c_api.jl")
+import .C
 
-include("metadata.jl")
-include("utils.jl")
+include("exceptions.jl")
+include("date_time.jl")
+include("element.jl")
+include("database.jl")
+include("database_create.jl")
+include("database_options.jl")
+include("database_csv_export.jl")
+include("database_csv_import.jl")
+include("database_metadata.jl")
+include("database_query.jl")
+include("database_read.jl")
+include("database_update.jl")
+include("database_delete.jl")
+include("database_transaction.jl")
+include("helper_maps.jl")
+include("lua_runner.jl")
+include("binary/Binary.jl")
 
-include("implementations.jl")
+export Element, Database, LuaRunner, DatabaseException
+export ScalarMetadata, GroupMetadata
+export QUIVER_DATA_TYPE_INTEGER, QUIVER_DATA_TYPE_FLOAT, QUIVER_DATA_TYPE_STRING
 
-include("writer.jl")
-include("reader.jl")
-
-include("csv.jl")
-include("binary.jl")
-include("compare.jl")
-
-include("merge.jl")
-include("operations.jl")
+# Re-export C enum constants for data types
+const QUIVER_DATA_TYPE_INTEGER = C.QUIVER_DATA_TYPE_INTEGER
+const QUIVER_DATA_TYPE_FLOAT = C.QUIVER_DATA_TYPE_FLOAT
+const QUIVER_DATA_TYPE_STRING = C.QUIVER_DATA_TYPE_STRING
 
 end
