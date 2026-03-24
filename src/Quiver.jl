@@ -1,8 +1,5 @@
 module Quiver
 
-# Flag used to load correct paths when using Quiver_jll
-ENV["QUIVER_JLL"] = "1"
-
 using Dates
 
 include("c_api.jl")
