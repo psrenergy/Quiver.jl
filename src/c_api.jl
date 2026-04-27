@@ -108,7 +108,7 @@ function quiver_database_rollback(db)
 end
 
 function quiver_database_in_transaction(db, out_active)
-    @ccall libquiver_c.quiver_database_in_transaction(db::Ptr{quiver_database_t}, out_active::Ptr{Bool})::quiver_error_t
+    @ccall libquiver_c.quiver_database_in_transaction(db::Ptr{quiver_database_t}, out_active::Ptr{Cint})::quiver_error_t
 end
 
 function quiver_database_current_version(db, out_version)
@@ -281,6 +281,10 @@ function quiver_database_update_time_series_group(db, collection, group, id, col
     @ccall libquiver_c.quiver_database_update_time_series_group(db::Ptr{quiver_database_t}, collection::Ptr{Cchar}, group::Ptr{Cchar}, id::Int64, column_names::Ptr{Ptr{Cchar}}, column_types::Ptr{Cint}, column_data::Ptr{Ptr{Cvoid}}, column_count::Csize_t, row_count::Csize_t)::quiver_error_t
 end
 
+function quiver_database_read_time_series_row(db, collection, group, attribute, date_time, out_data_type, out_values, out_count)
+    @ccall libquiver_c.quiver_database_read_time_series_row(db::Ptr{quiver_database_t}, collection::Ptr{Cchar}, group::Ptr{Cchar}, attribute::Ptr{Cchar}, date_time::Ptr{Cchar}, out_data_type::Ptr{Cint}, out_values::Ptr{Ptr{Cvoid}}, out_count::Ptr{Csize_t})::quiver_error_t
+end
+
 function quiver_database_free_time_series_data(column_names, column_types, column_data, column_count, row_count)
     @ccall libquiver_c.quiver_database_free_time_series_data(column_names::Ptr{Ptr{Cchar}}, column_types::Ptr{Cint}, column_data::Ptr{Ptr{Cvoid}}, column_count::Csize_t, row_count::Csize_t)::quiver_error_t
 end
@@ -449,10 +453,6 @@ function quiver_lua_runner_get_error(runner, out_error)
     @ccall libquiver_c.quiver_lua_runner_get_error(runner::Ptr{quiver_lua_runner_t}, out_error::Ptr{Ptr{Cchar}})::quiver_error_t
 end
 
-# ============================================================================
-# Binary types
-# ============================================================================
-
 @cenum quiver_time_frequency_t::UInt32 begin
     QUIVER_TIME_FREQUENCY_YEARLY = 0
     QUIVER_TIME_FREQUENCY_MONTHLY = 1
@@ -477,14 +477,6 @@ end
 mutable struct quiver_binary_metadata end
 
 const quiver_binary_metadata_t = quiver_binary_metadata
-
-mutable struct quiver_binary_file end
-
-const quiver_binary_file_t = quiver_binary_file
-
-# ============================================================================
-# Binary metadata functions
-# ============================================================================
 
 function quiver_binary_metadata_create(out)
     @ccall libquiver_c.quiver_binary_metadata_create(out::Ptr{Ptr{quiver_binary_metadata_t}})::quiver_error_t
@@ -570,9 +562,9 @@ function quiver_binary_metadata_free_dimension(dim)
     @ccall libquiver_c.quiver_binary_metadata_free_dimension(dim::Ptr{quiver_dimension_t})::quiver_error_t
 end
 
-# ============================================================================
-# Binary file functions
-# ============================================================================
+mutable struct quiver_binary_file end
+
+const quiver_binary_file_t = quiver_binary_file
 
 function quiver_binary_file_open_read(path, out)
     @ccall libquiver_c.quiver_binary_file_open_read(path::Ptr{Cchar}, out::Ptr{Ptr{quiver_binary_file_t}})::quiver_error_t
@@ -609,10 +601,6 @@ end
 function quiver_binary_file_free_float_array(data)
     @ccall libquiver_c.quiver_binary_file_free_float_array(data::Ptr{Cdouble})::quiver_error_t
 end
-
-# ============================================================================
-# Binary CSV functions
-# ============================================================================
 
 function quiver_csv_converter_bin_to_csv(path, aggregate_time_dimensions)
     @ccall libquiver_c.quiver_csv_converter_bin_to_csv(path::Ptr{Cchar}, aggregate_time_dimensions::Cint)::quiver_error_t
