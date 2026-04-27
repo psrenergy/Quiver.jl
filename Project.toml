@@ -1,6 +1,6 @@
 name = "Quiver"
 uuid = "cdbb3f72-2527-4dbd-9d0e-93533a5519ac"
-version = "0.3.1"
+version = "0.3.2"
 
 [deps]
 CEnum = "fa961155-64e5-5f13-b03f-caf6b980ea82"
