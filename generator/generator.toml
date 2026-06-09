@@ -2,10 +2,12 @@
 library_name = "libquiver_c"
 output_file_path = "../src/c_api.jl"
 module_name = "C"
-jll_pkg_name = "Quiver_jll"
+# jll_pkg_name = "Quiver_jll"
 print_using_CEnum = false
-prologue_file_path = "prologue.jl"
-epilogue_file_path = "epilogue.jl"
+auto_mutability = true
+auto_mutability_with_new = false
+prologue_file_path = "./prologue.jl"
+epilogue_file_path = "./epilogue.jl"
 output_ignorelist = [
     "QUIVER_C_API"
 ]
