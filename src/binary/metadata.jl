@@ -2,9 +2,9 @@ struct Dimension
     name::String
     size::Int64
     is_time_dimension::Bool
-    frequency::Union{String, Nothing}
-    initial_value::Union{Int64, Nothing}
-    parent_dimension_index::Union{Int64, Nothing}
+    frequency::Optional{String}
+    initial_value::Optional{Int64}
+    parent_dimension_index::Optional{Int64}
 end
 
 mutable struct Metadata
@@ -47,7 +47,7 @@ function Metadata(;
     return from_element(el)
 end
 
-function from_toml(toml::String)
+function from_toml_content(toml::String)
     out_md = Ref{Ptr{C.quiver_binary_metadata}}(C_NULL)
     check(C.quiver_binary_metadata_from_toml(toml, out_md))
     return Metadata(out_md[])

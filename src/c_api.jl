@@ -3,7 +3,51 @@ module C
 #! format: off
 
 using CEnum
-import Quiver_jll: libquiver_c
+using Artifacts
+using Libdl
+
+function library_name()
+    if Sys.iswindows()
+        return "libquiver_c.dll"
+    elseif Sys.isapple()
+        return "libquiver_c.dylib"
+    else
+        return "libquiver_c.so"
+    end
+end
+
+# On Windows, DLLs go to bin/; on Linux/macOS, shared libs go to lib/
+function library_dir()
+    if Sys.iswindows()
+        return "bin"
+    else
+        return "lib"
+    end
+end
+
+# Directory holding libquiver_c (and its libquiver dependency). Resolved (at module
+# load) in priority order:
+#   1. QUIVER_LIB_DIR     -- explicit override (CI / advanced users; set before load)
+#   2. the S3 artifact    -- when an Artifacts.toml is present (published Quiver.jl mirror)
+#   3. the in-tree build/ -- monorepo local development
+function quiver_lib_dir()
+    haskey(ENV, "QUIVER_LIB_DIR") && return ENV["QUIVER_LIB_DIR"]
+    artifacts_toml = Artifacts.find_artifacts_toml(@__DIR__)
+    if artifacts_toml !== nothing
+        hash = Artifacts.artifact_hash("quiver", artifacts_toml)
+        hash !== nothing && return joinpath(Artifacts.artifact_path(hash), library_dir())
+    end
+    return joinpath(@__DIR__, "..", "..", "..", "build", library_dir())
+end
+
+const libquiver_c = joinpath(quiver_lib_dir(), library_name())
+
+function __init__()
+    # Pre-load the transitive dependency (libquiver) from the same directory (Windows robustness).
+    dep = Sys.iswindows() ? "libquiver.dll" : Sys.isapple() ? "libquiver.dylib" : "libquiver.so"
+    Libdl.dlopen(joinpath(dirname(libquiver_c), dep); throw_error = false)
+end
+
 
 @cenum quiver_error_t::UInt32 begin
     QUIVER_OK = 0
@@ -279,6 +323,10 @@ end
 
 function quiver_database_update_time_series_group(db, collection, group, id, column_names, column_types, column_data, column_count, row_count)
     @ccall libquiver_c.quiver_database_update_time_series_group(db::Ptr{quiver_database_t}, collection::Ptr{Cchar}, group::Ptr{Cchar}, id::Int64, column_names::Ptr{Ptr{Cchar}}, column_types::Ptr{Cint}, column_data::Ptr{Ptr{Cvoid}}, column_count::Csize_t, row_count::Csize_t)::quiver_error_t
+end
+
+function quiver_database_add_time_series_row(db, collection, group, id, column_names, column_types, column_data, column_count)
+    @ccall libquiver_c.quiver_database_add_time_series_row(db::Ptr{quiver_database_t}, collection::Ptr{Cchar}, group::Ptr{Cchar}, id::Int64, column_names::Ptr{Ptr{Cchar}}, column_types::Ptr{Cint}, column_data::Ptr{Ptr{Cvoid}}, column_count::Csize_t)::quiver_error_t
 end
 
 function quiver_database_read_time_series_row(db, collection, group, attribute, date_time, out_data_type, out_values, out_count)
@@ -566,12 +614,16 @@ mutable struct quiver_binary_file end
 
 const quiver_binary_file_t = quiver_binary_file
 
-function quiver_binary_file_open_read(path, out)
-    @ccall libquiver_c.quiver_binary_file_open_read(path::Ptr{Cchar}, out::Ptr{Ptr{quiver_binary_file_t}})::quiver_error_t
+function quiver_binary_file_open_file(path, mode, md, out)
+    @ccall libquiver_c.quiver_binary_file_open_file(path::Ptr{Cchar}, mode::Cchar, md::Ptr{quiver_binary_metadata_t}, out::Ptr{Ptr{quiver_binary_file_t}})::quiver_error_t
 end
 
-function quiver_binary_file_open_write(path, md, out)
-    @ccall libquiver_c.quiver_binary_file_open_write(path::Ptr{Cchar}, md::Ptr{quiver_binary_metadata_t}, out::Ptr{Ptr{quiver_binary_file_t}})::quiver_error_t
+function quiver_binary_file_create(path, out)
+    @ccall libquiver_c.quiver_binary_file_create(path::Ptr{Cchar}, out::Ptr{Ptr{quiver_binary_file_t}})::quiver_error_t
+end
+
+function quiver_binary_file_open(binary_file, mode, md)
+    @ccall libquiver_c.quiver_binary_file_open(binary_file::Ptr{quiver_binary_file_t}, mode::Cchar, md::Ptr{quiver_binary_metadata_t})::quiver_error_t
 end
 
 function quiver_binary_file_close(binary_file)
@@ -610,6 +662,98 @@ function quiver_csv_converter_csv_to_bin(path)
     @ccall libquiver_c.quiver_csv_converter_csv_to_bin(path::Ptr{Cchar})::quiver_error_t
 end
 
+mutable struct quiver_expression end
+
+const quiver_expression_t = quiver_expression
+
+@cenum quiver_expression_operation_t::UInt32 begin
+    QUIVER_EXPRESSION_OPERATION_ADD = 0
+    QUIVER_EXPRESSION_OPERATION_SUBTRACT = 1
+    QUIVER_EXPRESSION_OPERATION_MULTIPLY = 2
+    QUIVER_EXPRESSION_OPERATION_DIVIDE = 3
+end
+
+@cenum quiver_expression_unary_operation_t::UInt32 begin
+    QUIVER_EXPRESSION_UNARY_OPERATION_NEGATE = 0
+    QUIVER_EXPRESSION_UNARY_OPERATION_ABS = 1
+    QUIVER_EXPRESSION_UNARY_OPERATION_SQRT = 2
+    QUIVER_EXPRESSION_UNARY_OPERATION_LOG = 3
+    QUIVER_EXPRESSION_UNARY_OPERATION_EXP = 4
+end
+
+@cenum quiver_expression_ternary_operation_t::UInt32 begin
+    QUIVER_EXPRESSION_TERNARY_OPERATION_IFELSE = 0
+end
+
+@cenum quiver_expression_aggregate_operation_t::UInt32 begin
+    QUIVER_EXPRESSION_AGGREGATE_OPERATION_SUM = 0
+    QUIVER_EXPRESSION_AGGREGATE_OPERATION_MEAN = 1
+    QUIVER_EXPRESSION_AGGREGATE_OPERATION_MIN = 2
+    QUIVER_EXPRESSION_AGGREGATE_OPERATION_MAX = 3
+    QUIVER_EXPRESSION_AGGREGATE_OPERATION_PERCENTILE = 4
+end
+
+@cenum quiver_expression_aggregate_agents_operation_t::UInt32 begin
+    QUIVER_EXPRESSION_AGGREGATE_AGENTS_OPERATION_SUM = 0
+    QUIVER_EXPRESSION_AGGREGATE_AGENTS_OPERATION_MEAN = 1
+    QUIVER_EXPRESSION_AGGREGATE_AGENTS_OPERATION_MIN = 2
+    QUIVER_EXPRESSION_AGGREGATE_AGENTS_OPERATION_MAX = 3
+    QUIVER_EXPRESSION_AGGREGATE_AGENTS_OPERATION_PERCENTILE = 4
+end
+
+function quiver_expression_from_file(file, out)
+    @ccall libquiver_c.quiver_expression_from_file(file::Ptr{quiver_binary_file_t}, out::Ptr{Ptr{quiver_expression_t}})::quiver_error_t
+end
+
+function quiver_expression_close(expression)
+    @ccall libquiver_c.quiver_expression_close(expression::Ptr{quiver_expression_t})::quiver_error_t
+end
+
+function quiver_expression_apply(operation, lhs, rhs, out)
+    @ccall libquiver_c.quiver_expression_apply(operation::quiver_expression_operation_t, lhs::Ptr{quiver_expression_t}, rhs::Ptr{quiver_expression_t}, out::Ptr{Ptr{quiver_expression_t}})::quiver_error_t
+end
+
+function quiver_expression_apply_scalar_right(operation, lhs, rhs, out)
+    @ccall libquiver_c.quiver_expression_apply_scalar_right(operation::quiver_expression_operation_t, lhs::Ptr{quiver_expression_t}, rhs::Cdouble, out::Ptr{Ptr{quiver_expression_t}})::quiver_error_t
+end
+
+function quiver_expression_apply_scalar_left(operation, lhs, rhs, out)
+    @ccall libquiver_c.quiver_expression_apply_scalar_left(operation::quiver_expression_operation_t, lhs::Cdouble, rhs::Ptr{quiver_expression_t}, out::Ptr{Ptr{quiver_expression_t}})::quiver_error_t
+end
+
+function quiver_expression_apply_unary(operation, operand, out)
+    @ccall libquiver_c.quiver_expression_apply_unary(operation::quiver_expression_unary_operation_t, operand::Ptr{quiver_expression_t}, out::Ptr{Ptr{quiver_expression_t}})::quiver_error_t
+end
+
+function quiver_expression_apply_ternary(operation, condition, then_value, else_value, out)
+    @ccall libquiver_c.quiver_expression_apply_ternary(operation::quiver_expression_ternary_operation_t, condition::Ptr{quiver_expression_t}, then_value::Ptr{quiver_expression_t}, else_value::Ptr{quiver_expression_t}, out::Ptr{Ptr{quiver_expression_t}})::quiver_error_t
+end
+
+function quiver_expression_save(expression, path)
+    @ccall libquiver_c.quiver_expression_save(expression::Ptr{quiver_expression_t}, path::Ptr{Cchar})::quiver_error_t
+end
+
+function quiver_expression_get_metadata(expression, out)
+    @ccall libquiver_c.quiver_expression_get_metadata(expression::Ptr{quiver_expression_t}, out::Ptr{Ptr{quiver_binary_metadata_t}})::quiver_error_t
+end
+
+function quiver_expression_aggregate(expression, dimension, operation, parameter, out)
+    @ccall libquiver_c.quiver_expression_aggregate(expression::Ptr{quiver_expression_t}, dimension::Ptr{Cchar}, operation::quiver_expression_aggregate_operation_t, parameter::Ptr{Cdouble}, out::Ptr{Ptr{quiver_expression_t}})::quiver_error_t
+end
+
+function quiver_expression_aggregate_agents(expression, operation, parameter, out)
+    @ccall libquiver_c.quiver_expression_aggregate_agents(expression::Ptr{quiver_expression_t}, operation::quiver_expression_aggregate_agents_operation_t, parameter::Ptr{Cdouble}, out::Ptr{Ptr{quiver_expression_t}})::quiver_error_t
+end
+
+function quiver_expression_select_agents(expression, labels, label_count, out)
+    @ccall libquiver_c.quiver_expression_select_agents(expression::Ptr{quiver_expression_t}, labels::Ptr{Ptr{Cchar}}, label_count::Csize_t, out::Ptr{Ptr{quiver_expression_t}})::quiver_error_t
+end
+
+function quiver_expression_rename_agents(expression, old_labels, new_labels, mapping_count, out)
+    @ccall libquiver_c.quiver_expression_rename_agents(expression::Ptr{quiver_expression_t}, old_labels::Ptr{Ptr{Cchar}}, new_labels::Ptr{Ptr{Cchar}}, mapping_count::Csize_t, out::Ptr{Ptr{quiver_expression_t}})::quiver_error_t
+end
+
 #! format: on
+
 
 end # module
