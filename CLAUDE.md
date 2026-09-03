@@ -37,10 +37,28 @@ Project.toml      # Deps: Artifacts, CEnum, Dates, Libdl; julia 1.11 compat
   arg + `quiver_database_free_mask` (regenerate, don't hand-edit long-term). This makes the public
   reader's *inferred* type a 2-way `Union{Vector{T}, Vector{Optional{T}}}` (the choice is a runtime
   metadata lookup) — intended: accurate per-column types over `@inferred` purity; assert with `isa`
-  on the result, not `@inferred` on the reader. Julia-only; the `_by_id`/`query_*`/time-series
+  on the result, not `@inferred` on the reader. `read_scalar_booleans` keeps the same
+  concrete-vs-optional shape but does **not** re-read the metadata: it recovers the schema's
+  nullability from `read_scalar_integers`' container type (`values isa Vector{Int64}`), so it adds
+  no FFI round-trip — if that delegate's container type ever changes, this branch changes with it.
+  `read_scalar_date_times` is the second wrapper on that mechanism (it branches on
+  `values isa Vector{String}`), so both are deliberately **outside** the brace list above.
+  Julia-only; the `_by_id`/`query_*`/time-series
   readers are not yet converted — see `type_stability_followup.md`. An `INTEGER PRIMARY KEY` (e.g.
   `id`) is a rowid alias and is reported `not_null` by the C++ core (`scalar_metadata_from_column`),
   so `read_scalar_integers(db, c, "id")` is a concrete `Vector{Int64}`.
+- **One date-time grammar, gated in `string_to_date_time`** (`src/date_time.jl`). Julia's
+  `dateformat` treats field widths as **maxima** and fills missing trailing components, so it used
+  to fabricate a date from truncated input: `"2024"` and `"2024-01"` both read as 2024-01-01 and
+  `"20240115"` as **year 20240115**, all without an error, where Python and Dart reject or read
+  those differently. `QUIVER_DATE_TIME_PATTERN` now gates the shape to the core's own band
+  (`datetime::is_valid_iso8601`) before parsing, and an out-of-range field that clears the regex
+  (`"2024-02-31"`) falls through to the same rejection, so the message always names the column.
+  Keep the three parsers (here, `_parse_datetime` in Python, `stringToDateTime` in Dart) accepting
+  exactly the same set — that intersection is the whole point of the core's write gate. Also note
+  `replace(s, ' ' => 'T'; count = 1)`: replacing *every* space turned `"Config 1"` into
+  `"ConfigT1"` and quoted that in the error. `string_to_date_time(::Nothing)` returns `nothing`
+  (the `_integer_to_boolean` precedent), which is why no caller hand-rolls a null guard.
 - **`run!` owns its result**: `quiver_lua_runner_run` takes an `out_result::Ptr{Ptr{Cchar}}` and the
   JSON string must be freed with `quiver_lua_runner_free_string` — *not*
   `quiver_database_free_string`. `check` throws before the `unsafe_string`, and the C API leaves
@@ -64,6 +82,10 @@ Project.toml      # Deps: Artifacts, CEnum, Dates, Libdl; julia 1.11 compat
   one-line wrappers over it, with the same `key::Union{Int64, String}` note. Kept separate from
   `_update_group_columns` because the row-upsert C signature carries no per-cell NULL mask, and
   that helper writes a zeroed placeholder for a masked cell.
+- **A nullable scalar string argument passes `Ptr{Cchar}(C_NULL)`, never `""`**
+  (`update_relation!`/`update_relation_by_label!`) — the C API reads NULL as "clear the relation"
+  and an empty string as a label to look up. The `GC.@preserve` rule above does not apply: there
+  are no `Ref`s, and `@ccall` pins a `String` argument itself for the duration of the call.
 - **Library loader** (`src/c_api.jl`, emitted from `generator/prologue.jl`) is **relocatable** —
   this matters for downstream apps compiled with PackageCompiler (`create_app`), where a baked
   absolute path would freeze the build machine's depot and fail on the target. Split design:
@@ -85,6 +107,19 @@ Project.toml      # Deps: Artifacts, CEnum, Dates, Libdl; julia 1.11 compat
   FK column derived from the naming convention, mapping each element to the positional index of
   its related element) exist only in this binding — documented exceptions in the root design
   decisions.
+- **Scoped resource factories**: `open`, `from_schema`, `from_migrations`, and
+  `Binary.open_file` have callback-first overloads for Julia `do` syntax. They return the
+  callback result and call the existing idempotent `close!` from `finally`, so both normal and
+  exceptional exits release the resource. The callback is typed **`fn::Function`** — with it
+  untyped, an arity slip (`from_schema("a.db", "b.db", "schema.sql")`) dispatches here and the
+  factory *runs* before the `MethodError`, and `from_schema` starts with `fs::remove(db_path)`
+  while a plain `open` creates the file. The overloads forward `kwargs...` rather than restating
+  the base method's keywords, so a keyword added later reaches the `do` form too. Two caveats a
+  caller has to know: a `LuaRunner` borrows a raw `Database&` (`src/lua_runner.cpp`), so one built
+  inside the block dangles after it (`.ptr` stays non-NULL — no error, just freed memory; the real
+  guard belongs in the C API, since Python's `with` has the same hole), and an uncommitted
+  transaction open at the block's exit is rolled back by the close — nest
+  `transaction(db) do db ... end`.
 - **No schemas live in this binding**: `test/fixture.jl` resolves the schema directory at
   runtime, preferring repo-root `tests/schemas/`; the publish workflow copies those schemas
   into the mirror's `test/schemas/`.
