@@ -77,6 +77,16 @@ function query_integer(db::Database, sql::String)
 end
 
 """
+    query_boolean(db::Database, sql::String) -> Optional{Bool}
+
+Execute a SQL query and return the first column of the first row as a Bool.
+Returns `nothing` if the query returns no rows.
+"""
+function query_boolean(db::Database, sql::String)
+    return _integer_to_boolean(query_integer(db, sql))
+end
+
+"""
     query_float(db::Database, sql::String) -> Optional{Float64}
 
 Execute a SQL query and return the first column of the first row as a Float64.
@@ -155,6 +165,16 @@ function query_integer(db::Database, sql::String, parameters::Vector)
 end
 
 """
+    query_boolean(db::Database, sql::String, parameters::Vector) -> Optional{Bool}
+
+Execute a parameterized SQL query and return the first column of the first row as a Bool.
+Returns `nothing` if the query returns no rows.
+"""
+function query_boolean(db::Database, sql::String, parameters::Vector)
+    return _integer_to_boolean(query_integer(db, sql, parameters))
+end
+
+"""
     query_float(db::Database, sql::String, parameters::Vector) -> Optional{Float64}
 
 Execute a parameterized SQL query and return the first column of the first row as a Float64.
@@ -190,11 +210,7 @@ Execute a SQL query and return the first column of the first row as a DateTime.
 Returns `nothing` if the query returns no rows.
 """
 function query_date_time(db::Database, sql::String)
-    result = query_string(db, sql)
-    if result === nothing
-        return nothing
-    end
-    return string_to_date_time(result)
+    return string_to_date_time(query_string(db, sql))
 end
 
 """
@@ -204,9 +220,5 @@ Execute a parameterized SQL query and return the first column of the first row a
 Returns `nothing` if the query returns no rows.
 """
 function query_date_time(db::Database, sql::String, parameters::Vector)
-    result = query_string(db, sql, parameters)
-    if result === nothing
-        return nothing
-    end
-    return string_to_date_time(result)
+    return string_to_date_time(query_string(db, sql, parameters))
 end
