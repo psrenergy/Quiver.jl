@@ -1,25 +1,25 @@
 [[quiver]]
 arch = "x86_64"
-git-tree-sha1 = "3cbea137c12ef8626e8419690c7d5959741abcbd"
+git-tree-sha1 = "f97d9d223c3f5aadc4eaaad03f0504d19b20e77e"
 libc = "glibc"
 os = "linux"
 
     [[quiver.download]]
-    sha256 = "2e10e4fd6e5cbe7a9360b3e85b4bb310284b99cbab6de3b5744cbc6bf5978112"
-    url = "https://julia-artifacts.s3.amazonaws.com/quiver/0.12.2/quiver-linux-x86_64.tgz"
+    sha256 = "dc78621f0e2e22efe32e23326ebb4d2b95abd7b758979c061b8f8d5bf3b8cc62"
+    url = "https://julia-artifacts.s3.amazonaws.com/quiver/0.12.3/quiver-linux-x86_64.tgz"
 [[quiver]]
 arch = "aarch64"
-git-tree-sha1 = "9cd5fc93073b69518d81b418d9284c278df6dfe8"
+git-tree-sha1 = "d136d62ebf17ad516aa7cbecb4eceeedfdd732ff"
 os = "macos"
 
     [[quiver.download]]
-    sha256 = "75fadf0a3e36148d81b9e4ec364f4f92a13d31e765c2f0cb33022a9fb229bbf0"
-    url = "https://julia-artifacts.s3.amazonaws.com/quiver/0.12.2/quiver-macos-aarch64.tgz"
+    sha256 = "ef9228e1681ddc8b4c3d53db8482773be673f4303bfee3c145c84b75075b6760"
+    url = "https://julia-artifacts.s3.amazonaws.com/quiver/0.12.3/quiver-macos-aarch64.tgz"
 [[quiver]]
 arch = "x86_64"
-git-tree-sha1 = "9288d179c9fa8dc75ac394cdd6a79629ee99cf72"
+git-tree-sha1 = "2f46ae1c79c81720aa1347096b7e46661488c1b1"
 os = "windows"
 
     [[quiver.download]]
-    sha256 = "e20504c40cb4540dcf3337a0bf3970622d0237b53de460f6fcb480b31dd674b4"
-    url = "https://julia-artifacts.s3.amazonaws.com/quiver/0.12.2/quiver-windows-x86_64.tgz"
+    sha256 = "b77dcf936ea5a344cd63a826b9e1e0abacacc44e1db40e2191b346c13a17b336"
+    url = "https://julia-artifacts.s3.amazonaws.com/quiver/0.12.3/quiver-windows-x86_64.tgz"
