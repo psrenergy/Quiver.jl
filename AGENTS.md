@@ -27,6 +27,8 @@ Project.toml      # Deps: Artifacts, CEnum, Dates, Libdl; julia 1.11 compat
 - **Always `GC.@preserve`**: refs produced by `marshal_params` (and any `Ref`s passed as pointers)
   must stay inside a `GC.@preserve refs ...` block spanning the ccall — the GC may otherwise
   collect them mid-call.
+- **Free C results in `finally`** when decoding can throw (DateTime parsing, metadata lookups),
+  as `read_time_series_group` does — Python's readers follow the same shape.
 - **Vector/set NULL cells are nullability-aware too.** All twelve vector/set readers consult
   `list_{vector,set}_groups(...)` for the value column's `not_null` (`_group_value_not_null`,
   `database_read.jl`) and return a concrete `Vector{Vector{Int64}}` / `Vector{Int64}` for a
@@ -38,9 +40,8 @@ Project.toml      # Deps: Artifacts, CEnum, Dates, Libdl; julia 1.11 compat
   `NOT NULL` column (a reader of the wrong type, or a NULL in a non-STRICT composite key, which the
   core reports `not_null`) raises instead of passing the C placeholder `0`/`0.0` off as data, and
   the C arrays are freed in `finally`. The public by-id readers wrap `_read_*_by_id(..., not_null)`
-  kernels: `read_{vectors,sets}_by_id` pass the answer from the groups they already listed, and
-  `set_relation_map` passes `false` (its values end up untyped), so no composite pays a
-  `list_*_groups` round-trip per column or per element. The boolean/datetime
+  kernels: `read_{vectors,sets}_by_id` pass the answer from the groups they already listed, so no
+  composite pays a `list_*_groups` round-trip per column. The boolean/datetime
   wrappers recover nullability from the delegate's container type (`values isa
   Vector{Vector{Int64}}`), so there is no second metadata hop. `Element` accepts the
   `Vector{Union{Nothing, T}}` a nullable read returns, `Optional{Bool}` from the boolean wrappers
@@ -48,6 +49,9 @@ Project.toml      # Deps: Artifacts, CEnum, Dates, Libdl; julia 1.11 compat
   `update_vector_group!` / `update_set_group!` / `update_time_series_group!`). The union is an
   explicit list on purpose: a `where T` form would also match `Vector{Any}`, which must keep
   raising `MethodError`.
+- **`Element` scalars**: `el[name] = nothing` writes SQL NULL via `quiver_element_set_null`
+  (so `create_element!`/`update_element!(...; x = nothing)` clears a column), and any
+  `AbstractString` is accepted. Arrays stay non-null (root design decision).
 - **Scalar bulk NULLs (nullability-aware element type)**: `read_scalar_{integers,floats,strings}`
   first read `get_scalar_metadata(db, collection, attribute).not_null`, then return a **concrete
   `Vector{T}`** for `NOT NULL` columns and a **`Vector{Optional{T}}`** for nullable columns — for
