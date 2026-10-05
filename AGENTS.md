@@ -84,10 +84,12 @@ Project.toml      # Deps: Artifacts, CEnum, Dates, Libdl; julia 1.11 compat
   `replace(s, ' ' => 'T'; count = 1)`: replacing *every* space turned `"Config 1"` into
   `"ConfigT1"` and quoted that in the error. `string_to_date_time(::Nothing)` returns `nothing`
   (the `_integer_to_boolean` precedent), which is why no caller hand-rolls a null guard.
-- **`run!` owns its result**: `quiver_lua_runner_run` takes an `out_result::Ptr{Ptr{Cchar}}` and the
-  JSON string must be freed with `quiver_lua_runner_free_string` — *not*
+- **`run!` owns its result**: `quiver_sandbox_run` takes an `out_result::Ptr{Ptr{Cchar}}` and the
+  JSON string must be freed with `quiver_sandbox_free_string` — *not*
   `quiver_database_free_string`. `check` throws before the `unsafe_string`, and the C API leaves
-  `out_result` NULL on failure.
+  `out_result` NULL on failure. The script must be Lua source text: the core loads it in text mode,
+  so a precompiled (bytecode) chunk is rejected with `Failed to run Lua script: ...` and surfaces
+  like any other script error.
 - **Time-series group NULLs**: `read_time_series_group` returns value columns as
   `Vector{Union{T, Nothing}}` **always** (type-stable, like `read_time_series_row`) — a NULL cell
   is `nothing`; the dimension column stays a dense `Vector{DateTime}`. `update_time_series_group!` accepts `nothing` cells, dispatching on
@@ -147,6 +149,22 @@ Project.toml      # Deps: Artifacts, CEnum, Dates, Libdl; julia 1.11 compat
   FK column derived from the naming convention, mapping each element to the positional index of
   its related element) exist only in this binding — documented exceptions in the root design
   decisions.
+- **AbstractExpression**: `abstract type AbstractExpression end` is declared in `src/Quiver.jl`
+  before the Binary include, and `Binary.jl` subtypes it through `using ..Quiver: AbstractExpression`
+  (subtyping needs no import; extending a function does). `Binary.File` and `Expression` are its
+  subtypes, and every expression operation is defined once on it: each converts its operands with
+  the private `_expression` (identity for an `Expression`, `Expression(file)` through
+  `quiver_expression_from_file` for a file). The C expression copies the file's path, so it
+  outlives a later `close!` of its file — but a closed `Binary.File` is itself not an operand:
+  `close!` frees the C handle, so it raises `Null argument` (unlike Lua, where a closed file is
+  still read by path). The file is passed to `GC.@preserve` across `quiver_expression_from_file`,
+  and every converted handle across its operation's ccall. `get_metadata` is one generic owned by
+  `Binary` and imported into `Quiver` before `include("expression.jl")` (an import after the
+  definition is a load error), so a file answers with its handle's metadata, never through the
+  conversion: an unopened `Binary.File(path)` reports its handle's empty metadata, while an
+  expression built from it reads the file's metadata from disk. There is no public
+  `Expression(::Expression)`: closing the result would close the argument. Do not re-add
+  per-type methods for the file type — that was 97 forwarders.
 - **Scoped resource factories**: `open`, `from_schema`, `from_migrations`, and
   `Binary.open_file` have callback-first overloads for Julia `do` syntax. They return the
   callback result and call the existing idempotent `close!` from `finally`, so both normal and
@@ -155,7 +173,7 @@ Project.toml      # Deps: Artifacts, CEnum, Dates, Libdl; julia 1.11 compat
   factory *runs* before the `MethodError`, and `from_schema` starts with `fs::remove(db_path)`
   while a plain `open` creates the file. The overloads forward `kwargs...` rather than restating
   the base method's keywords, so a keyword added later reaches the `do` form too. Two caveats a
-  caller has to know: a `LuaRunner` borrows a raw `Database&` (`src/lua_runner.cpp`), so one built
+  caller has to know: a `Sandbox` borrows a raw `Database&` (`src/sandbox/sandbox.cpp`), so one built
   inside the block dangles after it (`.ptr` stays non-NULL — no error, just freed memory; the real
   guard belongs in the C API, since Python's `with` has the same hole), and an uncommitted
   transaction open at the block's exit is rolled back by the close — nest
