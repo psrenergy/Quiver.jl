@@ -90,11 +90,12 @@ Project.toml      # Deps: Artifacts, CEnum, Dates, Libdl; julia 1.11 compat
   `"ConfigT1"` and quoted that in the error. `string_to_date_time(::Nothing)` returns `nothing`
   (the `_integer_to_boolean` precedent), which is why no caller hand-rolls a null guard.
 - **`run!` owns its result**: `quiver_sandbox_run` takes an `out_result::Ptr{Ptr{Cchar}}` and the
-  JSON string must be freed with `quiver_sandbox_free_string` — *not*
-  `quiver_database_free_string`. `check` throws before the `unsafe_string`, and the C API leaves
+  JSON string is freed with the shared `quiver_database_free_string`, as are the binary wrappers'
+  strings and arrays. `check` throws before the `unsafe_string`, and the C API leaves
   `out_result` NULL on failure. The script must be Lua source text: the core loads it in text mode,
   so a precompiled (bytecode) chunk is rejected with `Failed to run Lua script: ...` and surfaces
-  like any other script error.
+  like any other script error. The `timeout_ms` keyword (default 0, no limit) is passed straight
+  through; the C API validates it and raises the time-limit error.
 - **Time-series group NULLs**: `read_time_series_group` returns value columns as
   `Vector{Union{T, Nothing}}` **always** (type-stable, like `read_time_series_row`) — a NULL cell
   is `nothing`; the dimension column stays a dense `Vector{DateTime}`. `update_time_series_group!` accepts `nothing` cells, dispatching on
@@ -115,9 +116,10 @@ Project.toml      # Deps: Artifacts, CEnum, Dates, Libdl; julia 1.11 compat
 - **One marshaller for every row upsert**: `_upsert_row_columns(db, upsert, ...)`
   (`src/database_update.jl`) is its row-shaped sibling — every kwarg is a scalar wrapped in a
   1-element typed array — so `upsert_time_series_row!` and `upsert_time_series_row_by_label!` are
-  one-line wrappers over it, with the same `key::Union{Int64, String}` note. Kept separate from
-  `_update_group_columns` because the row-upsert C signature carries no per-cell NULL mask, and
-  that helper writes a zeroed placeholder for a masked cell.
+  one-line wrappers over it, with the same `key::Union{Int64, String}` note. `nothing` is sent as
+  a NULL data pointer, which the C API writes as an explicit SQL NULL (an unnamed kwarg keeps its
+  current value). Kept separate from `_update_group_columns` because the row-upsert C signature
+  carries no per-cell NULL mask, and that helper writes a zeroed placeholder for a masked cell.
 - **The whole-group readers call the native C readers**: `read_vector_group_by_id` /
   `read_set_group_by_id` are one-line wrappers over `_read_group_rows(db, read_group, ...)`
   (`src/database_read.jl`), which takes the C entry point as `_update_group_columns` does, decodes
@@ -166,8 +168,8 @@ Project.toml      # Deps: Artifacts, CEnum, Dates, Libdl; julia 1.11 compat
   and every converted handle across its operation's ccall. `get_metadata` is one generic owned by
   `Binary` and imported into `Quiver` before `include("expression.jl")` (an import after the
   definition is a load error), so a file answers with its handle's metadata, never through the
-  conversion: an unopened `Binary.File(path)` reports its handle's empty metadata, while an
-  expression built from it reads the file's metadata from disk. There is no public
+  conversion. A `Binary.File` comes only from `open_file` (there is no unopened handle, in Julia
+  or the C API). There is no public
   `Expression(::Expression)`: closing the result would close the argument. Do not re-add
   per-type methods for the file type — that was 97 forwarders.
 - **Scoped resource factories**: `open`, `from_schema`, `from_migrations`, and
