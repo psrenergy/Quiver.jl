@@ -1,34 +1,34 @@
 [[quiver]]
 arch = "x86_64"
-git-tree-sha1 = "4d537cec67aa898fe1d84a84830033aabe33a8af"
+git-tree-sha1 = "1733cbaefb236a5ab5c3a7d7129fb10a1923d825"
 libc = "glibc"
 os = "linux"
 
     [[quiver.download]]
-    sha256 = "7e77af235586d2737c298a2b72ec23eb01382416c93dff30af988bfd1c9c1f3a"
-    url = "https://julia-artifacts.s3.amazonaws.com/quiver/0.13.6/quiver-linux-x86_64.tgz"
+    sha256 = "e35921aa3e8eab8b350057ce3f85a165bbe96a36c96ffe0cb424a9a7d09553f4"
+    url = "https://julia-artifacts.s3.amazonaws.com/quiver/0.13.7/quiver-linux-x86_64.tgz"
 [[quiver]]
 arch = "aarch64"
-git-tree-sha1 = "5901380e719d6c0476db770b7bffaa86910dd4db"
+git-tree-sha1 = "ef658a637fb0c1388878bab123dbca4becc46908"
 libc = "glibc"
 os = "linux"
 
     [[quiver.download]]
-    sha256 = "d9c976469377dbcbaf2731ffbdb238e137e9d4c0de72f469b8caf509475b0b05"
-    url = "https://julia-artifacts.s3.amazonaws.com/quiver/0.13.6/quiver-linux-aarch64.tgz"
+    sha256 = "2172a0aceb3669efcd0ce9d2a39c526a97fcdcbeb5d3a1b3f574e2e258db5482"
+    url = "https://julia-artifacts.s3.amazonaws.com/quiver/0.13.7/quiver-linux-aarch64.tgz"
 [[quiver]]
 arch = "aarch64"
-git-tree-sha1 = "83c3c3a76bee0bad49b47467601705e98232e5bd"
+git-tree-sha1 = "ef3520f5e7195a4cfe53f9efd7fbcfe536053762"
 os = "macos"
 
     [[quiver.download]]
-    sha256 = "d20d51095c4fd493e04e6d208b7b91e0dea2f882a9bdfa70e4a3ad9a70698ecd"
-    url = "https://julia-artifacts.s3.amazonaws.com/quiver/0.13.6/quiver-macos-aarch64.tgz"
+    sha256 = "f513f82a1475a383ee48087ca7d7da23a250cd105109dabe28a015791dd98183"
+    url = "https://julia-artifacts.s3.amazonaws.com/quiver/0.13.7/quiver-macos-aarch64.tgz"
 [[quiver]]
 arch = "x86_64"
-git-tree-sha1 = "f931d30dcdb56f67b87c791d209941c80a9f56e5"
+git-tree-sha1 = "a19188dbf09c6a773d239d87ec81309b8b2ca035"
 os = "windows"
 
     [[quiver.download]]
-    sha256 = "2522cfcfbd559ff3e9f567b6b5ea2092c6ece2229e499ff98f111efc22e6d22e"
-    url = "https://julia-artifacts.s3.amazonaws.com/quiver/0.13.6/quiver-windows-x86_64.tgz"
+    sha256 = "e26b784d3b102a3a35e67dce9207e592a476b5b01cbf560905dc08cddcebfcb9"
+    url = "https://julia-artifacts.s3.amazonaws.com/quiver/0.13.7/quiver-windows-x86_64.tgz"
